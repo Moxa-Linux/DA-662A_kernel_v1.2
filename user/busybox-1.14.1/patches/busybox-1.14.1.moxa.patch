@@ -1,0 +1,44 @@
+diff -crB busybox-1.14.1/libbb/speed_table.c busybox-1.14.1.new/libbb/speed_table.c
+*** busybox-1.14.1/libbb/speed_table.c	Wed May 13 22:32:07 2009
+--- busybox-1.14.1.new/libbb/speed_table.c	Mon May 16 15:30:37 2011
+***************
+*** 51,56 ****
+--- 51,59 ----
+  #ifdef B460800
+  	{B460800, 460800/256 + 0x8000U},
+  #endif
++ #ifdef B921600 // Add by Jared for support stty 92600 configuration
++ 	{B921600, 921600/256 + 0x8000U},
++ #endif
+  };
+  
+  enum { NUM_SPEEDS = ARRAY_SIZE(speeds) };
+diff -crB busybox-1.14.1/modutils/insmod.c busybox-1.14.1.new/modutils/insmod.c
+*** busybox-1.14.1/modutils/insmod.c	Mon May 16 15:41:53 2011
+--- busybox-1.14.1.new/modutils/insmod.c	Mon May 16 15:29:58 2011
+***************
+*** 13,18 ****
+--- 13,21 ----
+  int insmod_main(int argc, char **argv) MAIN_EXTERNALLY_VISIBLE;
+  int insmod_main(int argc UNUSED_PARAM, char **argv)
+  {
++ #if 1  // Jared 2009-10-1
++         char **phead_argv=argv;
++ #endif
+  	char *filename;
+  	int rc;
+  
+***************
+*** 34,39 ****
+--- 37,47 ----
+  		bb_show_usage();
+  
+  	rc = bb_init_module(filename, parse_cmdline_module_options(argv));
++ 
++ #if 1 // Jared 2009-10-01
++ 	if (rc)
++         	rc = modprobe_main(argc, phead_argv);
++ #endif
+  	if (rc)
+  		bb_error_msg("can't insert '%s': %s", filename, moderror(rc));
+  

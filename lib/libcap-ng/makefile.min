@@ -1,0 +1,84 @@
+
+CONFIGURE_TARGET := $(strip $(subst -, ,$(CROSS)))
+CONFIGURE_TARGET := $(word 1,$(CONFIGURE_TARGET))-$(word 2,$(CONFIGURE_TARGET))
+
+INSTALL_PREFIX = $(CURDIR)/build_$(CONFIGURE_TARGET)/install-me-here
+TC_INSTALL_PREFIX = $(TOOLCHAIN_DIR)/$(CONFIGURE_TARGET)
+TARGET_SRC=libcap-ng-0.6.5
+
+ifeq ("$(CONFIGURE_TARGET)","arm-linux")
+	CONFIG_ENDIAN = little
+	INSTALL_LIB_DIR = $(INSTALL_PREFIX)/lib
+	TC_LIB_DIR = $(TC_INSTALL_PREFIX)/lib
+else
+	CONFIG_ENDIAN = big
+	INSTALL_LIB_DIR = $(INSTALL_PREFIX)/lib/be
+	TC_LIB_DIR = $(TC_INSTALL_PREFIX)/lib/be
+endif
+
+
+all: untar-all-source build
+
+untar-all-source:
+	if [ ! -d $(TARGET_SRC) ]; then \
+		[ ! -f $(TARGET_SRC).tar.gz ] && wget http://people.redhat.com/sgrubb/libcap-ng/$(TARGET_SRC).tar.gz; \
+		[ -f $(TARGET_SRC).tar.gz ] && tar xzf $(TARGET_SRC).tar.gz; \
+	fi
+
+build:
+	if [ -d "build_$(CONFIGURE_TARGET)" ]; then \
+		rm -rf build_$(CONFIGURE_TARGET); \
+	fi
+	mkdir -p build_$(CONFIGURE_TARGET)
+	(cd build_$(CONFIGURE_TARGET); \
+	CC=$(CONFIGURE_TARGET)-gcc \
+	LD=$(CONFIGURE_TARGET)-ld \
+	STRIP=$(CONFIGURE_TARGET)-strip \
+	CXX=$(CONFIGURE_TARGET)-g++ \
+	CPP="$(CONFIGURE_TARGET)-gcc -E" \
+	AS=$(CONFIGURE_TARGET)-as \
+	NM=$(CONFIGURE_TARGET)-nm \
+	AR=$(CONFIGURE_TARGET)-ar \
+	RANLIB=$(CONFIGURE_TARGET)-ranlib \
+	../$(TARGET_SRC)/configure \
+	--prefix="$(INSTALL_PREFIX)" \
+	--libdir="$(INSTALL_LIB_DIR)" \
+	--host=arm-linux \
+	--build=i686-pc-linux \
+	--enable-shared \
+	--with-gnu-ld \
+	)
+	make -C build_$(CONFIGURE_TARGET)
+	make -C build_$(CONFIGURE_TARGET) install
+
+
+# install into toolchain
+install:
+	cp -R $(INSTALL_PREFIX)/* $(TC_INSTALL_PREFIX)
+
+
+# install to romfs
+romfs:
+	$(ROMFSINST) "$(TC_LIB_DIR)/libcap-ng.so*" /lib
+
+
+# copy from toolchain to romfs
+tc2romfs:
+	$(ROMFSINST) "$(TC_INSTALL_PREFIX)/lib/libcap-ng.so*" /lib
+
+
+# only install include files & libraries
+min-install:
+	cp -a $(INSTALL_PREFIX)/include  $(TC_INSTALL_PREFIX)
+	cp -a $(INSTALL_LIB_DIRS)/libcap-ng.a  $(TC_LIB_DIR)
+	cp -a $(INSTALL_LIB_DIRS)/libcap-ng.so*  $(TC_LIB_DIR)
+
+
+clean:
+	make -C build_$(CONFIGURE_TARGET) distclean
+
+
+distclean: clean
+	rm -rf build_*
+	rm -rf $(TARGET_SRC)
+

@@ -1,0 +1,9 @@
+Package: python
+Version: 2.7.5
+Architecture: xscale
+Maintainer: Jared_wu <Jared_Wu@moxa.com>
+Section: base
+Priority: optional
+Description: An interactive high-level object-oriented language
+Source: http://www.python.org/ftp/python/2.7.5/Python-2.7.5.tar.bz2
+Depends: readline

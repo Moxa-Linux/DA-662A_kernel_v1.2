@@ -1,0 +1,48 @@
+diff -crB gcc-4.4.2/gcc/config/arm/t-linux gcc-4.4.2.new/gcc/config/arm/t-linux
+*** gcc-4.4.2/gcc/config/arm/t-linux	2008-12-20 01:31:12.000000000 +0800
+--- gcc-4.4.2.new/gcc/config/arm/t-linux	2011-12-23 14:57:30.000000000 +0800
+***************
+*** 6,15 ****
+  LIB1ASMFUNCS = _udivsi3 _divsi3 _umodsi3 _modsi3 _dvmd_lnx _clzsi2 _clzdi2 \
+  	_arm_addsubdf3 _arm_addsubsf3
+  
+! # MULTILIB_OPTIONS = mhard-float/msoft-float
+! # MULTILIB_DIRNAMES = hard-float soft-float
+  
+! # EXTRA_MULTILIB_PARTS = crtbegin.o crtend.o
+  
+! # LIBGCC = stmp-multilib
+! # INSTALL_LIBGCC = install-multilib
+--- 6,15 ----
+  LIB1ASMFUNCS = _udivsi3 _divsi3 _umodsi3 _modsi3 _dvmd_lnx _clzsi2 _clzdi2 \
+  	_arm_addsubdf3 _arm_addsubsf3
+  
+! MULTILIB_OPTIONS = mhard-float/msoft-float
+! MULTILIB_DIRNAMES = hard-float soft-float
+  
+! EXTRA_MULTILIB_PARTS = crtbegin.o crtend.o
+  
+! LIBGCC = stmp-multilib
+! INSTALL_LIBGCC = install-multilib
+diff -crB gcc-4.4.2/gcc/config/arm/t-linux-eabi gcc-4.4.2.new/gcc/config/arm/t-linux-eabi
+*** gcc-4.4.2/gcc/config/arm/t-linux-eabi	2009-01-25 05:06:08.000000000 +0800
+--- gcc-4.4.2.new/gcc/config/arm/t-linux-eabi	2011-12-23 15:37:24.000000000 +0800
+***************
+*** 3,10 ****
+  
+  # We do not build a Thumb multilib for Linux because the definition of
+  # CLEAR_INSN_CACHE in linux-gas.h does not work in Thumb mode.
+! MULTILIB_OPTIONS	=
+! MULTILIB_DIRNAMES	=
+  
+  # Use a version of div0 which raises SIGFPE.
+  LIB1ASMFUNCS := $(filter-out _dvmd_tls,$(LIB1ASMFUNCS)) _dvmd_lnx
+--- 3,10 ----
+  
+  # We do not build a Thumb multilib for Linux because the definition of
+  # CLEAR_INSN_CACHE in linux-gas.h does not work in Thumb mode.
+! MULTILIB_OPTIONS	= mhard-float/msoft-float
+! MULTILIB_DIRNAMES	= hard-float soft-float
+  
+  # Use a version of div0 which raises SIGFPE.
+  LIB1ASMFUNCS := $(filter-out _dvmd_tls,$(LIB1ASMFUNCS)) _dvmd_lnx

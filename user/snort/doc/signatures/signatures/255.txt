@@ -1,0 +1,36 @@
+Rule:  alert tcp $EXTERNAL_NET any -> $HOME_NET 53 (msg:"DNS zone transfer"; content: "|00 00 FC|"; flags: A+; offset: 13; reference:arachnids,212; classtype:attempted-recon; sid:255; rev:2;)
+
+--
+
+Sid: 255
+
+--
+
+Summary:  Someone has requested a zone transfer from your DNS Server
+
+--
+Impact:  Information leak, Reconnaisance.  A malicious user can use this information to gain an understanding of your internal network structure.
+
+--
+Detailed Information:  DNS Zone transfers are normally used between DNS Servers to replicate zone information. Zone transfers can also be used to gain information about a network.
+
+--
+Attack Scenarios:  A malicious user may request a Zone Transfer to gather information before commencing an attack.  This can give the user a list of hosts to target.
+
+--
+Ease of Attack:  Tools such as nslookup and dig are part of commercial linux distributions, and may be used to perform zone transfers.
+
+--
+False Positives:  DNS Zone transfers are part of day-to-day traffic for DNS servers.  You may want to tailor this signature for your environment to limit false positives.
+
+--
+False Negatives:  
+
+--
+Corrective Action:  Configure your DNS servers to only allow zone transfers from authorised hosts, limit the information available from publicly acessible DNS server by using Split Horizon DNS or separate DNS Servers for internal networks.
+
+--
+Contributors:
+
+--
+Additional References:

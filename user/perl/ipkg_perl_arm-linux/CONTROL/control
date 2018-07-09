@@ -1,0 +1,9 @@
+Package: perl
+Version: 5.10.1
+Architecture: arm
+Maintainer: Jared_wu <Jared_Wu@moxa.com>
+Section: base
+Priority: optional
+Description: The Perl language interpreter
+Source: http://www.cpan.org/src/perl-5.10.1.tar.bz2
+Depends:

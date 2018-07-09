@@ -1,0 +1,8 @@
+config_require(rnas1200/rnas1200)
+config_require(rnas1200/dataContainer)
+config_require(rnas1200/productContainer)
+config_require(rnas1200/filterContainer)
+config_require(rnas1200/sqlDb)
+config_require(rnas1200/misc)
+config_require(rnas1200/bussinessLogic)
+config_require(rnas1200/basicFunc)

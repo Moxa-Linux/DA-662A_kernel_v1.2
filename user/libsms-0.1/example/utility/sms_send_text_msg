@@ -1,0 +1,32 @@
+#!/bin/sh
+LPATH=/bin
+phone_number=
+text=
+text_length=
+print_usage()
+{
+	echo "Usage: $0 [-h] | [ -n Phone_Number -t \"Text_Message\"]";
+	echo "Send a text message to a specific number";
+	echo ""
+        echo "e.g.: $0 -h ; display help  message" ;
+        echo "    : $0 -n +8860911345678 -t \"Hello, how are you.\" ; Send Message";
+}
+while getopts hn:t: options
+do
+	case $options in
+	n) phone_number="$OPTARG";;
+	t) text=$OPTARG;;
+	h) print_usage;
+	   exit 0;;
+	?) print_usage;
+	   exit 2;;
+	esac
+done
+
+if [ "$phone_number" != "" ] || [ "$text" != "" ]; then
+	text_length=`/bin/echo $text | /usr/bin/wc -c`
+	text_length=`/usr/bin/expr $text_length - 1`
+	${LPATH}/egprscmd -m "$phone_number:$text:$text_length"
+else
+	print_usage ;
+fi

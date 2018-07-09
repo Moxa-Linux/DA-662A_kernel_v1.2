@@ -1,0 +1,9 @@
+#!/bin/sh
+
+#DEBHELPER#
+
+case "$1" in
+    purge)
+	update-rc.d nfs-common remove >/dev/null 2>&1
+	;;
+esac

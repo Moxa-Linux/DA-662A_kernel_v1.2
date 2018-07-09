@@ -1,0 +1,63 @@
+Rule:
+alert tcp $EXTERNAL_NET any -> $HOME_NET any (msg:"SCAN NULL";flags:0;
+seq:0; ack:0; reference:arachnids,4; classtype:attempted-recon;
+sid:623; rev:1;)
+
+--
+Sid:
+623
+--
+Summary:
+A tcp packet with none of it's control bits set was detected.
+
+--
+Impact:
+Information regarding firewall rulesets, open/closed ports, ACLs, and
+possibly even OS type is possible.  This technique can also be used to
+bypass certain firewalls or traffic filtering/shaping devices.
+
+--
+Detailed Information:
+A tcp packet with none of it's control bits (URG, ACK, PSH, RST, SYN,
+FIN) was detected.  Additionally, both the sequence number and
+acknowledgement number were set to 0.  An open port will generally not
+respond at all, whereas a closed port will generally respond with an
+ACK RST.  The particular response varies between operating systems,
+and is also governed by any filtering that may be done between the two
+hosts.
+
+--
+Attack Scenarios:
+As part of information gathering leading up to another (more directed)
+attack, an attacker may attempt to figure out what ports are
+open/closed on a remote machine.
+
+--
+Ease of Attack:
+Intermediate.  To initiate an attack of this type, an attacker either
+needs a tool that can send tcp packets with no control bits  set or
+the ability to craft their own packets.  The former is easy, the later
+requires a more advanced skillset.
+
+--
+False Positives:
+None.  This traffic should never be seen as part of legitimate tcp
+communication.
+
+--
+False Negatives:
+None.
+
+--
+Corrective Action:
+Determine if this particular port would have responded as being open
+or closed.  If open, watch for more attacks on this particular service
+or from the remote machine that sent the packet.  If closed, simply
+watch for more traffic from this host.
+
+--
+Contributors:
+Jon Hart <warchild@spoofed.org>
+
+-- 
+Additional References:

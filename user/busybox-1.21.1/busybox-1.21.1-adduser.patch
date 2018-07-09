@@ -1,0 +1,21 @@
+diff -urN busybox-1.21.1/loginutils/adduser.c busybox-1.21.1.new/loginutils/adduser.c
+--- busybox-1.21.1/loginutils/adduser.c	2013-05-12 07:30:43.000000000 +0800
++++ busybox-1.21.1.new/loginutils/adduser.c	2014-01-15 18:33:53.000000000 +0800
+@@ -147,6 +147,7 @@
+ 	const char *usegroup = NULL;
+ 	char *p;
+ 	unsigned opts;
++	char shell[16];
+ 
+ #if ENABLE_FEATURE_ADDUSER_LONG_OPTIONS
+ 	applet_long_options = adduser_longopts;
+@@ -159,7 +160,8 @@
+ 
+ 	pw.pw_gecos = (char *)"Linux User,,,";
+ 	/* We assume that newly created users "inherit" root's shell setting */
+-	pw.pw_shell = (char *)get_shell_name();
++	strncpy(shell, (char *)get_shell_name(), sizeof(shell));
++	pw.pw_shell = shell;
+ 	pw.pw_dir = NULL;
+ 
+ 	/* at most two non-option args */

@@ -1,0 +1,53 @@
+# $Id: 480.txt,v 1.1 2002/10/14 00:52:17 cazz Exp $
+
+Rule:
+ICMP Ping SpeedEra
+
+--
+Sid:
+480
+
+--
+Summary:
+Benevolent ping used by SpeedEra.net to find closest cache for you.
+
+--
+Impact:
+Minimal to none, usually not an attack.
+
+--
+Detailed Information:
+
+After visiting certain speedera.net sites, you will recieve several pings 
+to your host.  These pings are sent so that speedera can find the
+closest cache to your computer.  This rule was added so that Snort could
+distinguish the usually benevolent speerera pings from normal, possibly
+malevolent pings.
+
+--
+Attack Scenarios:
+This is not really an attack.  However an attacker could disguise their
+pings as speedera pings, but this is unlikely.
+
+--
+Ease of Attack:
+
+--
+False Positives:
+This is usually not an attack.
+
+--
+False Negatives:
+
+--
+Corrective Action:
+None required, unless none of your users have ever visited a site run by
+speedera.
+
+--
+Contributors:
+Drew Hintz ( http://guh.nu )
+
+--
+Additional References:
+http://www.linuxsecurity.com/articles/firewalls_article-2064.html

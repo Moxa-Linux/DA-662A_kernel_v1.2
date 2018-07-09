@@ -1,0 +1,27 @@
+# File: /etc/ppp/peers/chtumts
+/dev/ttyUSB1    # modem port used
+115200        # speed
+defaultroute  # use the cellular network for the default route
+usepeerdns    # use the DNS servers from the remote network
+#nodetach      # keep pppd in the foreground
+nocrtscts       # hardware flow control
+lock          # lock the serial port
+noauth        # don't expect the modem to authenticate itself
+local         # don't use Carrier Detect or Data Terminal Ready
+mtu 1450
+#persist
+#demand
+#modem
+#debug
+#logfile /home/pppd.log
+
+# Use the next two lines if you receive the dreaded messages:
+#
+#    No response to n echo-requests
+#    Serial link appears to be disconnected.
+#    Connection terminated.
+#
+lcp-echo-failure 4
+lcp-echo-interval 65535
+connect	"/usr/sbin/chat -v -f /etc/chatscripts/umts-connect.chat"
+disconnect	"/usr/sbin/chat -v -f /etc/chatscripts/umts-disconnect.chat"

@@ -1,0 +1,25 @@
+#!/bin/sh
+LPATH=/bin
+print_usage()
+{
+	echo "Usage: $0 [-h] | [ -i index]";
+	echo "Read a message from the SIM or Memory storage";
+	echo ""
+        echo "e.g.: $0 -h      ; display this message" ;
+        echo "    : $0 -i 1    ; Read the Message of Index 1";
+}
+while getopts i:h options
+do
+	case $options in
+	i) index="$OPTARG";;
+	h) print_usage;
+	   exit 0;;
+	?) print_usage;
+	   exit 2;;
+	esac
+done
+if [ "$index" != "" ]; then
+	${LPATH}/egprscmd -r $index
+else
+	print_usage ;
+fi

@@ -1,0 +1,37 @@
+yacc_cis.o: yacc_cis.c /home/work/sdlinux-moxaart/include/sys/types.h \
+  /home/work/sdlinux-moxaart/include/features.h \
+  /home/work/sdlinux-moxaart/include/sys/cdefs.h \
+  /home/work/sdlinux-moxaart/include/gnu/stubs.h \
+  /home/work/sdlinux-moxaart/include/bits/types.h \
+  /usr/local/arm-linux/lib/gcc/arm-linux/4.2.1/include/stddef.h \
+  /home/work/sdlinux-moxaart/include/bits/pthreadtypes.h \
+  /home/work/sdlinux-moxaart/include/bits/sched.h \
+  /home/work/sdlinux-moxaart/include/time.h \
+  /home/work/sdlinux-moxaart/include/endian.h \
+  /home/work/sdlinux-moxaart/include/bits/endian.h \
+  /home/work/sdlinux-moxaart/include/sys/select.h \
+  /home/work/sdlinux-moxaart/include/bits/select.h \
+  /home/work/sdlinux-moxaart/include/bits/sigset.h \
+  /home/work/sdlinux-moxaart/include/bits/time.h \
+  /home/work/sdlinux-moxaart/include/sys/sysmacros.h \
+  /home/work/sdlinux-moxaart/include/stdlib.h \
+  /home/work/sdlinux-moxaart/include/alloca.h \
+  /home/work/sdlinux-moxaart/include/stdio.h \
+  /home/work/sdlinux-moxaart/include/libio.h \
+  /home/work/sdlinux-moxaart/include/_G_config.h \
+  /home/work/sdlinux-moxaart/include/wchar.h \
+  /home/work/sdlinux-moxaart/include/bits/wchar.h \
+  /home/work/sdlinux-moxaart/include/gconv.h \
+  /usr/local/arm-linux/lib/gcc/arm-linux/4.2.1/include/stdarg.h \
+  /home/work/sdlinux-moxaart/include/bits/stdio_lim.h \
+  /home/work/sdlinux-moxaart/include/bits/stdio.h \
+  /home/work/sdlinux-moxaart/include/string.h \
+  /home/work/sdlinux-moxaart/include/bits/string.h \
+  /home/work/sdlinux-moxaart/include/bits/string2.h \
+  /home/work/sdlinux-moxaart/include/math.h \
+  /home/work/sdlinux-moxaart/include/bits/huge_val.h \
+  /home/work/sdlinux-moxaart/include/bits/mathdef.h \
+  /home/work/sdlinux-moxaart/include/bits/mathcalls.h \
+  /home/work/sdlinux-moxaart/include/bits/mathinline.h \
+  ../include/pcmcia/cs_types.h ../include/pcmcia/cs.h \
+  ../include/pcmcia/cistpl.h pack_cis.h

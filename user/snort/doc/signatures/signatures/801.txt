@@ -1,0 +1,69 @@
+# This is a template for submitting snort signature descriptions to
+# the snort.org website
+#
+# Ensure that your descriptions are your own
+# and not the work of others.  References in the rules themselves
+# should be used for linking to other's work. 
+#
+# If you are unsure of some part of a rule, use that as a commentary
+# and someone else perhaps will be able to fix it.
+# 
+# $Id: 801.txt,v 1.1 2002/04/04 02:07:54 cazz Exp $
+#
+# 
+
+Rule:  
+
+--
+Sid:
+801
+
+--
+Summary:
+Using two or more windows file extensions, mail users have
+difficulties to determine the type of attachments an probably
+execute a file or script while thinking it is a harmless WORD document.
+
+--
+Impact:
+Mail worms may spread rapidly because users execute them.
+
+--
+Detailed Information:
+Windows systems are often configured not to display file extensions.
+By adding a second extension, users get confused and think that an
+executable is a WORD document - e.g. resume.doc.vbs gets displayed as
+resume.doc but is a visual basic script and not a WORD document.
+
+--
+Attack Scenarios:
+Famous worms (ILOVEYOU, KOURNIKOVA) are based on this method. Warning:
+A WORD document is in now way more secure than a visual basic script.
+Wrongly configured antivirus software my ignore this files and
+let a macro virus pass.
+
+--
+Ease of Attack:
+Very easy. One needs to attach a file and hope that it gets executed.
+
+--
+False Positives:
+Could be an error on sender's side.
+
+--
+False Negatives:
+-
+
+--
+Corrective Action:
+Use antivirus software. Configure mail clients securely, especially when
+using windows desktops. Educate your mail users. Deny all attachments at
+the gateway if you can.
+
+--
+Contributors:
+tobias.haecker@to.com
+
+--
+Additional References:
+See websites of antivirus companies.

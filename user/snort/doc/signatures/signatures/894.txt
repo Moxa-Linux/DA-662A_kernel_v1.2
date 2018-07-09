@@ -1,0 +1,38 @@
+Rule:  alert tcp $EXTERNAL_NET any -> $HTTP_SERVERS 80 (msg:"WEB-CGI bb-hist.sh access";flags: A+; uricontent:"/bb-hist.sh"; nocase; reference:bugtraq,142; classtype:attempted-recon; sid:894; rev:1;)
+--
+
+Sid: 894
+
+--
+
+Summary: Someone attempted to display historical information from a Big Brother system monitor host.
+
+--
+Impact: Local file access, information leak
+
+--
+Detailed Information: Big Brother is a monitoring system used by many organisations.  It records both current and historical information about monitored hosts on a network.  Access to the system status is via a series of web pages and CGI scripts.  Version 1.09b & 1.09c contained a bug in bb-hist.sh that could be made to display files accessible by the user under which the CGI script is run.
+
+--
+Attack Scenarios: A malicious user could use this vulnerability to gain more information about the Big Brother host.
+
+--
+Ease of Attack: Not known.  According to Bugtraq there are no known exploits.
+
+--
+False Positives: This problem was fixed in Big Brother 1.09d, current version (as at 21/01/2002 is 1.8d4.
+
+--
+False Negatives: 
+
+--
+Corrective Action: Upgrade to a later version of Big Brother at least 1.09d
+
+--
+Contributors:
+
+--
+Additional References: 
+url,http://bb4.com/
+vce,CAN-1999-1462
+

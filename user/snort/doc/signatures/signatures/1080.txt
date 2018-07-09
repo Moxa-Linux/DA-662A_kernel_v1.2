@@ -1,0 +1,57 @@
+Rule:  
+alert tcp $EXTERNAL_NET any -> $HTTP_SERVERS 80 (msg:"WEB-MISC unify eWave ServletExec upload"; content:"(com.unify.servletexec.UploadServlet"; nocase; flags:a+; classtype:web-application-attack; sid:1080; rev:3; reference:bugtraq,1868;)
+--
+
+Sid:
+1080
+
+--
+
+Summary:
+Someone attempted to access Unify eWave ServletExec uploader servlet,
+which may lead to a web server compromise.
+
+--
+Impact:
+An attacker could upload any arbitrary file onto the web server, including
+executable code that can then be used to compromise the web server.
+
+--
+Detailed Information:
+Unify eWave ServletExec is a webserver-based JSP and Java Servlet
+environment available for many popular web servers (e.g., Apache, Netscape
+web server, and IIS).  Versions of ServletExec before 3.0E contain a
+vulnerability in UploadServlet that could allow an attacker to upload
+arbitrary files, including executables used to compromise the web server.
+
+--
+Attack Scenarios:
+Attacker sends a simple HTTP GET or POST like the following:
+GET http://target/servlet/com.unify.ewave.servletexec.UploadServlet HTTP/1.0
+
+--
+Ease of Attack:
+Relatively simple handcrafted HTTP GET or POST.
+
+--
+False Positives:
+It is possible that legitimate web administrators could use UploadServlet.
+
+--
+False Negatives:
+
+--
+Corrective Action:
+Examine the packet to see if a web request was being done.  Try to
+determine if the request was by a legitimate web admin or not.
+Determine from the web server's configuration whether it was a threat or not
+(e.g., whether the web server even runs ServletExec, and if so whether
+it was running a vulnerable version).
+
+--
+Contributors:
+
+--
+Additional References:
+Bugtraq:  BID 1876
+CVE:  CVE-2000-1024

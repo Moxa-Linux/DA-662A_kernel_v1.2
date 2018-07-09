@@ -1,0 +1,32 @@
+#!/bin/sh
+# Start/stop the cron daemon.
+#
+# chkconfig: 2345 89 11
+#
+PATH=/bin:/usr/bin:/sbin:/usr/sbin
+
+test -f /bin/cron || exit 0
+
+case "$1" in
+start)	echo -n "Starting periodic command scheduler: cron"
+        start-stop-daemon -S -q  -x /bin/cron &
+        echo "." 
+	;;
+stop)	echo -n "Stopping periodic command scheduler: cron"
+        start-stop-daemon -K -q  -x /bin/cron
+        echo "."
+        ;;
+restart) echo -n "Restarting periodic command scheduler: cron"
+        start-stop-daemon -K -q  -x /bin/cron
+        start-stop-daemon -S -q  -x /bin/cron &
+        echo "."
+        ;;
+reload|force-reload) echo -n "Reloading configuration files for periodic command scheduler: cron"
+	# cron reloads automatically
+        echo "."
+        ;;
+*)	echo "Usage: /etc/init.d/cron start|stop|restart|reload|force-reload"
+        exit 1 
+        ;;
+esac
+exit 0

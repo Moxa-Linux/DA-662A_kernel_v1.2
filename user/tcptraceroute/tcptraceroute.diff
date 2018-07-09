@@ -1,0 +1,70 @@
+*** ./configure	Wed Mar 29 09:49:55 2006
+--- ./configure.new	Tue Feb  7 16:14:46 2012
+***************
+*** 5488,5494 ****
+  See \`config.log' for more details." >&5
+  echo "$as_me: error: cannot run test program while cross compiling
+  See \`config.log' for more details." >&2;}
+!    { (exit 1); exit 1; }; }
+  else
+    cat >conftest.$ac_ext <<_ACEOF
+  /* confdefs.h.  */
+--- 5488,5494 ----
+  See \`config.log' for more details." >&5
+  echo "$as_me: error: cannot run test program while cross compiling
+  See \`config.log' for more details." >&2;}
+!   }
+  else
+    cat >conftest.$ac_ext <<_ACEOF
+  /* confdefs.h.  */
+***************
+*** 5555,5561 ****
+  See \`config.log' for more details." >&5
+  echo "$as_me: error: cannot run test program while cross compiling
+  See \`config.log' for more details." >&2;}
+!    { (exit 1); exit 1; }; }
+  else
+    cat >conftest.$ac_ext <<_ACEOF
+  /* confdefs.h.  */
+--- 5555,5561 ----
+  See \`config.log' for more details." >&5
+  echo "$as_me: error: cannot run test program while cross compiling
+  See \`config.log' for more details." >&2;}
+!   }
+  else
+    cat >conftest.$ac_ext <<_ACEOF
+  /* confdefs.h.  */
+***************
+*** 5622,5628 ****
+  See \`config.log' for more details." >&5
+  echo "$as_me: error: cannot run test program while cross compiling
+  See \`config.log' for more details." >&2;}
+!    { (exit 1); exit 1; }; }
+  else
+    cat >conftest.$ac_ext <<_ACEOF
+  /* confdefs.h.  */
+--- 5622,5628 ----
+  See \`config.log' for more details." >&5
+  echo "$as_me: error: cannot run test program while cross compiling
+  See \`config.log' for more details." >&2;}
+!   }
+  else
+    cat >conftest.$ac_ext <<_ACEOF
+  /* confdefs.h.  */
+***************
+*** 5689,5695 ****
+  See \`config.log' for more details." >&5
+  echo "$as_me: error: cannot run test program while cross compiling
+  See \`config.log' for more details." >&2;}
+!    { (exit 1); exit 1; }; }
+  else
+    cat >conftest.$ac_ext <<_ACEOF
+  /* confdefs.h.  */
+--- 5689,5695 ----
+  See \`config.log' for more details." >&5
+  echo "$as_me: error: cannot run test program while cross compiling
+  See \`config.log' for more details." >&2;}
+!   }
+  else
+    cat >conftest.$ac_ext <<_ACEOF
+  /* confdefs.h.  */

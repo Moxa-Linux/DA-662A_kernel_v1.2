@@ -1,0 +1,25 @@
+#############################################################################
+#
+# NOTE : it is fairly important that changes to this file consider their
+#        effect on other platforms and default setups.  If you can, only
+#        add to the file,  changing the name of a variable will break
+#        many configurations.
+#
+#        www.snapgear.com
+#
+#############################################################################
+
+mainmenu_name "Embedded Linux Customized Project Configuration"
+
+#############################################################################
+
+mainmenu_option next_comment
+comment 'Network Utilities'
+
+bool 'GPSDO: config DO by GPS'           CONFIG_PROJECT_GPSDO
+if [ "$CONFIG_PROJECT_GPSDO" = "y" ]; then
+	bool '  start by default'	CONFIG_PROJECT_GPSDO_START
+fi
+
+
+endmenu

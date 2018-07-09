@@ -1,0 +1,26 @@
+TIMEOUT 10
+ABORT   'BUSY'
+ABORT   'NO ANSWER'
+ABORT   'ERROR'
+SAY     'Starting umts connect script\n'
+''      ATZ
+#  AT+CPOPS is the modifications AT commands for V3G:
+#  AT_OPSUS=n n=0~5, 
+#  0: Only connect to GSM networks
+#  1: Only connect to UMTS networks
+#  2: If you have a choice - GPRS first
+#  3: If you have a choice UMTS first
+#  4: Which ever network you connect to stay with it
+#  5: Automatic - let V3G decide
+#  AT+COPS? shows the if the card is registered on a GPRS or a UMTS network.
+#  EX: +COPS:0,0,"Vodafone UK",0  The end digital 0 means a GSM network.
+#OK      AT_OPSYS=1
+OK      ATE0V1
+# Input the PIN number
+#OK	AT+CPIN=0000
+SAY     'Setting APN\n'
+OK      AT+CGDCONT=1,"IP","lvami"
+ABORT   'NO CARRIER'
+SAY     'Dialing...\n'
+OK      ATD*99#
+CONNECT ''

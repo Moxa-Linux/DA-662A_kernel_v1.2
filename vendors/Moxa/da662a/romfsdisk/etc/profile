@@ -1,0 +1,33 @@
+# /etc/profile: system-wide .profile file for the Bourne shell (sh(1))
+# and Bourne compatible shells (bash(1), ksh(1), ash(1), ...).
+
+PATH="/bin:/sbin:/usr/bin:/usr/sbin:/usr/local/bin:/usr/local/sbin"
+
+if [ "$BASH" ]; then
+  PS1='\u@\H:\w\$ '
+else
+  if [ "`id -u`" -eq 0 ]; then
+    PS1='# '
+  else
+    PS1='$ '
+  fi
+fi
+
+export PATH PS1
+export TERM=xterm
+export OPENSSL_CONF=/usr/local/ssl
+export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:"/usr/local/lib"
+
+umask 022
+
+# The default umask is now handled by pam_umask.
+# See pam_umask(8) and /etc/login.defs.
+
+if [ -d /etc/profile.d ]; then
+  for i in /etc/profile.d/*.sh; do
+    if [ -r $i ]; then
+      . $i
+    fi
+  done
+  unset i
+fi

@@ -1,0 +1,55 @@
+Rule:
+alert icmp $EXTERNAL_NET any -> $HOME_NET any (msg:"ICMP traceroute";ttl:1;itype:8; reference:arachnids,118; classtype:attempted-recon; sid:385; rev:3;)
+
+--
+Sid:
+385
+
+--
+Summary:
+This event is generated when a Windows traceroute (tracert) is detected.
+
+--
+Impact:
+Information gathering.  A traceroute can be used to discover live hosts and network topologies.
+
+--
+Detailed Information:
+A Windows traceroute command uses an ICMP echo request with a lower than normal Time to Live (TTL) value to identify live hosts and network topolgies.  The TTL value is manipulated by the sending host to discover all routers traversed from the source host to the destination host.  Eventually, a TTL value of 1 is observed, which elicits an ICMP error message of time exceeded in-transit.  A router sends this ICMP error message to the host running traceroute.  The traceroute host will record this as a router and continue to incrementally manipulate the TTL until the destination host is reached. 
+
+--
+Affected Systems:
+All
+
+--
+Attack Scenarios:
+An attacker may use a traceroute to discover live hosts and routers on a target network in preparation for an attack.
+
+--
+Ease of Attack:
+Simple
+
+--
+False Positives:
+The traceroute command may be used to legitimately troubleshoot networking problems.
+
+--
+False Negatives:
+None known
+
+--
+Corrective Action:
+Block inbound ICMP echo requests.
+
+--
+Contributors:
+Original rule written by Max Vision <vision@whitehats.org>
+Documented by Steven Alexander<alexander.s@mccd.edu>
+Sourcefire Research Team
+Judy Novak <judy.novak@sourcefire.com>
+
+--
+Additional References:
+
+Arachnids:
+http://www.whitehats.com/info/IDS118

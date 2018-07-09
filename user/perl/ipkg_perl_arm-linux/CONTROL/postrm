@@ -1,0 +1,25 @@
+#!/bin/sh
+
+#echo "$0, $1"  >> /var/postinst
+
+case "$1" in
+  update)
+    ;;
+  install)
+    ;;
+  configure)
+    ;;
+  remove)
+	#ln -sf /home/perl/bin/perl /usr/bin/perl
+	if [ -n "`cat /etc/profile|grep PERL5LIB`" ]; then
+		sed -i '/export PERL5LIB=\/home\/perl\/lib\/perl5\/5.10.1/d' /etc/profile
+		sed -i '/export LD_PRELOAD=\/lib\/libgcc_s.so.1//d' /etc/profile
+		sed -i 's/\/usr\/lib:\/home\/perl\/lib\/perl5\/5.10.1\/arm-linux\/CORE//' /etc/profile
+		sed -i 's/:\/home\/perl\/bin//' /etc/profile
+	fi
+    ;;
+  *)
+    ;;
+esac
+
+exit 0

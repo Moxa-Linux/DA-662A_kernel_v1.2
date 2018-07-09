@@ -1,0 +1,19 @@
+#!/bin/sh
+
+#echo "$0, $1"  >> /var/prerm
+
+
+case "$1" in
+  update)
+    ;;
+  install)
+    ;;
+  configure)
+    ;;
+  remove)
+    ;;
+  *)
+    ;;
+esac
+
+exit 0

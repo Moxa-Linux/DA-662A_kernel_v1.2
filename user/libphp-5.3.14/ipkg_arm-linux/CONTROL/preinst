@@ -1,0 +1,24 @@
+#!/bin/sh
+
+#echo "$0, $1"  >> /var/preinst
+
+
+case "$1" in
+  update)
+    ;;
+  install)
+    /etc/init.d/apache stop
+    [ -d /home/.__usr/local/bin ] || mkdir -p /home/.__usr/local/bin
+    [ -d /home/.__usr/local/sbin ] || mkdir -p /home/.__usr/local/sbin
+    [ -d /home/.__usr/local/lib ] || mkdir -p /home/.__usr/local/lib
+    [ -d /home/.__usr/local/libexec ] || mkdir -p /home/.__usr/local/libexec
+    ;;
+  configure)
+    ;;
+  remove)
+    ;;
+  *)
+    ;;
+esac
+
+exit 0

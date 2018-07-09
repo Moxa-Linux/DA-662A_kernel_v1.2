@@ -1,0 +1,46 @@
+SPO_CSV Usage Guide
+Brian Caswell <bmc@snort.org>
+
+$Id: README.csv,v 1.2 2003/05/06 14:47:41 cazz Exp $
+
+
+
+Overview:
+----
+The CSV output plugin gives an interface for users to specify what 
+information they see for alerts.  csv provides this by outputing the
+data in comma seperated value format, configured by the user in the
+snort configuration file.
+
+Using limited output configurations can greatly increase the speed of 
+snort.
+
+
+Usage:
+----
+The CSV output plugin can be configured to output specific portions 
+of a snort alert.
+
+spo_csv requires the following format.
+
+output alert_CSV: location_to_your_file fieldname,fieldname2,fieldname3
+
+
+The following line is an example CSV configuration:
+output csv: /my/snort.log msg,proto,timestamp,src,srcport,dst,dstport
+
+That configuration will append the following output to /my/snort.log 
+WEB-MISC phf access,TCP,02/23-11:06:59.600820 ,192.168.0.1,1021,192.168.0.2,80
+
+
+Possible Field Names:
+----
+The following field names are available (As of 4/17/2001)
+
+timestamp, msg, proto, ethsrc, ethdst, ethtype, udplenght, ethlen,
+trheader, src, dst, srcport, dstport, icmptype, icmpcode, icmpid,
+icmpseq, ttl, tos, id, iplen, dgmlen, tcpseq, tcpack, tcplen, 
+tcpwindow, tcpflags and default
+
+By specifying "default" as a field name, a default set of field names
+is used.  `grep DEFAULT_CSV spo_csv.h` for the default set of fields

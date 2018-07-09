@@ -1,0 +1,10 @@
+Package: backuphfm
+Version: 1.0
+Architecture: arm
+Maintainer: Jared_wu <Jared_Wu@moxa.com>
+Section: base
+Priority: optional
+Description: This is Moxa Systems Linux platform utility to backup the firmware of Moxa embedded computer.
+  The backuped firmware format can be upgraded in kernel or bootloader.
+Source:
+Depends: 

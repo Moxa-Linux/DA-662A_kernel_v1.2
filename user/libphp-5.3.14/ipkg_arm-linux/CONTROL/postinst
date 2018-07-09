@@ -1,0 +1,20 @@
+#!/bin/sh
+
+#echo "$0, $1"  >> /var/postinst
+
+case "$1" in
+  update)
+    ;;
+  install)
+    ;;
+  configure)
+    sed -ie 's/#\+ LoadModule php5_module/ LoadModule php5_module/' /etc/apache/conf/httpd.conf
+    /etc/init.d/apache start
+    ;;
+  remove)
+    ;;
+  *)
+    ;;
+esac
+
+exit 0

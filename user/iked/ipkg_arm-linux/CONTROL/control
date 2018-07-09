@@ -1,0 +1,9 @@
+Package: iked
+Version: 2.2.1
+Architecture: arm
+Maintainer: Jared_wu <Jared_Wu@moxa.com>
+Section: base
+Priority: optional
+Description: Internet Key Exchange Daemon
+Source: https://www.shrew.net/download/ike/ike-2.2.0-release.tbz2
+Depends: 

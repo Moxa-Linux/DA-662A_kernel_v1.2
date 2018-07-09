@@ -1,0 +1,64 @@
+Rule:
+alert tcp $EXTERNAL_NET any -> $HTTP_SERVERS 80 (msg:"WEB-CGI test-cgi
+access"; flags: A+; uricontent:"/test-cgi"; nocase;
+reference:cve,CVE-1999-0070;
+reference:arachnids,218;classtype:attempted-recon; sid:835; rev:1;)
+
+--
+Sid:
+835
+
+--
+Summary:
+Potential access to the test-cgi cgi script was detected.
+
+--
+Impact:
+May reveal key information about the configuration of your listening
+Apache webserver.
+
+--
+Detailed Information:
+The test-cgi script is provided as part of the Apache web server to
+test that cgi scripts are working.  It can provide vital information
+about the configuration of your webserver that may be invaluable to a
+potential attacker.
+
+--
+Attack Scenarios:
+A web browser, or anything that can speak http:
+
+lynx http://victim/cgi-bin/test-cgi
+
+warchild@cuba
+[~]$ telnet victim 80
+Trying 192.168.0.2...
+Connected to haiti.
+Escape character is '^]'.
+GET /cgi-bin/test-cgi HTTP/1.0
+
+--
+Ease of Attack:
+Trivial.  All that is needed is a web browser of sorts.
+
+--
+False Positives:
+This may trigger on urls containing test-cgi, but are not necessarily
+indicative of an attack.  For example,
+http://myhost.org/home/foobar/test-cgi.txt would trigger this rule.
+
+--
+False Negatives:
+Few, if any.
+
+--
+Corrective Action:
+Determine the need for this script, and remove it if there is no need.
+Keep your eyes peeled for more potential probes from this host.
+
+--
+Contributors:
+Jon Hart <warchild@spoofed.org>
+
+-- 
+Additional References:

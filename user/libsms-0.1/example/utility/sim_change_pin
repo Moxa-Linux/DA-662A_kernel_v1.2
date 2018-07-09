@@ -1,0 +1,30 @@
+#!/bin/sh
+LPATH=/bin
+current_pin=
+new_pin=
+print_usage()
+{
+	echo "Usage: $0 [-h] | [-o old_pin] [-n new_pin]   ; Change the PIN code";
+	echo ""
+	echo "e.g.: sim_change_pin                 ; display this message"
+	echo "    : sim_change_pin -h              ; display help message"
+	echo "    : sim_change_pin -o 1234 -n 8888 ; change the PIN code from 1234 to 8888"
+}
+while getopts o:n:h options
+do
+	case $options in
+	o) current_pin="$OPTARG";;
+	n) new_pin="$OPTARG";;
+	h) print_usage;
+	   exit 0;;
+	?) print_usage;
+	   exit 2;;
+	esac
+done
+
+if [ "$current_pin" != "" ] && [ "$new_pin" != "" ]; then
+	${LPATH}/egprscmd -n $current_pin:$new_pin
+else
+	print_usage;
+	exit 1;
+fi

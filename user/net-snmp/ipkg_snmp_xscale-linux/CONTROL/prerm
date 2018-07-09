@@ -1,0 +1,21 @@
+#!/bin/sh
+
+#echo "$0, $1"  >> /var/prerm
+
+
+case "$1" in
+  update)
+    ;;
+  install)
+    ;;
+  configure)
+    ;;
+  remove)
+	/etc/init.d/snmpd stop
+	mount -o remount,rw /
+    ;;
+  *)
+    ;;
+esac
+
+exit 0

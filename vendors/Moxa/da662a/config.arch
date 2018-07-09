@@ -1,0 +1,77 @@
+.EXPORT_ALL_VARIABLES:
+############################################################################
+
+MAJORVER=1
+MINORVER=3
+OEMVER=0
+
+VENDOR_CFLAGS := -DARCH_DA662A -DMAJORVER=$(MAJORVER) -DMINORVER=$(MINORVER)
+ifneq ("$(OEMVER)","0")
+VENDOR_CFLAGS += -DOEMVER=$(OEMVER)
+endif
+
+BOOT_LOADER_VERSION=1.4.0.0
+ifeq ("$(OEMVER)","0")
+VERSIONPKG=$(MAJORVER).$(MINORVER)
+else
+VERSIONPKG=$(MAJORVER).$(MINORVER).$(OEMVER)
+endif
+FULLVERSIONPKG = $(MAJORVER).$(MINORVER).$(OEMVER).0
+HW_ID=0x6622
+AP_ID=0x80006622
+
+INSTALL_ROOT_DIRS = \
+	bin \
+	lib \
+	sbin \
+	include \
+	usr/bin \
+	usr/sbin \
+	usr/lib \
+	usr/include \
+	usr/local/lib usr/local/bin usr/local/sbin usr/local/include \
+	usr/share/man/man1 \
+	usr/share/man/man3 \
+	usr/share/man/man5 \
+	usr/share/man/man8 \
+	info/dir \
+	man/man1 \
+	share/gtk-doc/html/libxml2 \
+	share/doc/libxml2-2.6.31/html \
+	doc/examples
+
+ROMFS_DIRS = \
+	bin \
+	dev \
+	etc etc/config etc/config/ssh \
+	home/root \
+	lib lib/modules \
+	mnt mnt/defdisk \
+	proc \
+	sbin \
+	tmp \
+	usr usr/bin usr/sbin usr/lib \
+	/usr/lib/hotplug/firmware \
+	usr/local/ssl usr/local/ssl/certs /usr/local/ssl/private \
+	$(TOOLCHAIN_DIR)/lib \
+	/usr/share/terminfo/x \
+	sys \
+	var
+
+
+LINUXTARGET = zImage
+
+############################################################################
+
+include $(ROOTDIR)/vendors/config/arm-eabi/config.arch
+
+############################################################################
+
+TOOLCHAIN_DIR := /usr/local/arm-linux-4.4.2-v4
+CONFIGURE_TARGET := $(strip $(subst -, ,$(CROSS)))
+CONFIGURE_TC_TARGET := $(word 1,$(CONFIGURE_TARGET))-$(word 2,$(CONFIGURE_TARGET))-$(word 3,$(CONFIGURE_TARGET))-$(word 4,$(CONFIGURE_TARGET))
+CONFIGURE_TARGET := $(word 1,$(CONFIGURE_TARGET))
+TC_INSTALL_PREFIX = $(TOOLCHAIN_DIR)/$(CONFIGURE_TC_TARGET)
+TC_LIBDIR := $(TC_INSTALL_PREFIX)/lib/
+
+############################################################################

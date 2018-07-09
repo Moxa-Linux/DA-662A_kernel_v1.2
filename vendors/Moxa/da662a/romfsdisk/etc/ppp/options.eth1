@@ -1,0 +1,5 @@
+name username@hinet.net
+mtu 1492
+mru 1492
+defaultroute
+noipdefault

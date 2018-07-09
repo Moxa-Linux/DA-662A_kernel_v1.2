@@ -1,0 +1,20 @@
+diff -crB readline-6.1/examples/Makefile.in readline-6.1.new/examples/Makefile.in
+*** readline-6.1/examples/Makefile.in	2009-01-07 01:04:11.000000000 +0800
+--- readline-6.1.new/examples/Makefile.in	2011-12-08 11:18:12.000000000 +0800
+***************
+*** 86,92 ****
+  install:	installdirs
+  	@for f in $(SOURCES); do \
+  		$(RM) $(DESTDIR)$(installdir)/$$f ; \
+! 		$(INSTALL_DATA) $$f $(DESTDIR)$(installdir) ; \
+  	done
+  	
+  uninstall:
+--- 86,92 ----
+  install:	installdirs
+  	@for f in $(SOURCES); do \
+  		$(RM) $(DESTDIR)$(installdir)/$$f ; \
+! 		$(INSTALL_DATA) $(srcdir)/$$f $(DESTDIR)$(installdir) ; \
+  	done
+  	
+  uninstall:

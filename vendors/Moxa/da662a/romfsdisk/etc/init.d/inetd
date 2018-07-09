@@ -1,0 +1,47 @@
+#!/bin/sh
+#
+# start/stop inetd super server.
+#
+# chkconfig: 2345 20 20
+#
+#
+PATH=/bin:/usr/bin:/sbin:/usr/sbin
+if ! [ -x /bin/inetd ]; then
+	exit 0
+fi
+
+case "$1" in
+    start)
+	echo -n "Starting internet superserver:"
+	echo -n " inetd" ; start-stop-daemon -S -q -p /var/run/inetd.pid -x /bin/inetd
+	echo "."
+	;;
+    stop)
+	echo -n "Stopping internet superserver:"
+	echo -n " inetd" ; start-stop-daemon -K -q  -p /var/run/inetd.pid -x /bin/inetd
+	echo "."
+	;;
+    reload)
+	echo -n "Reloading internet superserver:"
+	echo -n " inetd"
+	start-stop-daemon -K -q  -p /var/run/inetd.pid --signal 1
+	echo "."
+	;;
+    force-reload)
+	$0 reload
+	;;
+    restart)
+	echo -n "Restarting internet superserver:"
+	echo -n " inetd"
+	start-stop-daemon -K -q  -p /var/run/inetd.pid
+	start-stop-daemon -S -q -p /var/run/inetd.pid -x /bin/inetd
+	echo "."
+	;;
+    *)
+	echo "Usage: /etc/init.d/inetd {start|stop|reload|restart}"
+	exit 1
+	;;
+esac
+
+exit 0
+

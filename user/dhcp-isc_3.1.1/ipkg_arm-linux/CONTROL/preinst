@@ -1,0 +1,22 @@
+#!/bin/sh
+
+#echo "$0, $1"  >> /var/preinst
+
+
+case "$1" in
+  update)
+    ;;
+  install)
+  	# remove the original snmpd to replace with net-snmp
+  	[ -n "`ps|grep in.tftpd|grep -v grep`" ] && killall dhcpd
+	[ -e /usr/local/bin/dhcpd ] && rm -rf /usr/local/bin/dhcpd
+    ;;
+  configure)
+    ;;
+  remove)
+    ;;
+  *)
+    ;;
+esac
+
+exit 0

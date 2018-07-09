@@ -1,0 +1,35 @@
+#!/bin/sh
+
+DAEMON=/usr/bin/nginx
+CONFIG_FILE=/etc/nginx/nginx.conf
+
+DAEMON_OPTS="-c $CONFIG_FILE"
+NAME=nginx
+DESC="nginx web server"
+PIDFILE=/var/run/$NAME.pid 
+SCRIPTNAME=/etc/init.d/$NAME
+
+PATH=/sbin:/bin:/usr/sbin:/usr/bin
+
+#only run if binary can be found
+test -x $DAEMON || exit 0
+
+case "$1" in
+start)
+	start-stop-daemon -S -p /var/run/nginx.pid -x $DAEMON -- $DAEMON_OPTS ;
+	;;
+stop)
+	killall nginx;
+	;;
+restart)
+	$0 stop
+	sleep 1
+	$0 start
+	;;
+*)
+	echo "Usage: $SCRIPTNAME {start|stop|restart|reload|force-reload}" >&2
+	exit 1;
+	;;
+esac
+
+exit 0

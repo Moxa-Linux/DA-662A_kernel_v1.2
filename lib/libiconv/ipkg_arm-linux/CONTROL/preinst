@@ -1,0 +1,22 @@
+#!/bin/sh
+
+#echo "$0, $1"  >> /var/preinst
+
+case "$1" in
+  update)
+    ;;
+  install)
+    if [ -f lib/libxml2.so.2.6.31 ]; then
+      /etc/init.d/apache stop
+      #mount -o remount,rw /dev/mtdblock2 /
+    fi
+    ;;
+  configure)
+    ;;
+  remove)
+    ;;
+  *)
+    ;;
+esac
+
+exit 0

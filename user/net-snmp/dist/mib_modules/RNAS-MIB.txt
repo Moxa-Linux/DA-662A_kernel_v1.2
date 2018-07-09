@@ -1,0 +1,109 @@
+MOXA-SYS-MIB DEFINITIONS ::= BEGIN
+
+-- Design notes:
+--
+-- The design of this mib use as parts moxa system platform, 
+-- including RISC/X86/X86_64 as well.
+-- 
+-- In that light, most sub-sections of this mib have four common
+-- numerical oid consistencies:
+--
+--	2011D-09M-02D	Creation date by jimmy.chen@moxa.com
+--
+-- These conventions enable managers to easy examine portions of the
+-- mib by setting the ID to the sub-section they are interested in
+-- monitoring, and then scanning.
+
+IMPORTS
+
+    MODULE-IDENTITY, OBJECT-TYPE, Counter32, Gauge32, Counter64,
+    Integer32, TimeTicks, mib-2,
+    NOTIFICATION-TYPE, enterprises,          FROM SNMPv2-SMI
+    TEXTUAL-CONVENTION, DisplayString,
+    PhysAddress, TruthValue, RowStatus,
+    TimeStamp, AutonomousType, TestAndIncr   FROM SNMPv2-TC
+    MODULE-COMPLIANCE, OBJECT-GROUP,
+    NOTIFICATION-GROUP                       FROM SNMPv2-CONF
+    snmpTraps                                FROM SNMPv2-MIB
+    InetAddress, InetAddressType,
+    InetAddressPrefixLength,
+    InetVersion, InetZoneIndex		     FROM INET-ADDRESS-MIB
+    InterfaceIndex                    	     FROM IF-MIB
+    SnmpAdminString			     FROM SNMP-FRAMEWORK-MIB
+;
+
+moxa MODULE-IDENTITY
+    LAST-UPDATED "201209100000Z"
+    ORGANIZATION "Moxa Techonology , Software Research Department"
+    CONTACT-INFO    
+	"This mib is being maintained by the Moxa System Software R&D who handle
+	 RNAS product line.
+
+         postal:   8F., No.6, Ln. 235, Baoquao Rd., Xindian Dist., 
+		           New Taipei City 231, Taiwan (R.O.C.)
+
+         Phone:    (02)8919-1230
+
+         email:    technical_support@moxa.com
+        "
+    DESCRIPTION
+	"MIB script for RNAS product of Embedded Communication & Computing .Dep."
+    REVISION	 "201209100000Z"
+    DESCRIPTION
+	"This file defines the private Moxa product MIB."
+    ::= { enterprises 8691 }
+
+-- Current Moxa System company and main entries:
+Linux               OBJECT IDENTIFIER ::= { moxa   12 }
+rnas1200            OBJECT IDENTIFIER ::= { Linux   1200 }
+
+mxControlManager			OBJECT IDENTIFIER ::= { rnas1200   1 }
+
+
+
+--
+--  Control manager
+--
+
+rnas1200Setting OBJECT-TYPE
+    SYNTAX	DisplayString
+    ACCESS	write-only
+    STATUS  mandatory
+    DESCRIPTION
+			"To modify RNAS1200 settings.
+			All settings will be applied when 'rnas1200Commit' is setted to '1'.
+			You can find all the setting items in user manual.
+
+			Input: 
+				xxx.xxx.xxx=xxx"
+    ::= { mxControlManager 1 }
+
+rnas1200Commit OBJECT-TYPE
+    SYNTAX	DisplayString
+    ACCESS	write-only
+    STATUS  mandatory
+    DESCRIPTION
+			"To commit all the settings which is setted in 'rnas1200Setting'.
+
+			Input:
+				0 : none
+				1 : commit
+			Output:
+				0 : none
+				1 : busy"
+    ::= { mxControlManager 2 }
+
+rnas1200Query OBJECT-TYPE
+    SYNTAX	DisplayString
+    ACCESS	read-write
+    STATUS  mandatory
+    DESCRIPTION
+			"To query one of the RNAS1200 setting.
+
+			Input:
+				xxx.xxx.xxx
+			Output:
+				The setting value."
+    ::= { mxControlManager 3 }
+
+END

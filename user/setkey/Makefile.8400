@@ -1,0 +1,26 @@
+CONFIG_PRODUCT=uc8400
+CROSS=xscale-linux-
+CFLAGS=-DARCH_UC8400
+
+CC=$(CROSS)gcc
+SRTIP=$(CROSS)gcc
+EXEC=setkey
+
+CFLAGS += -I../mtd-utils/include
+
+ifeq ("$(CONFIG_PRODUCT)","uc8400")
+CFLAGS += -I../../lib/redboot_config
+LDFLAGS := -lredboot -L../../lib/redboot_config
+endif
+
+all:	$(EXEC)
+
+$(EXEC):	$(EXEC).c
+	$(CC) $(EXEC).c $(CFLAGS) -o $@ $(LDFLAGS)
+
+romfs:
+	$(STRIP) -s $(EXEC)
+	$(ROMFSINST) /bin/$(EXEC)
+
+clean:
+	rm -fr $(EXEC)

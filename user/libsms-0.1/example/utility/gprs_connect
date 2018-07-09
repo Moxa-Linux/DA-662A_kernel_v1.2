@@ -1,0 +1,51 @@
+#!/bin/sh
+LPATH=/bin
+username=
+password=
+
+function warning_ctrl_c
+{
+        trap ' ' 1 2 3 9 ;
+        echo "WARNING:Terminating the GPRS connection"
+	echo "program with ctrl+c will cause system lock." ;
+        echo "(/var/run/cellular_modem.lock)" ;
+        echo "Make sure to manually terminate the pppd" ;
+        echo "program to avoid system lock." ;
+        exit 1 ;
+}
+
+print_usage()
+{
+	echo "Usage: $0 [-h] [-u user_id] [-p password]";
+	echo "make a GPRS connection to ISP";
+	echo ""
+        echo "e.g.: $0 ; connect to ISP with empty user_id and password" ;
+        echo "    : $0 -u user -p 1234 ; connect to ISP with user_id(user) and password(1234)";
+	exit 1 ;
+}
+
+while getopts u:p:h options
+do
+	case $options in
+	u) username="$OPTARG";;
+	p) password="$OPTARG";;
+	h) print_usage;
+	   exit 0;;
+	?) print_usage;
+	   exit 2;;
+	esac
+done
+
+if [ "$password" != "" ]; then
+	if [ "$username" == "" ] ; then
+		print_usage ;
+	fi
+fi
+
+trap 'warning_ctrl_c' 1 2 3 9 ;
+
+if [ "$username" != "" ] && [ "$password" != "" ]; then
+	${LPATH}/egprscmd -c $username:$password
+else
+	${LPATH}/egprscmd -c NULL
+fi

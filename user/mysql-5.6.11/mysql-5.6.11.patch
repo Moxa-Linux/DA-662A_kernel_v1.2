@@ -1,0 +1,235 @@
+diff -urN mysql-5.6.11/client/mysql.cc mysql-5.6.11.new/client/mysql.cc
+--- mysql-5.6.11/client/mysql.cc	2013-04-05 20:27:18.000000000 +0800
++++ mysql-5.6.11.new/client/mysql.cc	2013-05-07 17:26:20.551103564 +0800
+@@ -71,6 +71,9 @@
+ #if defined(HAVE_CURSES_H) && defined(HAVE_TERM_H)
+ #include <curses.h>
+ #include <term.h>
++#elif defined(HAVE_NCURSES_CURSES_H) && defined(HAVE_NCURSES_TERM_H)
++#include <ncurses/curses.h>
++#include <ncurses/term.h>
+ #else
+ #if defined(HAVE_TERMIOS_H)
+ #include <termios.h>
+@@ -84,12 +87,16 @@
+ #if defined(HAVE_TERMCAP_H)
+ #include <termcap.h>
+ #else
+-#ifdef HAVE_CURSES_H
++#if defined(HAVE_CURSES_H)
+ #include <curses.h>
++#elif defined(HAVE_NCURSES_CURSES_H)
++#include <ncurses/curses.h>
+ #endif
+ #undef SYSV				// hack to avoid syntax error
+-#ifdef HAVE_TERM_H
++#if defined(HAVE_TERM_H)
+ #include <term.h>
++#elif defined(HAVE_NCURSES_TERM_H)
++#include <ncurses/term.h>
+ #endif
+ #endif
+ #endif
+diff -urN mysql-5.6.11/cmake/readline.cmake mysql-5.6.11.new/cmake/readline.cmake
+--- mysql-5.6.11/cmake/readline.cmake	2013-04-05 20:27:18.000000000 +0800
++++ mysql-5.6.11.new/cmake/readline.cmake	2013-05-07 17:59:47.000000000 +0800
+@@ -86,6 +86,10 @@
+    SET(HAVE_CURSES_H 1 CACHE INTERNAL "")
+  ELSEIF(CURSES_HAVE_NCURSES_H)
+    SET(HAVE_NCURSES_H 1 CACHE INTERNAL "")
++ ELSEIF(CURSES_HAVE_NCURSES_CURSES_H)
++   SET(HAVE_NCURSES_CURSES_H 1 CACHE INTERNAL "")
++ ELSEIF(CURSES_HAVE_NCURSES_NCURSES_H)
++   SET(HAVE_NCURSES_NCURSES_H 1 CACHE INTERNAL "")
+  ENDIF()
+  IF(CMAKE_SYSTEM_NAME MATCHES "HP")
+    # CMake uses full path to library /lib/libcurses.sl 
+diff -urN mysql-5.6.11/cmake/ssl.cmake mysql-5.6.11.new/cmake/ssl.cmake
+--- mysql-5.6.11/cmake/ssl.cmake	2013-04-05 20:27:18.000000000 +0800
++++ mysql-5.6.11.new/cmake/ssl.cmake	2013-05-07 16:50:30.903092985 +0800
+@@ -173,7 +173,7 @@
+     IF(OPENSSL_INCLUDE_DIR AND
+        OPENSSL_LIBRARY   AND
+        CRYPTO_LIBRARY      AND
+-       OPENSSL_MAJOR_VERSION STREQUAL "1"
++       OPENSSL_MAJOR_VERSION STREQUAL "0"
+       )
+       SET(OPENSSL_FOUND TRUE)
+     ELSE()
+diff -urN mysql-5.6.11/cmd-line-utils/libedit/CMakeLists.txt mysql-5.6.11.new/cmd-line-utils/libedit/CMakeLists.txt
+--- mysql-5.6.11/cmd-line-utils/libedit/CMakeLists.txt	2013-04-05 20:27:18.000000000 +0800
++++ mysql-5.6.11.new/cmd-line-utils/libedit/CMakeLists.txt	2013-05-07 17:56:30.000000000 +0800
+@@ -45,6 +45,35 @@
+ 
+ 
+ 
++CHECK_INCLUDE_FILES(ncurses/term.h HAVE_NCURSES_TERM_H)
++
++SET(CMAKE_REQUIRED_LIBRARIES ${CURSES_LIBRARY})
++CHECK_CXX_SOURCE_COMPILES("
++#include <ncurses/term.h>
++int main()
++{
++  tgoto(0,0,0);
++  return 0;
++}" HAVE_DECL_TGOTO)
++IF(NOT HAVE_DECL_TGOTO)
++  # On Solaris 11, term.h is broken, curses.h is also required.
++  CHECK_CXX_SOURCE_COMPILES("
++  #include <ncurses/curses.h>
++  #include <ncurses/term.h>
++  int main()
++  {
++    tgoto(0,0,0);
++    return 0;
++  }" HAVE_DECL_TGOTO2)
++  IF(HAVE_DECL_TGOTO2)
++    SET(HAVE_DECL_TGOTO 1 CACHE INTERNAL "" FORCE)
++  ENDIF()
++ENDIF()
++
++SET(CMAKE_REQUIRED_LIBRARIES)
++
++
++
+ IF(CMAKE_SYSTEM_NAME STREQUAL "SunOS")
+   #On Solaris, default awk is next to unusable while the xpg4 one is ok.
+   IF(EXISTS /usr/xpg4/bin/awk)
+diff -urN mysql-5.6.11/cmd-line-utils/libedit/terminal.c mysql-5.6.11.new/cmd-line-utils/libedit/terminal.c
+--- mysql-5.6.11/cmd-line-utils/libedit/terminal.c	2013-04-05 20:27:18.000000000 +0800
++++ mysql-5.6.11.new/cmd-line-utils/libedit/terminal.c	2013-05-07 17:35:47.000000000 +0800
+@@ -60,11 +60,19 @@
+ #include <curses.h>
+ #elif HAVE_NCURSES_H
+ #include <ncurses.h>
++#elif HAVE_NCURSES_CURSES_H
++#include <ncurses/curses.h>
++#elif HAVE_NCURSES_NCURSES_H
++#include <ncurses/ncurses.h>
+ #endif
+ 
+ /* Solaris's term.h does horrid things. */
+-#if defined(HAVE_TERM_H) && !defined(__sun)
++#if !defined(__sun)
++#if defined(HAVE_TERM_H)
+ #include <term.h>
++#elif defined(HAVE_NCURSES_TERM_H)
++#include <ncurses/term.h>
++#endif
+ #endif
+  
+ #include <sys/types.h>
+diff -urN mysql-5.6.11/config.h.cmake mysql-5.6.11.new/config.h.cmake
+--- mysql-5.6.11/config.h.cmake	2013-04-05 20:27:18.000000000 +0800
++++ mysql-5.6.11.new/config.h.cmake	2013-05-07 17:59:25.000000000 +0800
+@@ -27,8 +27,10 @@
+ #cmakedefine HAVE_BSEARCH 1
+ #cmakedefine HAVE_CRYPT_H 1
+ #cmakedefine HAVE_CURSES_H 1
++#cmakedefine HAVE_NCURSES_CURSES_H 1
+ #cmakedefine HAVE_CXXABI_H 1
+ #cmakedefine HAVE_NCURSES_H 1
++#cmakedefine HAVE_NCURSES_NCURSES_H 1
+ #cmakedefine HAVE_NDIR_H 1
+ #cmakedefine HAVE_DIRENT_H 1
+ #cmakedefine HAVE_DLFCN_H 1
+@@ -90,10 +92,12 @@
+ #cmakedefine HAVE_SYS_UN_H 1
+ #cmakedefine HAVE_SYS_VADVISE_H 1
+ #cmakedefine HAVE_TERM_H 1
++#cmakedefine HAVE_NCURSES_TERM_H 1
+ #cmakedefine HAVE_TERMBITS_H 1
+ #cmakedefine HAVE_TERMIOS_H 1
+ #cmakedefine HAVE_TERMIO_H 1
+ #cmakedefine HAVE_TERMCAP_H 1
++#cmakedefine HAVE_NCURSES_TERMCAP_H 1
+ #cmakedefine HAVE_TIME_H 1
+ #cmakedefine HAVE_UNISTD_H 1
+ #cmakedefine HAVE_UTIME_H 1
+diff -urN mysql-5.6.11/configure.cmake mysql-5.6.11.new/configure.cmake
+--- mysql-5.6.11/configure.cmake	2013-04-05 20:27:18.000000000 +0800
++++ mysql-5.6.11.new/configure.cmake	2013-05-07 17:29:47.000000000 +0800
+@@ -299,11 +299,13 @@
+ CHECK_INCLUDE_FILES (sys/termcap.h HAVE_SYS_TERMCAP_H)
+ CHECK_INCLUDE_FILES ("time.h;sys/timeb.h" HAVE_SYS_TIMEB_H)
+ CHECK_INCLUDE_FILES ("curses.h;term.h" HAVE_TERM_H)
++CHECK_INCLUDE_FILES ("ncurses/curses.h;ncurses/term.h" HAVE_NCURSES_TERM_H)
+ CHECK_INCLUDE_FILES (asm/termbits.h HAVE_ASM_TERMBITS_H)
+ CHECK_INCLUDE_FILES (termbits.h HAVE_TERMBITS_H)
+ CHECK_INCLUDE_FILES (termios.h HAVE_TERMIOS_H)
+ CHECK_INCLUDE_FILES (termio.h HAVE_TERMIO_H)
+ CHECK_INCLUDE_FILES (termcap.h HAVE_TERMCAP_H)
++CHECK_INCLUDE_FILES (ncurses/termcap.h HAVE_NCURSES_TERMCAP_H)
+ CHECK_INCLUDE_FILES (unistd.h HAVE_UNISTD_H)
+ CHECK_INCLUDE_FILES (utime.h HAVE_UTIME_H)
+ CHECK_INCLUDE_FILES (varargs.h HAVE_VARARGS_H)
+diff -urN mysql-5.6.11/extra/CMakeLists.txt mysql-5.6.11.new/extra/CMakeLists.txt
+--- mysql-5.6.11/extra/CMakeLists.txt	2013-04-05 20:27:18.000000000 +0800
++++ mysql-5.6.11.new/extra/CMakeLists.txt	2013-05-07 18:09:02.000000000 +0800
+@@ -35,7 +35,7 @@
+ 
+ ADD_CUSTOM_COMMAND(OUTPUT ${PROJECT_BINARY_DIR}/include/mysqld_error.h 
+                    ${PROJECT_BINARY_DIR}/sql/share/english/errmsg.sys
+-                   COMMAND comp_err
++                   COMMAND ./comp_err
+                     --charset=${PROJECT_SOURCE_DIR}/sql/share/charsets 
+                     --out-dir=${PROJECT_BINARY_DIR}/sql/share/
+                     --header_file=${PROJECT_BINARY_DIR}/include/mysqld_error.h 
+diff -urN mysql-5.6.11/include/my_global.h mysql-5.6.11.new/include/my_global.h
+--- mysql-5.6.11/include/my_global.h	2013-04-05 20:27:18.000000000 +0800
++++ mysql-5.6.11.new/include/my_global.h	2013-05-08 14:01:17.903092985 +0800
+@@ -323,6 +323,9 @@
+ #include <math.h>
+ #ifdef HAVE_LIMITS_H
+ #include <limits.h>
++#if defined(__cplusplus)
++#include <climits>
++#endif
+ #endif
+ #ifdef HAVE_FLOAT_H
+ #include <float.h>
+diff -urN mysql-5.6.11/scripts/CMakeLists.txt mysql-5.6.11.new/scripts/CMakeLists.txt
+--- mysql-5.6.11/scripts/CMakeLists.txt	2013-04-05 20:27:18.000000000 +0800
++++ mysql-5.6.11.new/scripts/CMakeLists.txt	2013-05-07 18:30:44.215113694 +0800
+@@ -47,7 +47,7 @@
+ ADD_CUSTOM_COMMAND(
+   OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/mysql_fix_privilege_tables_sql.c
+   ${CAT_COMMAND}
+-  COMMAND comp_sql
++  COMMAND ./comp_sql
+   mysql_fix_privilege_tables
+   mysql_fix_privilege_tables.sql
+   mysql_fix_privilege_tables_sql.c
+diff -urN mysql-5.6.11/sql/CMakeLists.txt mysql-5.6.11.new/sql/CMakeLists.txt
+--- mysql-5.6.11/sql/CMakeLists.txt	2013-04-05 20:27:18.000000000 +0800
++++ mysql-5.6.11.new/sql/CMakeLists.txt	2013-05-08 10:16:55.000000000 +0800
+@@ -363,11 +363,13 @@
+ )
+ 
+ # Gen_lex_hash
+-ADD_EXECUTABLE(gen_lex_hash gen_lex_hash.cc)
++IF(NOT CMAKE_CROSSCOMPILING)
++  ADD_EXECUTABLE(gen_lex_hash gen_lex_hash.cc)
++ENDIF()
+ 
+ ADD_CUSTOM_COMMAND(
+   OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/lex_hash.h
+-  COMMAND gen_lex_hash > lex_hash.h
++  COMMAND ./gen_lex_hash > lex_hash.h
+   DEPENDS gen_lex_hash
+ )
+ 
+diff -urN mysql-5.6.11/vio/viossl.c mysql-5.6.11.new/vio/viossl.c
+--- mysql-5.6.11/vio/viossl.c	2013-04-05 20:27:17.000000000 +0800
++++ mysql-5.6.11.new/vio/viossl.c	2013-05-07 18:28:33.963474729 +0800
+@@ -328,8 +328,10 @@
+   SSL_SESSION_set_timeout(SSL_get_session(ssl), timeout);
+   SSL_set_fd(ssl, sd);
+ #ifndef HAVE_YASSL
++#ifdef SSL_OP_NO_COMPRESSION
+   SSL_set_options(ssl, SSL_OP_NO_COMPRESSION);
+ #endif
++#endif
+ 
+   /*
+     Since yaSSL does not support non-blocking send operations, use

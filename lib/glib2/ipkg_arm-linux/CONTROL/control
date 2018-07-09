@@ -1,0 +1,9 @@
+Package: glib2
+Version: 2.33.12
+Architecture: arm
+Maintainer: Jared_wu <Jared.Wu@moxa.com>
+Section: base
+Priority: optional
+Description: The GLib library of C routines
+Source: wget http://ftp.de.debian.org/debian/pool/main/g/glib2.0/glib2.0_2.33.12+really2.32.4.orig.tar.xz
+Depends: libffi

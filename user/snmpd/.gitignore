@@ -1,0 +1,4 @@
+/modules/libmodules.a
+/snmplib/libsnmplib.a
+/snmpd/snmpd
+/snmpd/snmpd.*

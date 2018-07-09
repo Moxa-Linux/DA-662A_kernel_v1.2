@@ -1,0 +1,22 @@
+#!/bin/sh
+PATH=/bin:/usr/bin:/sbin:/usr/sbin
+if ! [ -x /bin/mx_igt ]; then
+	exit 0
+fi
+
+case "$1" in
+    start)
+	echo "Starting mx_igt"
+	start-stop-daemon -S -b -m -p /var/run/mx_igt.pid -x /bin/mx_igt -- -s 10
+	;;
+    stop)
+	echo "Stopping mx_igt"
+	start-stop-daemon -K -n mx_igt
+	;;
+    *)
+	echo "Usage: /etc/init.d/mx_igt {start|stop}"
+	exit 1
+	;;
+esac
+
+exit 0

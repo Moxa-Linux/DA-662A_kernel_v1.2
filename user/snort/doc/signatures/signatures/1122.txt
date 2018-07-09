@@ -1,0 +1,80 @@
+Rule:
+--
+alert tcp $EXTERNAL_NET any -> $HTTP_SERVERS 80 (msg:"WEB-MISC
+/etc/passwd";flags: A+; content:"/etc/passwd"; nocase;
+classtype:attempted-recon; sid:1122; rev:1;) 
+
+Sid:
+--
+1122
+
+Summary:
+--
+Part of the communication between a remote machine and your webserver
+contained the string /etc/passwd.
+
+--
+Impact:
+This generally indicates an attempt to get the contents of the
+/etc/passwd file on a *NIX system.  If successful, valuable
+information regarding user credentials may be disclosed.  In a more
+extreme case (where shadowed passwds are not in use), it may be
+possible for an attacker to get the encrypted passwd fields and
+potentially gain access to the system. 
+
+--
+Detailed Information:
+The /etc/passwd file contains information regarding login credentials
+for users of a *NIX system.  Snort detected the string '/etc/passwd'
+as part of the communication from a remote machine to your webserver.
+This could indicate an attempt exploit vulerable web applications or
+weak cgi scripts.  Successful capture of this file could lead to
+valuable information disclosure about your system and give an attacker
+a number of new avenues to attack your system from.
+
+--
+Attack Scenarios:
+As part of either an information gathering mission or a flat-out
+attack against your webserver, an attacker may attempt to gain access
+to your passwd file.  This can be done any number of ways, most
+commonly by exploiting poorly written web applications or cgi scripts.
+Alternatively, an attacker may attack the webserver itself and attempt
+to exploit flaws in its design -- this may include directory
+traversals, unicoding, and others.
+
+--
+Ease of Attack:
+Medium.  Many tools that are readily available carry an arsenal of
+common ways of getting at /etc/passwd.  Some of the most common tools
+include whisker (rfp), retina (eeye), nessus, and good old lynx.
+
+--
+False Positives:
+Few, if any.  This particular string is rarely seen as part of a
+request to a webserver, and if it is, the majority of the time it is
+malicious in nature.  A few know exceptions include 'man-cgi' by
+Panagiotis J. Christias and other web frontends to man pages -- it is
+not uncommon for people to request help for /etc/passwd.
+
+--
+False Negatives:
+Rare.
+
+--
+Corrective Action:
+Examine both the full-snort alert and your webserver logs for this
+particular host.  Determine if the /etc/passwd string was part of a
+malicious request against your webserver.  Pay particular attention to
+requests that access directories that have exec-cgi (apache)
+permissions and the scripts contained therein.  If retrieval of the
+password is possible and was succesful, determine what information the
+attacker may have gleaned.  Are you using shadowed password files?  If
+the retrieval was successful, watch for failed login attempts against
+the login names contained in your passwd file.
+
+--
+Contributors:
+Jon Hart <warchild@spoofed.org>
+
+-- 
+Additional References:

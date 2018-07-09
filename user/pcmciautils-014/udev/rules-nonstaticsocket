@@ -1,0 +1,5 @@
+
+# if this is a PCMCIA socket which needs a resource database,
+# pcmcia-socket-startup sets it up
+ACTION=="add", SUBSYSTEM=="pcmcia_socket", \
+		RUN+="/sbin/pcmcia-socket-startup"

@@ -1,0 +1,9 @@
+Package: openswan
+Version: 2.4.15
+Architecture: xscale
+Maintainer: Jared_wu <Jared_Wu@moxa.com>
+Section: base
+Priority: optional
+Description: openswan 2.4.15
+Source: ftp://ftp.openswan.org/openswan/openswan-2.4.15.tar.gz
+Depends:

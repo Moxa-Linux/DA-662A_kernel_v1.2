@@ -1,0 +1,19 @@
+
+How to build alsa package
+
+1. update kernel/user configure
+
+	# cp user/alsa-utils/config-linux-2.6.x linux-2.6.x/.config
+	# cp user/alsa-utils/config-vendors-2.6.x config/.config
+	# make modules
+
+2. make alsa-lib
+
+	# make lib/alsa-lib_only
+
+3. make alsa-utils
+
+	# make lib/alsa-utils_only
+
+
+Jared

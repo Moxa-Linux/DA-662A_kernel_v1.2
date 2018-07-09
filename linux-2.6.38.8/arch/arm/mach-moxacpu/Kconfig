@@ -1,0 +1,26 @@
+# FIXME: Add your own platform here
+menu "Moxa ART CPU Implementation Options"
+
+comment "Moxa ART CPU Platforms"
+
+config ARCH_CPE
+	bool "Support for Moxa CPE Development Platform"
+	depends on ARCH_MOXACPU
+	default y
+
+config ARCH_MOXACPU_TICK
+        int "System tick(Hz) for CV request"
+        depends on ARCH_MOXACPU
+        default '100'
+
+config ARCH_IA240
+	bool "Support for Moxa IA240 Development Platform"
+	depends on ARCH_MOXACPU
+
+config MACH_MOXACPU
+	bool "MACH_MOXACPU"
+	help
+	  Say 'Y' here if you want your kernel to support Moxa's
+	  ART CPU Reference Platform.
+
+endmenu

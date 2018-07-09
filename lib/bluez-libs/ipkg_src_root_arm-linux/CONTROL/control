@@ -1,0 +1,9 @@
+Package: bluez-libs
+Version: 3.36
+Architecture: arm
+Maintainer: Jared_wu <Jared_Wu@moxa.com>
+Section: Misc
+Priority: optional
+Description: Bluetooth library
+Source: http://www.bluez.org/
+Depends: 

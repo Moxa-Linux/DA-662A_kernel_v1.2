@@ -1,0 +1,56 @@
+Rule:  
+alert tcp $EXTERNAL_NET any -> $HTTP_SERVERS 80 (msg:"WEB-MISC webstore directory traversal"; uricontent:"/web_store.cgi?page=../.."; flags:A+; classtype:web-application-attack; sid:1094; rev:2;)
+
+--
+
+Sid:
+1094
+
+--
+
+Summary:
+Someone tried to abuse a web_store.cgi vulnerability to read a file on a
+web server.
+
+--
+Impact:
+An attacker may have accessed any file on the web server
+accessable by the user the web server runs as, possibly including
+sensitive files.
+
+--
+Detailed Information:
+Some versions of Extropia WebStore contain a vulnerability in 
+web_store.cgi that can allow an attacker to read arbitrary files on
+the web server through a directory traversal attack.  Any file that the
+user that the web server runs as can read can be accessed.
+
+--
+Attack Scenarios:
+An attacker sends a web request like the following:
+http://target/cgi-bin/Web_Store/web_store.cgi?page=../../../path/filename%00ext
+
+--
+Ease of Attack:
+Fairly simple URL sent by the attacker.  The attacker will have to make
+some educated guesses of directory structures.
+
+--
+False Positives:
+
+--
+False Negatives:
+
+--
+Corrective Action:
+Examine the packet to determine what file was accessed.  If the targetted
+web server runs a vulnerable version web_store, consider launching an
+investigation.
+
+--
+Contributors:
+
+--
+Additional References:
+CVE:  CVE-2000-1005
+Bugtraq:  BID 1174

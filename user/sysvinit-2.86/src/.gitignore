@@ -1,0 +1,11 @@
+bootlogd
+halt
+init
+last
+mesg
+mountpoint
+runlevel
+shutdown
+sulogin
+utmpdump
+wall

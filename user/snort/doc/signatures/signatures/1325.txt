@@ -1,0 +1,84 @@
+Rule:
+
+--
+Sid:
+
+1325
+
+--
+Summary:
+
+This event is generated when an attempt is made to exploit a known vulnerability in implementations of Secure Shell (ssh) version 1.
+
+--
+Impact:
+A buffer overflow will allow an attack to execute any arbitrary commands with the privileges of the root user, leading to full compromise of the system and perhaps other systems as well.
+
+
+
+--
+Detailed Information:
+SSH is a secure replacement for telnet/ftp/r* commands. Both commercial and non-commercial implementations are available.
+
+The vulnerability exists in the integer calculation in SSH version 1 or SSH version 2 with a backward compatibility enabled.
+
+By sending a crafted packet to SSH daemon, an attacker could manipulate the return address of the affected function call, allowing arbitrary code execution on the target system.
+
+
+--
+Affected Systems:
+	Cisco IOS 12.0S
+	Cisco IOS 12.1xx-12.2xx
+	SSH Communications Security SSH 2.x and 3.x 
+	SSH Communications Security SSH 1.2.23-1.2.31
+	F-Secure SSH versions prior to 1.3.11-2
+	OpenSSH versions prior to 2.3.0
+
+--
+Attack Scenarios:
+
+A vulnerable machine may be probed using any banner grabber. 
+An attacker then attempts to overflow the integer calculations buffer and execute /bin/sh.
+
+
+--
+Ease of Attack:
+
+Simple. Scanners and exploits are available.
+
+--
+False Positives:
+
+None known.
+
+--
+False Negatives:
+
+None known.
+
+--
+Corrective Action:
+Use access control restrictions ("AllowHosts" or "DenyHosts)
+
+Disable SSH version 1 support
+
+Apply the appropriate vendor supplied patch
+
+Upgrade to the latest non-affected version of the software
+
+--
+Contributors:
+Sourcefire Research Team
+Brian Caswell <bmc@sourcefire.com>
+Nigel Houghton <nigel.houghton@sourcefire.com>
+Snort documentation contributed by Nawapong Nakjang (tony@ksc.net, tonie@thai.com)
+
+--
+Additional References:
+
+Bugtraq:
+http://www.securityfocus.com/bid/2347/
+
+CERT:
+http://www.kb.cert.org/vuls/id/945216
+

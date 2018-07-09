@@ -1,0 +1,9 @@
+Package: libgpg-error
+Version: 1.6
+Architecture: arm
+Maintainer: Jared_wu <Jared_Wu@moxa.com>
+Section: base
+Priority: optional
+Description: The Libgpg-error package contains a library that defines common error values for all GnuPG components. Among these are GPG, GPGSM, GPGME, GPG-Agent, libgcrypt, Libksba, DirMngr, Pinentry, SmartCard Daemon and more.
+Source:  ftp://ftp.gnupg.org/gcrypt/libgpg-error/libgpg-error-1.6.tar.bz2
+Depends:

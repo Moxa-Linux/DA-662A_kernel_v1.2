@@ -1,0 +1,6 @@
+install_me_here/usr/local/arm-linux-4.4.2/lib/perl5/site_perl/5.10.1/arm-linux/Device/SerialPort.pm
+install_me_here/usr/local/arm-linux-4.4.2/lib/perl5/site_perl/5.10.1/arm-linux/auto/Device/SerialPort/SerialPort.bs
+install_me_here/usr/local/arm-linux-4.4.2/lib/perl5/site_perl/5.10.1/arm-linux/auto/Device/SerialPort/SerialPort.so
+install_me_here/usr/local/bin/modemtest
+install_me_here/usr/local/share/man/man1/modemtest.1
+install_me_here/usr/local/share/man/man3/Device::SerialPort.3

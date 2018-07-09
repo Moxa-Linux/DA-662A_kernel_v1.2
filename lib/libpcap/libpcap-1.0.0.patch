@@ -1,0 +1,111 @@
+*** Makefile.in	2008-10-28 09:26:13.000000000 +0800
+--- ../Makefile.in	2011-12-02 14:39:44.000000000 +0800
+***************
+*** 346,352 ****
+  
+  scanner.c: $(srcdir)/scanner.l
+  	@rm -f $@
+! 	./runlex.sh $(LEX) -o$@ $<
+  
+  scanner.o: scanner.c tokdefs.h
+  	$(CC) $(CFLAGS) -c scanner.c
+--- 346,352 ----
+  
+  scanner.c: $(srcdir)/scanner.l
+  	@rm -f $@
+! 	$(srcdir)/runlex.sh $(LEX) -o$@ $<
+  
+  scanner.o: scanner.c tokdefs.h
+  	$(CC) $(CFLAGS) -c scanner.c
+***************
+*** 390,396 ****
+  	ln -s $(srcdir)/bpf/net/bpf_filter.c bpf_filter.c
+  
+  bpf_filter.o: bpf_filter.c
+! 	$(CC) $(CFLAGS) -c bpf_filter.c
+  
+  #
+  # Generate the pcap-config script.
+--- 390,396 ----
+  	ln -s $(srcdir)/bpf/net/bpf_filter.c bpf_filter.c
+  
+  bpf_filter.o: bpf_filter.c
+! 	$(CC) $(CFLAGS) -c $(srcdir)/bpf_filter.c
+  
+  #
+  # Generate the pcap-config script.
+***************
+*** 400,406 ****
+  	sed -e 's|@includedir[@]|$(includedir)|g' \
+  	    -e 's|@libdir[@]|$(libdir)|g' \
+  	    -e 's|@DEPLIBS[@]|$(DEPLIBS)|g' \
+! 	    pcap-config.in >$@.tmp
+  	mv $@.tmp $@
+  	chmod a+x $@
+  
+--- 400,406 ----
+  	sed -e 's|@includedir[@]|$(includedir)|g' \
+  	    -e 's|@libdir[@]|$(libdir)|g' \
+  	    -e 's|@DEPLIBS[@]|$(DEPLIBS)|g' \
+! 	    $(srcdir)/pcap-config.in >$@.tmp
+  	mv $@.tmp $@
+  	chmod a+x $@
+  
+***************
+*** 418,423 ****
+--- 418,425 ----
+  	    (mkdir -p $(DESTDIR)$(libdir); chmod 755 $(DESTDIR)$(libdir))
+  	$(INSTALL_DATA) libpcap.a $(DESTDIR)$(libdir)/libpcap.a
+  	$(RANLIB) $(DESTDIR)$(libdir)/libpcap.a
++ 	[ -d $(DESTDIR)$(bindir) ] || \
++ 	    (mkdir -p $(DESTDIR)$(bindir); chmod 755 $(DESTDIR)$(bindir))
+  	[ -d $(DESTDIR)$(includedir) ] || \
+  	    (mkdir -p $(DESTDIR)$(includedir); chmod 755 $(DESTDIR)$(includedir))
+  	[ -d $(DESTDIR)$(includedir)/pcap ] || \
+***************
+*** 449,457 ****
+  	for i in $(MAN1); do \
+  		$(INSTALL_DATA) $(srcdir)/$$i \
+  		    $(DESTDIR)$(mandir)/man1/$$i; done
+! 	for i in $(MAN3PCAP); do \
+  		$(INSTALL_DATA) $(srcdir)/$$i \
+  		    $(DESTDIR)$(mandir)/man3/$$i; done
+  	ln $(DESTDIR)$(mandir)/man3/pcap_datalink_val_to_name.3pcap \
+  		 $(DESTDIR)$(mandir)/man3/pcap_datalink_val_to_description.3pcap
+  	ln $(DESTDIR)$(mandir)/man3/pcap_dump_open.3pcap \
+--- 451,462 ----
+  	for i in $(MAN1); do \
+  		$(INSTALL_DATA) $(srcdir)/$$i \
+  		    $(DESTDIR)$(mandir)/man1/$$i; done
+! 	for i in $(MAN3PCAP_NOEXPAND); do \
+  		$(INSTALL_DATA) $(srcdir)/$$i \
+  		    $(DESTDIR)$(mandir)/man3/$$i; done
++ 	for i in $(MAN3PCAP_EXPAND:.in=); do \
++ 		$(INSTALL_DATA) ./$$i \
++ 		    $(DESTDIR)$(mandir)/man3/$$i; done
+  	ln $(DESTDIR)$(mandir)/man3/pcap_datalink_val_to_name.3pcap \
+  		 $(DESTDIR)$(mandir)/man3/pcap_datalink_val_to_description.3pcap
+  	ln $(DESTDIR)$(mandir)/man3/pcap_dump_open.3pcap \
+***************
+*** 471,480 ****
+  	ln $(DESTDIR)$(mandir)/man3/pcap_setnonblock.3pcap \
+  		 $(DESTDIR)$(mandir)/man3/pcap_getnonblock.3pcap
+  	for i in $(MANFILE); do \
+! 		$(INSTALL_DATA) $(srcdir)/`echo $$i | sed 's/.manfile.in/.manfile/'` \
+  		    $(DESTDIR)$(mandir)/man@MAN_FILE_FORMATS@/`echo $$i | sed 's/.manfile.in/.@MAN_FILE_FORMATS@/'`; done
+  	for i in $(MANMISC); do \
+! 		$(INSTALL_DATA) $(srcdir)/`echo $$i | sed 's/.manmisc.in/.manmisc/'` \
+  		    $(DESTDIR)$(mandir)/man@MAN_MISC_INFO@/`echo $$i | sed 's/.manmisc.in/.@MAN_MISC_INFO@/'`; done
+  
+  install-shared: install-shared-$(DYEXT)
+--- 476,485 ----
+  	ln $(DESTDIR)$(mandir)/man3/pcap_setnonblock.3pcap \
+  		 $(DESTDIR)$(mandir)/man3/pcap_getnonblock.3pcap
+  	for i in $(MANFILE); do \
+! 		$(INSTALL_DATA) ./`echo $$i | sed 's/.manfile.in/.manfile/'` \
+  		    $(DESTDIR)$(mandir)/man@MAN_FILE_FORMATS@/`echo $$i | sed 's/.manfile.in/.@MAN_FILE_FORMATS@/'`; done
+  	for i in $(MANMISC); do \
+! 		$(INSTALL_DATA) ./`echo $$i | sed 's/.manmisc.in/.manmisc/'` \
+  		    $(DESTDIR)$(mandir)/man@MAN_MISC_INFO@/`echo $$i | sed 's/.manmisc.in/.@MAN_MISC_INFO@/'`; done
+  
+  install-shared: install-shared-$(DYEXT)

@@ -1,0 +1,29 @@
+#!/bin/sh
+LPATH=/bin
+puk=
+new_pin=
+print_usage()
+{
+	echo "Usage: $0 [-h] | [-p PUK_code -n new_pin_code]   ; Unlock the SIM card";
+	echo ""
+	echo "e.g.: $0                    ; display this message"
+	echo "    : $0 -h                 ; display help message"
+	echo "    : $0 -p 9876 -n 1234    ; input PUK code with new pin code assigned"
+}
+while getopts p:n: options
+do
+	case $options in
+	p) puk="$OPTARG";;
+	n) new_pin="$OPTARG";;
+	h) print_usage;
+	   exit 0;;
+	?) print_usage;
+	   exit 2;;
+	esac
+done
+
+if [ "$puk" != "" ] && [ "$new_pin" != "" ]; then
+	${LPATH}/egprscmd -p $puk:$new_pin
+else
+	print_usage;
+fi

@@ -1,0 +1,9 @@
+Package: udev
+Version: 164
+Architecture: xscale
+Maintainer: Jared_wu <Jared_Wu@moxa.com>
+Section: Misc
+Priority: optional
+Description: /dev/ and hotplug management daemon
+Source: http://pkgs.fedoraproject.org/repo/pkgs/udev/udev-164.tar.bz2/cd285a85f969518a671834de2f4d6614/udev-164.tar.bz2
+Depends: 

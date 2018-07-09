@@ -1,0 +1,41 @@
+--- ./cipher.c	2014-07-21 00:24:59.000000000 +0800
++++ ./cipher_new.c	2016-04-20 19:32:57.196531153 +0800
+@@ -90,9 +90,11 @@
+ 			SSH_CIPHER_SSH2, 8, 16, 0, 0, 0, 1, EVP_bf_cbc },
+ 	{ "cast128-cbc",
+ 			SSH_CIPHER_SSH2, 8, 16, 0, 0, 0, 1, EVP_cast5_cbc },
++#ifndef OPENSSL_NO_RC4 /* Jared */
+ 	{ "arcfour",	SSH_CIPHER_SSH2, 8, 16, 0, 0, 0, 0, EVP_rc4 },
+ 	{ "arcfour128",	SSH_CIPHER_SSH2, 8, 16, 0, 0, 1536, 0, EVP_rc4 },
+ 	{ "arcfour256",	SSH_CIPHER_SSH2, 8, 32, 0, 0, 1536, 0, EVP_rc4 },
++#endif
+ 	{ "aes128-cbc",	SSH_CIPHER_SSH2, 16, 16, 0, 0, 0, 1, EVP_aes_128_cbc },
+ 	{ "aes192-cbc",	SSH_CIPHER_SSH2, 16, 24, 0, 0, 0, 1, EVP_aes_192_cbc },
+ 	{ "aes256-cbc",	SSH_CIPHER_SSH2, 16, 32, 0, 0, 0, 1, EVP_aes_256_cbc },
+@@ -622,12 +624,14 @@
+ 	const struct sshcipher *c = cc->cipher;
+ 	int plen = 0;
+ 
++#ifndef OPENSSL_NO_RC4 /* Jared */
+ 	if (c->evptype == EVP_rc4) {
+ 		plen = EVP_X_STATE_LEN(cc->evp);
+ 		if (dat == NULL)
+ 			return (plen);
+ 		memcpy(dat, EVP_X_STATE(cc->evp), plen);
+ 	}
++#endif
+ 	return (plen);
+ #else
+ 	return 0;
+@@ -641,9 +645,11 @@
+ 	const struct sshcipher *c = cc->cipher;
+ 	int plen;
+ 
++#ifndef OPENSSL_NO_RC4 /* Jared */
+ 	if (c->evptype == EVP_rc4) {
+ 		plen = EVP_X_STATE_LEN(cc->evp);
+ 		memcpy(EVP_X_STATE(cc->evp), dat, plen);
+ 	}
+ #endif
++#endif
+ }

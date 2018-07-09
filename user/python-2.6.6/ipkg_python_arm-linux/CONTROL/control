@@ -1,0 +1,9 @@
+Package: python
+Version: 2.6.6
+Architecture: arm
+Maintainer: Jared_wu <Jared_Wu@moxa.com>
+Section: base
+Priority: optional
+Description: An interactive high-level object-oriented language
+Source: www.python.org/download/releases/2.6.6/
+Depends: 

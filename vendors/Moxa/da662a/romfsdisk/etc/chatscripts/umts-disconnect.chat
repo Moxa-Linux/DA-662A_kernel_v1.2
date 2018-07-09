@@ -1,0 +1,5 @@
+# File: /etc/chatscripts/umts-disconnect.chat
+#
+""	"\K"
+""	"+++ATH0"
+SAY	"GPRS disconnected."

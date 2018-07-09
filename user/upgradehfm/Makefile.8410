@@ -1,0 +1,12 @@
+# Cross-compile: 
+#CFLAGS += -DHW_ID='"0x8000"' -DAP_ID='"0x80008410"' -I../mtd-utils/include/
+
+EXEC=upgradehfm
+CFLAGS += -DHW_ID='"$(HW_ID)"' -DAP_ID='"$(AP_ID)"'
+
+all:	$(EXEC).c
+	xscale-linux-gcc  upgradehfm.c   -Dlinux -D__linux__ -Dunix -DEMBED -I/root/sdlinux-moxaart/include -idirafter /root/sdlinux-moxaart/linux-2.6.x/include -Wall -fno-common  -fno-builtin -DARCH_UC8400 -DHW_ID='"0x8000"' -DAP_ID='"0x80008410"' -I../../lib/redboot_config -DBIG_ENDIAN -DDEBUG -DTEST -lredboot -L../../lib/redboot_config -o upgradehfm.debug
+
+
+clean:
+	rm -fr $(EXEC).debug

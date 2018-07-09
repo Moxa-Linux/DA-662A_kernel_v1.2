@@ -1,0 +1,24 @@
+CC=xscale-linux-gcc
+STRIP=xscale-linux-strip
+FULLVERSIONPKG=1.0.0.0
+
+EXEC=reportip
+
+CFLAGS += -DKVERSION='"$(FULLVERSIONPKG)"' -DARCH_UC8400 -D__BYTE_ORDER=__BIG_ENDIAN
+CFLAGS += -I../../lib/redboot_config -I../mtd-utils/include -DDEBUG
+LDFLAGS := -lredboot -L../../lib/redboot_config
+
+all:	$(EXEC)
+
+$(EXEC):	$(EXEC).o
+	$(CC) -o $@ $(EXEC).o $(LDFLAGS)
+
+.c.o:
+	$(CC) $(CFLAGS) $? -c
+
+romfs:
+	$(STRIP) -s $(EXEC)
+	$(ROMFSINST) /bin/$(EXEC)
+
+clean:
+	rm -fr $(EXEC) $(EXEC).o

@@ -1,0 +1,9 @@
+Package: apache
+Version: 2.2.8
+Architecture: xscale
+Maintainer: Jared_wu <Jared_Wu@moxa.com>
+Section: base
+Priority: optional
+Description: The Apache package contains an open-source HTTP server. It is useful for creating local intranet web sites or running huge web serving operations.
+Source: http://archive.apache.org/dist/httpd/httpd-2.2.8.tar.bz2
+Depends: 

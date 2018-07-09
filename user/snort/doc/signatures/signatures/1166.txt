@@ -1,0 +1,58 @@
+Rule:  
+alert tcp $EXTERNAL_NET any -> $HTTP_SERVERS 80 (msg:"WEB-MISC ws_ftp.ini access"; uricontent:"/ws_ftp.ini"; nocase; flags: A+; classtype:attempted-recon; sid:1166; rev:1;)
+--
+
+Sid:
+1166
+
+--
+
+Summary:
+Someone attempted to download ws_ftp.ini through the web
+
+--
+Impact:
+Saved passwords for FTP accounts may be gleaned from the ws_ftp.ini file
+
+--
+Detailed Information:
+When a user of WS_FTP chooses "save password" when connecting to an FTP
+server, the password is saved in ws_ftp.ini.  The passwords are stored
+weakly encrypted.
+
+--
+Attack Scenarios:
+A web administrator opens up far too much of his hard drive to web sharing,
+and an attacker finds and downloads the ws_ftp.ini file, and cracks the
+encrypted passwords to get access to FTP accounts
+
+--
+Ease of Attack:
+Requires that the attacker find a web-shared ws_ftp.ini file first, and
+then run the file through a specialized password cracker (such tools
+exist in the wild)
+
+--
+False Positives:
+
+--
+False Negatives:
+
+--
+Corrective Action:
+Find out if the ws_ftp.ini file existed on the web server.
+Find out what accounts were stored in the ws_ftp.ini file that was
+downloaded, and change the passwords for those accounts immediately.
+Consider investigating the referenced systems and accounts
+for signs of compromise or access of sensitive data.
+Having a web-accessable ws_ftp.ini file is probably a sign of larger
+misconfigurations of the web server, so consider launching an audit
+and investigation of the web server.
+
+--
+Contributors:
+
+--
+Additional References:
+CVE:  CAN-1999-1078
+Bugtraq:  BID 547

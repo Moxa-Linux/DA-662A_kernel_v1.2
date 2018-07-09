@@ -1,0 +1,95 @@
+------------------------------------------------------------------------------
+
+Building embedded Linux firmware for UC-8410/8411/8416/8418-LX, EM-2260-LX and
+IA-260/261/262-LX, W406/W416-LX
+
+-----------------------------------------------------------------------------
+Following steps describe how to decompress and build the firmware for UC-84XX-LX, EM-2260, W4X6 and IA-26X-LX serials
+
+1.Host Operation System Requirements  (recommend)
+
+	Debian 4.0, 5.0 (on x86)
+	Ubuntu 8.04, 8.10, 9.04 (on x86)
+ 	
+2. Install the developing enviornment
+
+	Following compiling enironment and packages are needed for firmware
+	making. you must install these packages on your Debian based 
+	enviornment.
+
+	$ apt-get install build-essential autoconf lynx libxml2 libxml2-dev btyacc libjpeg62 libjpeg-dev flex man2html bison libtool libncurses5-dev xmlto
+
+3. Install the arm-linux big endian cross compile tool chain for cross 
+compiling. You can check it in your cdrom or download it from Moxa supporting 
+page, http://www.moxa.com/support/support_home.aspx.
+
+	$ sh /tmp/arm-linux_2.1.sh
+	$ rm -f /tmp/arm-linux_2.1.sh
+	$ export PATH="$/usr/local/arm-linux/bin":$PATH
+
+4. Untar the source code, moxalinux.tar.bz2
+
+	tar xjvf moxalinux.tar.bz2
+	
+	After the moxalinux.tar.bz2 is untared, 
+	all the files will be decompressed in ./moxalinux directory
+	
+	./moxalinux/linux-2.6.x		Linux kernel source code
+	./moxalinux/modules		Linux kernel modules (not included in kernel)
+	./moxalinux/user		Application source code
+	./moxalinux/lib			Library source code
+	./moxalinux/vendor/Moxa/	Product specific configurations
+	./moxalinux/host		Host utility
+	./moxalinux/tools		rom file making utilities
+	./moxalinux/config		firmware configuration files
+
+5. Then you can enter the moxalinux directory and make the firmware image
+	
+	5.1. choice the product to make
+
+	$ cd ./moxalinux
+	$ make menuconfig
+	
+	5.2. make the linux kernel
+
+	$ cd ./moxalinux
+	$ make linux
+
+	the kennel image will be output to /tftpboot/zImage, you should create 
+	/tftpboot directory before making zImage
+
+	5.3. Fast making the firmware
+
+	$ cd ./moxalinux
+	$ make fast_build
+
+	the firmwares and image files will be output to /tftpboot/
+
+	FWR_UC8410_V1.1_Build_09021904.hfm	the firmware
+	UC8410_R1-1.3-1.1_Build_09021904	the ROM image
+	uc8400-kernel-1.1.bin			the kernel image
+	uc8400-usrdisk-1.1.dsk			the roof file system image
+	
+	You can upload the .hfm file to your target and upgrade by upgradehfm
+	
+	5.4. Rebuild all the source
+
+	This will take a long time to rebuild all the libraries and applications. If not necessary, we suggest you should use the fast build making.
+
+	$ cd ./moxalinux
+	$ make
+	
+6. For UC-84XX-LX serials, the CSR source code license is belong to Intel.
+  If you have to re-compile it, you should download it from IntelR IXP400 
+  Software - Version 3.0 or 3.01.
+   
+	http://www.intel.com/design/network/products/npfamily/download_ixp400.htm
+  After you get the Intel CSR, you should extract the CSR to ./modules/CSR3.0/ 
+  or ./modules/CSR3.01 directory, the directory structure will be like this.
+
+	./modules/CSR3.0/ixp400_xscale_sw/
+	./modules/CSR3.0/ixp_osal/
+	or
+	./modules/CSR3.01/ixp400_xscale_sw/
+	./modules/CSR3.01/ixp_osal/	
+

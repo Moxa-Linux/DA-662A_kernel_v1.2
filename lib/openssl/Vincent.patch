@@ -1,0 +1,311 @@
+diff -crB openssl-0.9.8r/apps/speed.c openssl-0.9.8r.new/apps/speed.c
+*** openssl-0.9.8r/apps/speed.c	Tue Jan 17 18:06:23 2012
+--- openssl-0.9.8r.new/apps/speed.c	Tue Jan 17 17:27:58 2012
+***************
+*** 285,291 ****
+  static int do_multi(int multi);
+  #endif
+  
+! #define ALGOR_NUM	28
+  #define SIZE_NUM	5
+  #define RSA_NUM		4
+  #define DSA_NUM		3
+--- 285,291 ----
+  static int do_multi(int multi);
+  #endif
+  
+! #define ALGOR_NUM	29 //28: modified by Vincent Wu
+  #define SIZE_NUM	5
+  #define RSA_NUM		4
+  #define DSA_NUM		3
+***************
+*** 710,715 ****
+--- 710,720 ----
+  #define D_IGE_128_AES   25
+  #define D_IGE_192_AES   26
+  #define D_IGE_256_AES   27
++ /*Added by Vincent Wu. 2011-02-17*/
++ #define	D_ECB_DES	28
++ /*Added by Vincent Wu. 2011-02-21*/
++ #define	D_ECB_EDE3_DES	29
++ 
+  	double d=0.0;
+  	long c[ALGOR_NUM][SIZE_NUM];
+  #define	R_DSA_512	0
+diff -crB openssl-0.9.8r/crypto/engine/eng_cryptodev.c openssl-0.9.8r.new/crypto/engine/eng_cryptodev.c
+*** openssl-0.9.8r/crypto/engine/eng_cryptodev.c	Tue Jan 17 18:06:23 2012
+--- openssl-0.9.8r.new/crypto/engine/eng_cryptodev.c	Tue Jan 17 18:08:24 2012
+***************
+*** 74,82 ****
+  	int d_fd;
+  
+  #ifdef USE_CRYPTODEV_DIGESTS
+! 	char dummy_mac_key[20];
+  
+! 	unsigned char digest_res[20];
+  	char *mac_data;
+  	int mac_len;
+  
+--- 74,82 ----
+  	int d_fd;
+  
+  #ifdef USE_CRYPTODEV_DIGESTS
+! 	char dummy_mac_key[EVP_MAX_MD_SIZE]; //modified by Vincent Wu for SHA256, SHA384, and SHA512
+  
+! 	unsigned char digest_res[EVP_MAX_MD_SIZE]; //modified by Vincent Wu for SHA256, SHA384, and SHA512
+  	char *mac_data;
+  	int mac_len;
+  
+***************
+*** 150,159 ****
+  	{ CRYPTO_BLF_CBC,		NID_bf_cbc,		8,	16, },
+  	{ CRYPTO_CAST_CBC,		NID_cast5_cbc,		8,	16, },
+  	{ CRYPTO_SKIPJACK_CBC,		NID_undef,		0,	 0, },
+  	{ 0,				NID_undef,		0,	 0, },
+  };
+  
+! #if 0
+  static struct {
+  	int	id;
+  	int	nid;
+--- 150,166 ----
+  	{ CRYPTO_BLF_CBC,		NID_bf_cbc,		8,	16, },
+  	{ CRYPTO_CAST_CBC,		NID_cast5_cbc,		8,	16, },
+  	{ CRYPTO_SKIPJACK_CBC,		NID_undef,		0,	 0, },
++ 	/*New Added Ciphers.  Vincent Wu. 2011-02-16*/
++ 	{ CRYPTO_DES_ECB,		NID_des_ecb,		8,	 8, },
++ 	{ CRYPTO_3DES_ECB,		NID_des_ede3_ecb,	8,	24, },	
++ 	{ CRYPTO_AES_ECB,		NID_aes_128_ecb,	16,	16, },
++ 	{ CRYPTO_AES_ECB,		NID_aes_256_ecb,	16,	32, },
++ 	{ CRYPTO_ARC4,		NID_rc4,	1,	256, },	
++ 	/*New Added Ciphers.  Vincent Wu. 2011-02-21*/
+  	{ 0,				NID_undef,		0,	 0, },
+  };
+  
+! #if 1
+  static struct {
+  	int	id;
+  	int	nid;
+***************
+*** 166,171 ****
+--- 173,182 ----
+  	{ CRYPTO_SHA1_KPDK,		NID_undef,		0},
+  	{ CRYPTO_MD5,			NID_md5,		16},
+  	{ CRYPTO_SHA1,			NID_sha1,		20},
++ 	/*New Added Ciphers.  Vincent Wu. 2011-02-22*/
++ 	{ CRYPTO_SHA2_256,		NID_sha256,		32},
++ 	{ CRYPTO_SHA2_384,		NID_sha384,		48},
++ 	{ CRYPTO_SHA2_512,		NID_sha512,		64},
+  	{ 0,				NID_undef,		0},
+  };
+  #endif
+***************
+*** 266,272 ****
+  	return (count);
+  }
+  
+! #if 0  /* unused */
+  /*
+   * Find out what digests /dev/crypto will let us have a session for.
+   * XXX note, that some of these openssl doesn't deal with yet!
+--- 277,283 ----
+  	return (count);
+  }
+  
+! #if 1  /* unused */
+  /*
+   * Find out what digests /dev/crypto will let us have a session for.
+   * XXX note, that some of these openssl doesn't deal with yet!
+***************
+*** 517,523 ****
+  	EVP_CIPHER_get_asn1_iv,
+  	NULL
+  };
+! 
+  /* 3DES CBC EVP */
+  const EVP_CIPHER cryptodev_3des_cbc = {
+  	NID_des_ede3_cbc,
+--- 528,546 ----
+  	EVP_CIPHER_get_asn1_iv,
+  	NULL
+  };
+! /* DES ECB EVP, added by Vincent Wu. 2011-02-17 */
+! const EVP_CIPHER cryptodev_des_ecb = {
+! 	NID_des_ecb,
+! 	8, 8, 8,
+! 	EVP_CIPH_ECB_MODE,
+! 	cryptodev_init_key,
+! 	cryptodev_cipher,
+! 	cryptodev_cleanup,
+! 	sizeof(struct dev_crypto_state),
+! 	EVP_CIPHER_set_asn1_iv,
+! 	EVP_CIPHER_get_asn1_iv,
+! 	NULL
+! };
+  /* 3DES CBC EVP */
+  const EVP_CIPHER cryptodev_3des_cbc = {
+  	NID_des_ede3_cbc,
+***************
+*** 532,537 ****
+--- 555,574 ----
+  	NULL
+  };
+  
++ /* 3DES ECB EVP, added by Vincent Wu. 2011-02-21*/
++ const EVP_CIPHER cryptodev_3des_ecb = {
++ 	NID_des_ede3_ecb,
++ 	8, 24, 8,
++ 	EVP_CIPH_ECB_MODE,
++ 	cryptodev_init_key,
++ 	cryptodev_cipher,
++ 	cryptodev_cleanup,
++ 	sizeof(struct dev_crypto_state),
++ 	EVP_CIPHER_set_asn1_iv,
++ 	EVP_CIPHER_get_asn1_iv,
++ 	NULL
++ };
++ 
+  const EVP_CIPHER cryptodev_bf_cbc = {
+  	NID_bf_cbc,
+  	8, 16, 8,
+***************
+*** 597,602 ****
+--- 634,681 ----
+  	NULL
+  };
+  
++ /* AES 128 ECB EVP, added by Vincent Wu. 2011-02-21*/
++ const EVP_CIPHER cryptodev_aes_128_ecb = {
++ 	NID_aes_128_ecb,
++ 	16, 16, 16,
++ 	EVP_CIPH_ECB_MODE,
++ 	cryptodev_init_key,
++ 	cryptodev_cipher,
++ 	cryptodev_cleanup,
++ 	sizeof(struct dev_crypto_state),
++ 	EVP_CIPHER_set_asn1_iv,
++ 	EVP_CIPHER_get_asn1_iv,
++ 	NULL
++ };
++ 
++ /* AES 256 ECB EVP, added by Vincent Wu. 2011-02-21*/
++ const EVP_CIPHER cryptodev_aes_256_ecb = {
++ 	NID_aes_256_ecb,
++ 	16, 32, 16,
++ 	EVP_CIPH_ECB_MODE,
++ 	cryptodev_init_key,
++ 	cryptodev_cipher,
++ 	cryptodev_cleanup,
++ 	sizeof(struct dev_crypto_state),
++ 	EVP_CIPHER_set_asn1_iv,
++ 	EVP_CIPHER_get_asn1_iv,
++ 	NULL
++ };
++ 
++ /* AES 256 ECB EVP, added by Vincent Wu. 2011-02-21*/
++ const EVP_CIPHER cryptodev_rc4_ecb = {
++ 	NID_rc4,
++ 	1, 256, 0,
++ 	EVP_CIPH_ECB_MODE,
++ 	cryptodev_init_key,
++ 	cryptodev_cipher,
++ 	cryptodev_cleanup,
++ 	sizeof(struct dev_crypto_state),
++ 	EVP_CIPHER_set_asn1_iv,
++ 	EVP_CIPHER_get_asn1_iv,
++ 	NULL
++ };
++ 
+  /*
+   * Registered by the ENGINE when used to find out how to deal with
+   * a particular NID in the ENGINE. this says what we'll do at the
+***************
+*** 616,624 ****
+--- 695,709 ----
+  	case NID_des_ede3_cbc:
+  		*cipher = &cryptodev_3des_cbc;
+  		break;
++ 	case NID_des_ede3_ecb: //Added by Vincent Wu. 2011-02-21
++ 		*cipher = &cryptodev_3des_ecb;
++ 		break;			
+  	case NID_des_cbc:
+  		*cipher = &cryptodev_des_cbc;
+  		break;
++ 	case NID_des_ecb: //Added by Vincent Wu. 2011-02-17
++ 		*cipher = &cryptodev_des_ecb;
++ 		break;
+  	case NID_bf_cbc:
+  		*cipher = &cryptodev_bf_cbc;
+  		break;
+***************
+*** 634,639 ****
+--- 719,730 ----
+  	case NID_aes_256_cbc:
+  		*cipher = &cryptodev_aes_256_cbc;
+  		break;
++ 	case NID_aes_128_ecb://Added by Vincent Wu. 2011-02-21
++ 		*cipher = &cryptodev_aes_128_ecb;
++ 		break;
++ 	case NID_aes_256_ecb://Added by Vincent Wu. 2011-02-21
++ 		*cipher = &cryptodev_aes_256_ecb;
++ 		break;
+  	default:
+  		*cipher = NULL;
+  		break;
+***************
+*** 850,855 ****
+--- 941,994 ----
+  	SHA_CBLOCK,
+  	sizeof(struct dev_crypto_state),
+  };
++ /* SHA 256 EVP, added by Vincent Wu. 2011-02-22*/
++ const EVP_MD cryptodev_sha256 = {
++ 	NID_sha256,
++ 	NID_undef, 
++ 	SHA256_DIGEST_LENGTH, 
++ 	EVP_MD_FLAG_ONESHOT,
++ 	cryptodev_digest_init,
++ 	cryptodev_digest_update,
++ 	cryptodev_digest_final,
++ 	cryptodev_digest_copy,
++ 	cryptodev_digest_cleanup,
++ 	EVP_PKEY_NULL_method,
++ 	SHA256_CBLOCK,
++ 	sizeof(struct dev_crypto_state),
++ };
++ 
++ /* SHA 256 EVP, added by Vincent Wu. 2011-02-22*/
++ const EVP_MD cryptodev_sha384 = {
++ 	NID_sha384,
++ 	NID_undef, 
++ 	SHA384_DIGEST_LENGTH, 
++ 	EVP_MD_FLAG_ONESHOT,
++ 	cryptodev_digest_init,
++ 	cryptodev_digest_update,
++ 	cryptodev_digest_final,
++ 	cryptodev_digest_copy,
++ 	cryptodev_digest_cleanup,
++ 	EVP_PKEY_NULL_method,
++ 	SHA512_CBLOCK,
++ 	sizeof(struct dev_crypto_state),
++ };
++ 
++ /* SHA 512 EVP, added by Vincent Wu. 2011-02-22*/
++ const EVP_MD cryptodev_sha512 = {
++ 	NID_sha512,
++ 	NID_undef, 
++ 	SHA512_DIGEST_LENGTH, 
++ 	EVP_MD_FLAG_ONESHOT,
++ 	cryptodev_digest_init,
++ 	cryptodev_digest_update,
++ 	cryptodev_digest_final,
++ 	cryptodev_digest_copy,
++ 	cryptodev_digest_cleanup,
++ 	EVP_PKEY_NULL_method,
++ 	SHA512_CBLOCK,
++ 	sizeof(struct dev_crypto_state),
++ };
++ 
+  
+  const EVP_MD cryptodev_md5 = {
+  	NID_md5,

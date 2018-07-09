@@ -1,0 +1,393 @@
+manage.o manage.o: ../manage.c config.h ../syshead.h \
+  /usr/local/arm-linux/lib/gcc/arm-linux/4.2.1/../../../../arm-linux/include/sys/types.h \
+  /usr/local/arm-linux/lib/gcc/arm-linux/4.2.1/../../../../arm-linux/include/features.h \
+  /usr/local/arm-linux/lib/gcc/arm-linux/4.2.1/../../../../arm-linux/include/sys/cdefs.h \
+  /usr/local/arm-linux/lib/gcc/arm-linux/4.2.1/../../../../arm-linux/include/gnu/stubs.h \
+  /usr/local/arm-linux/lib/gcc/arm-linux/4.2.1/../../../../arm-linux/include/bits/types.h \
+  /usr/local/arm-linux/lib/gcc/arm-linux/4.2.1/include/stddef.h \
+  /usr/local/arm-linux/lib/gcc/arm-linux/4.2.1/../../../../arm-linux/include/bits/pthreadtypes.h \
+  /usr/local/arm-linux/lib/gcc/arm-linux/4.2.1/../../../../arm-linux/include/bits/sched.h \
+  /usr/local/arm-linux/lib/gcc/arm-linux/4.2.1/../../../../arm-linux/include/time.h \
+  /usr/local/arm-linux/lib/gcc/arm-linux/4.2.1/../../../../arm-linux/include/endian.h \
+  /usr/local/arm-linux/lib/gcc/arm-linux/4.2.1/../../../../arm-linux/include/bits/endian.h \
+  /usr/local/arm-linux/lib/gcc/arm-linux/4.2.1/../../../../arm-linux/include/sys/select.h \
+  /usr/local/arm-linux/lib/gcc/arm-linux/4.2.1/../../../../arm-linux/include/bits/select.h \
+  /usr/local/arm-linux/lib/gcc/arm-linux/4.2.1/../../../../arm-linux/include/bits/sigset.h \
+  /usr/local/arm-linux/lib/gcc/arm-linux/4.2.1/../../../../arm-linux/include/bits/time.h \
+  /usr/local/arm-linux/lib/gcc/arm-linux/4.2.1/../../../../arm-linux/include/sys/sysmacros.h \
+  /usr/local/arm-linux/lib/gcc/arm-linux/4.2.1/../../../../arm-linux/include/sys/wait.h \
+  /usr/local/arm-linux/lib/gcc/arm-linux/4.2.1/../../../../arm-linux/include/signal.h \
+  /usr/local/arm-linux/lib/gcc/arm-linux/4.2.1/../../../../arm-linux/include/bits/signum.h \
+  /usr/local/arm-linux/lib/gcc/arm-linux/4.2.1/../../../../arm-linux/include/bits/siginfo.h \
+  /usr/local/arm-linux/lib/gcc/arm-linux/4.2.1/../../../../arm-linux/include/bits/wordsize.h \
+  /usr/local/arm-linux/lib/gcc/arm-linux/4.2.1/../../../../arm-linux/include/bits/sigaction.h \
+  /usr/local/arm-linux/lib/gcc/arm-linux/4.2.1/../../../../arm-linux/include/bits/sigcontext.h \
+  /usr/local/arm-linux/lib/gcc/arm-linux/4.2.1/../../../../arm-linux/include/asm/sigcontext.h \
+  /usr/local/arm-linux/lib/gcc/arm-linux/4.2.1/../../../../arm-linux/include/bits/sigstack.h \
+  /usr/local/arm-linux/lib/gcc/arm-linux/4.2.1/../../../../arm-linux/include/bits/sigthread.h \
+  /usr/local/arm-linux/lib/gcc/arm-linux/4.2.1/../../../../arm-linux/include/sys/resource.h \
+  /usr/local/arm-linux/lib/gcc/arm-linux/4.2.1/../../../../arm-linux/include/bits/resource.h \
+  /usr/local/arm-linux/lib/gcc/arm-linux/4.2.1/../../../../arm-linux/include/bits/waitflags.h \
+  /usr/local/arm-linux/lib/gcc/arm-linux/4.2.1/../../../../arm-linux/include/bits/waitstatus.h \
+  /usr/local/arm-linux/lib/gcc/arm-linux/4.2.1/../../../../arm-linux/include/sys/time.h \
+  /usr/local/arm-linux/lib/gcc/arm-linux/4.2.1/../../../../arm-linux/include/sys/socket.h \
+  /usr/local/arm-linux/lib/gcc/arm-linux/4.2.1/../../../../arm-linux/include/sys/uio.h \
+  /usr/local/arm-linux/lib/gcc/arm-linux/4.2.1/../../../../arm-linux/include/bits/uio.h \
+  /usr/local/arm-linux/lib/gcc/arm-linux/4.2.1/../../../../arm-linux/include/bits/socket.h \
+  /usr/local/arm-linux/lib/gcc/arm-linux/4.2.1/include/limits.h \
+  /usr/local/arm-linux/lib/gcc/arm-linux/4.2.1/../../../../arm-linux/include/bits/sockaddr.h \
+  /usr/local/arm-linux/lib/gcc/arm-linux/4.2.1/../../../../arm-linux/include/asm/socket.h \
+  /usr/local/arm-linux/lib/gcc/arm-linux/4.2.1/../../../../arm-linux/include/asm/sockios.h \
+  /usr/local/arm-linux/lib/gcc/arm-linux/4.2.1/../../../../arm-linux/include/sys/ioctl.h \
+  /usr/local/arm-linux/lib/gcc/arm-linux/4.2.1/../../../../arm-linux/include/bits/ioctls.h \
+  /usr/local/arm-linux/lib/gcc/arm-linux/4.2.1/../../../../arm-linux/include/asm/ioctls.h \
+  /usr/local/arm-linux/lib/gcc/arm-linux/4.2.1/../../../../arm-linux/include/asm/ioctl.h \
+  /usr/local/arm-linux/lib/gcc/arm-linux/4.2.1/../../../../arm-linux/include/asm-generic/ioctl.h \
+  /usr/local/arm-linux/lib/gcc/arm-linux/4.2.1/../../../../arm-linux/include/bits/ioctl-types.h \
+  /usr/local/arm-linux/lib/gcc/arm-linux/4.2.1/../../../../arm-linux/include/sys/ttydefaults.h \
+  /usr/local/arm-linux/lib/gcc/arm-linux/4.2.1/../../../../arm-linux/include/sys/stat.h \
+  /usr/local/arm-linux/lib/gcc/arm-linux/4.2.1/../../../../arm-linux/include/bits/stat.h \
+  /usr/local/arm-linux/lib/gcc/arm-linux/4.2.1/../../../../arm-linux/include/fcntl.h \
+  /usr/local/arm-linux/lib/gcc/arm-linux/4.2.1/../../../../arm-linux/include/bits/fcntl.h \
+  /usr/local/arm-linux/lib/gcc/arm-linux/4.2.1/../../../../arm-linux/include/sys/file.h \
+  /usr/local/arm-linux/lib/gcc/arm-linux/4.2.1/../../../../arm-linux/include/stdlib.h \
+  /usr/local/arm-linux/lib/gcc/arm-linux/4.2.1/../../../../arm-linux/include/alloca.h \
+  /usr/local/arm-linux/lib/gcc/arm-linux/4.2.1/../../../../arm-linux/include/stdint.h \
+  /usr/local/arm-linux/lib/gcc/arm-linux/4.2.1/../../../../arm-linux/include/bits/wchar.h \
+  /usr/local/arm-linux/lib/gcc/arm-linux/4.2.1/include/stdarg.h \
+  /usr/local/arm-linux/lib/gcc/arm-linux/4.2.1/../../../../arm-linux/include/unistd.h \
+  /usr/local/arm-linux/lib/gcc/arm-linux/4.2.1/../../../../arm-linux/include/bits/posix_opt.h \
+  /usr/local/arm-linux/lib/gcc/arm-linux/4.2.1/../../../../arm-linux/include/bits/confname.h \
+  /usr/local/arm-linux/lib/gcc/arm-linux/4.2.1/../../../../arm-linux/include/getopt.h \
+  /usr/local/arm-linux/lib/gcc/arm-linux/4.2.1/../../../../arm-linux/include/stdio.h \
+  /usr/local/arm-linux/lib/gcc/arm-linux/4.2.1/../../../../arm-linux/include/libio.h \
+  /usr/local/arm-linux/lib/gcc/arm-linux/4.2.1/../../../../arm-linux/include/_G_config.h \
+  /usr/local/arm-linux/lib/gcc/arm-linux/4.2.1/../../../../arm-linux/include/wchar.h \
+  /usr/local/arm-linux/lib/gcc/arm-linux/4.2.1/../../../../arm-linux/include/gconv.h \
+  /usr/local/arm-linux/lib/gcc/arm-linux/4.2.1/../../../../arm-linux/include/bits/stdio_lim.h \
+  /usr/local/arm-linux/lib/gcc/arm-linux/4.2.1/../../../../arm-linux/include/bits/stdio.h \
+  /usr/local/arm-linux/lib/gcc/arm-linux/4.2.1/../../../../arm-linux/include/ctype.h \
+  /usr/local/arm-linux/lib/gcc/arm-linux/4.2.1/../../../../arm-linux/include/errno.h \
+  /usr/local/arm-linux/lib/gcc/arm-linux/4.2.1/../../../../arm-linux/include/bits/errno.h \
+  /usr/local/arm-linux/lib/gcc/arm-linux/4.2.1/../../../../arm-linux/include/linux/errno.h \
+  /usr/local/arm-linux/lib/gcc/arm-linux/4.2.1/../../../../arm-linux/include/asm/errno.h \
+  /usr/local/arm-linux/lib/gcc/arm-linux/4.2.1/../../../../arm-linux/include/asm-generic/errno.h \
+  /usr/local/arm-linux/lib/gcc/arm-linux/4.2.1/../../../../arm-linux/include/asm-generic/errno-base.h \
+  /usr/local/arm-linux/lib/gcc/arm-linux/4.2.1/../../../../arm-linux/include/syslog.h \
+  /usr/local/arm-linux/lib/gcc/arm-linux/4.2.1/../../../../arm-linux/include/sys/syslog.h \
+  /usr/local/arm-linux/lib/gcc/arm-linux/4.2.1/../../../../arm-linux/include/pwd.h \
+  /usr/local/arm-linux/lib/gcc/arm-linux/4.2.1/../../../../arm-linux/include/grp.h \
+  /usr/local/arm-linux/lib/gcc/arm-linux/4.2.1/../../../../arm-linux/include/dlfcn.h \
+  /usr/local/arm-linux/lib/gcc/arm-linux/4.2.1/../../../../arm-linux/include/bits/dlfcn.h \
+  /usr/local/arm-linux/lib/gcc/arm-linux/4.2.1/../../../../arm-linux/include/netdb.h \
+  /usr/local/arm-linux/lib/gcc/arm-linux/4.2.1/../../../../arm-linux/include/netinet/in.h \
+  /usr/local/arm-linux/lib/gcc/arm-linux/4.2.1/../../../../arm-linux/include/bits/in.h \
+  /usr/local/arm-linux/lib/gcc/arm-linux/4.2.1/../../../../arm-linux/include/bits/byteswap.h \
+  /usr/local/arm-linux/lib/gcc/arm-linux/4.2.1/../../../../arm-linux/include/rpc/netdb.h \
+  /usr/local/arm-linux/lib/gcc/arm-linux/4.2.1/../../../../arm-linux/include/bits/netdb.h \
+  /usr/local/arm-linux/lib/gcc/arm-linux/4.2.1/../../../../arm-linux/include/sys/poll.h \
+  /usr/local/arm-linux/lib/gcc/arm-linux/4.2.1/../../../../arm-linux/include/bits/poll.h \
+  /usr/local/arm-linux/lib/gcc/arm-linux/4.2.1/../../../../arm-linux/include/string.h \
+  /usr/local/arm-linux/lib/gcc/arm-linux/4.2.1/../../../../arm-linux/include/bits/string.h \
+  /usr/local/arm-linux/lib/gcc/arm-linux/4.2.1/../../../../arm-linux/include/bits/string2.h \
+  /usr/local/arm-linux/lib/gcc/arm-linux/4.2.1/../../../../arm-linux/include/arpa/inet.h \
+  /usr/local/arm-linux/lib/gcc/arm-linux/4.2.1/../../../../arm-linux/include/net/if.h \
+  /usr/local/arm-linux/lib/gcc/arm-linux/4.2.1/../../../../arm-linux/include/netinet/if_ether.h \
+  /usr/local/arm-linux/lib/gcc/arm-linux/4.2.1/../../../../arm-linux/include/linux/if_ether.h \
+  /usr/local/arm-linux/lib/gcc/arm-linux/4.2.1/../../../../arm-linux/include/linux/types.h \
+  /usr/local/arm-linux/lib/gcc/arm-linux/4.2.1/../../../../arm-linux/include/linux/posix_types.h \
+  /usr/local/arm-linux/lib/gcc/arm-linux/4.2.1/../../../../arm-linux/include/linux/stddef.h \
+  /usr/local/arm-linux/lib/gcc/arm-linux/4.2.1/../../../../arm-linux/include/linux/compiler.h \
+  /usr/local/arm-linux/lib/gcc/arm-linux/4.2.1/../../../../arm-linux/include/asm/posix_types.h \
+  /usr/local/arm-linux/lib/gcc/arm-linux/4.2.1/../../../../arm-linux/include/asm/types.h \
+  /usr/local/arm-linux/lib/gcc/arm-linux/4.2.1/../../../../arm-linux/include/net/ethernet.h \
+  /usr/local/arm-linux/lib/gcc/arm-linux/4.2.1/../../../../arm-linux/include/net/if_arp.h \
+  /usr/local/arm-linux/lib/gcc/arm-linux/4.2.1/../../../../arm-linux/include/linux/if_tun.h \
+  /usr/local/arm-linux/lib/gcc/arm-linux/4.2.1/../../../../arm-linux/include/netinet/ip.h \
+  /usr/local/arm-linux/lib/gcc/arm-linux/4.2.1/../../../../arm-linux/include/linux/sockios.h \
+  /usr/local/arm-linux/lib/gcc/arm-linux/4.2.1/../../../../arm-linux/include/linux/errqueue.h \
+  /usr/local/arm-linux/lib/gcc/arm-linux/4.2.1/../../../../arm-linux/include/sys/mman.h \
+  /usr/local/arm-linux/lib/gcc/arm-linux/4.2.1/../../../../arm-linux/include/bits/mman.h \
+  ../error.h ../basic.h ../thread.h ../common.h ../errlevel.h ../fdmisc.h \
+  ../options.h ../mtu.h ../buffer.h ../route.h ../tun.h ../win32.h \
+  ../event.h ../sig.h ../status.h ../interval.h ../otime.h ../integer.h \
+  ../perf.h ../proto.h ../misc.h ../socket.h ../proxy.h ../socks.h \
+  ../plugin.h ../openvpn-plugin.h ../manage.h ../memdbg.h
+
+config.h:
+
+../syshead.h:
+
+/usr/local/arm-linux/lib/gcc/arm-linux/4.2.1/../../../../arm-linux/include/sys/types.h:
+
+/usr/local/arm-linux/lib/gcc/arm-linux/4.2.1/../../../../arm-linux/include/features.h:
+
+/usr/local/arm-linux/lib/gcc/arm-linux/4.2.1/../../../../arm-linux/include/sys/cdefs.h:
+
+/usr/local/arm-linux/lib/gcc/arm-linux/4.2.1/../../../../arm-linux/include/gnu/stubs.h:
+
+/usr/local/arm-linux/lib/gcc/arm-linux/4.2.1/../../../../arm-linux/include/bits/types.h:
+
+/usr/local/arm-linux/lib/gcc/arm-linux/4.2.1/include/stddef.h:
+
+/usr/local/arm-linux/lib/gcc/arm-linux/4.2.1/../../../../arm-linux/include/bits/pthreadtypes.h:
+
+/usr/local/arm-linux/lib/gcc/arm-linux/4.2.1/../../../../arm-linux/include/bits/sched.h:
+
+/usr/local/arm-linux/lib/gcc/arm-linux/4.2.1/../../../../arm-linux/include/time.h:
+
+/usr/local/arm-linux/lib/gcc/arm-linux/4.2.1/../../../../arm-linux/include/endian.h:
+
+/usr/local/arm-linux/lib/gcc/arm-linux/4.2.1/../../../../arm-linux/include/bits/endian.h:
+
+/usr/local/arm-linux/lib/gcc/arm-linux/4.2.1/../../../../arm-linux/include/sys/select.h:
+
+/usr/local/arm-linux/lib/gcc/arm-linux/4.2.1/../../../../arm-linux/include/bits/select.h:
+
+/usr/local/arm-linux/lib/gcc/arm-linux/4.2.1/../../../../arm-linux/include/bits/sigset.h:
+
+/usr/local/arm-linux/lib/gcc/arm-linux/4.2.1/../../../../arm-linux/include/bits/time.h:
+
+/usr/local/arm-linux/lib/gcc/arm-linux/4.2.1/../../../../arm-linux/include/sys/sysmacros.h:
+
+/usr/local/arm-linux/lib/gcc/arm-linux/4.2.1/../../../../arm-linux/include/sys/wait.h:
+
+/usr/local/arm-linux/lib/gcc/arm-linux/4.2.1/../../../../arm-linux/include/signal.h:
+
+/usr/local/arm-linux/lib/gcc/arm-linux/4.2.1/../../../../arm-linux/include/bits/signum.h:
+
+/usr/local/arm-linux/lib/gcc/arm-linux/4.2.1/../../../../arm-linux/include/bits/siginfo.h:
+
+/usr/local/arm-linux/lib/gcc/arm-linux/4.2.1/../../../../arm-linux/include/bits/wordsize.h:
+
+/usr/local/arm-linux/lib/gcc/arm-linux/4.2.1/../../../../arm-linux/include/bits/sigaction.h:
+
+/usr/local/arm-linux/lib/gcc/arm-linux/4.2.1/../../../../arm-linux/include/bits/sigcontext.h:
+
+/usr/local/arm-linux/lib/gcc/arm-linux/4.2.1/../../../../arm-linux/include/asm/sigcontext.h:
+
+/usr/local/arm-linux/lib/gcc/arm-linux/4.2.1/../../../../arm-linux/include/bits/sigstack.h:
+
+/usr/local/arm-linux/lib/gcc/arm-linux/4.2.1/../../../../arm-linux/include/bits/sigthread.h:
+
+/usr/local/arm-linux/lib/gcc/arm-linux/4.2.1/../../../../arm-linux/include/sys/resource.h:
+
+/usr/local/arm-linux/lib/gcc/arm-linux/4.2.1/../../../../arm-linux/include/bits/resource.h:
+
+/usr/local/arm-linux/lib/gcc/arm-linux/4.2.1/../../../../arm-linux/include/bits/waitflags.h:
+
+/usr/local/arm-linux/lib/gcc/arm-linux/4.2.1/../../../../arm-linux/include/bits/waitstatus.h:
+
+/usr/local/arm-linux/lib/gcc/arm-linux/4.2.1/../../../../arm-linux/include/sys/time.h:
+
+/usr/local/arm-linux/lib/gcc/arm-linux/4.2.1/../../../../arm-linux/include/sys/socket.h:
+
+/usr/local/arm-linux/lib/gcc/arm-linux/4.2.1/../../../../arm-linux/include/sys/uio.h:
+
+/usr/local/arm-linux/lib/gcc/arm-linux/4.2.1/../../../../arm-linux/include/bits/uio.h:
+
+/usr/local/arm-linux/lib/gcc/arm-linux/4.2.1/../../../../arm-linux/include/bits/socket.h:
+
+/usr/local/arm-linux/lib/gcc/arm-linux/4.2.1/include/limits.h:
+
+/usr/local/arm-linux/lib/gcc/arm-linux/4.2.1/../../../../arm-linux/include/bits/sockaddr.h:
+
+/usr/local/arm-linux/lib/gcc/arm-linux/4.2.1/../../../../arm-linux/include/asm/socket.h:
+
+/usr/local/arm-linux/lib/gcc/arm-linux/4.2.1/../../../../arm-linux/include/asm/sockios.h:
+
+/usr/local/arm-linux/lib/gcc/arm-linux/4.2.1/../../../../arm-linux/include/sys/ioctl.h:
+
+/usr/local/arm-linux/lib/gcc/arm-linux/4.2.1/../../../../arm-linux/include/bits/ioctls.h:
+
+/usr/local/arm-linux/lib/gcc/arm-linux/4.2.1/../../../../arm-linux/include/asm/ioctls.h:
+
+/usr/local/arm-linux/lib/gcc/arm-linux/4.2.1/../../../../arm-linux/include/asm/ioctl.h:
+
+/usr/local/arm-linux/lib/gcc/arm-linux/4.2.1/../../../../arm-linux/include/asm-generic/ioctl.h:
+
+/usr/local/arm-linux/lib/gcc/arm-linux/4.2.1/../../../../arm-linux/include/bits/ioctl-types.h:
+
+/usr/local/arm-linux/lib/gcc/arm-linux/4.2.1/../../../../arm-linux/include/sys/ttydefaults.h:
+
+/usr/local/arm-linux/lib/gcc/arm-linux/4.2.1/../../../../arm-linux/include/sys/stat.h:
+
+/usr/local/arm-linux/lib/gcc/arm-linux/4.2.1/../../../../arm-linux/include/bits/stat.h:
+
+/usr/local/arm-linux/lib/gcc/arm-linux/4.2.1/../../../../arm-linux/include/fcntl.h:
+
+/usr/local/arm-linux/lib/gcc/arm-linux/4.2.1/../../../../arm-linux/include/bits/fcntl.h:
+
+/usr/local/arm-linux/lib/gcc/arm-linux/4.2.1/../../../../arm-linux/include/sys/file.h:
+
+/usr/local/arm-linux/lib/gcc/arm-linux/4.2.1/../../../../arm-linux/include/stdlib.h:
+
+/usr/local/arm-linux/lib/gcc/arm-linux/4.2.1/../../../../arm-linux/include/alloca.h:
+
+/usr/local/arm-linux/lib/gcc/arm-linux/4.2.1/../../../../arm-linux/include/stdint.h:
+
+/usr/local/arm-linux/lib/gcc/arm-linux/4.2.1/../../../../arm-linux/include/bits/wchar.h:
+
+/usr/local/arm-linux/lib/gcc/arm-linux/4.2.1/include/stdarg.h:
+
+/usr/local/arm-linux/lib/gcc/arm-linux/4.2.1/../../../../arm-linux/include/unistd.h:
+
+/usr/local/arm-linux/lib/gcc/arm-linux/4.2.1/../../../../arm-linux/include/bits/posix_opt.h:
+
+/usr/local/arm-linux/lib/gcc/arm-linux/4.2.1/../../../../arm-linux/include/bits/confname.h:
+
+/usr/local/arm-linux/lib/gcc/arm-linux/4.2.1/../../../../arm-linux/include/getopt.h:
+
+/usr/local/arm-linux/lib/gcc/arm-linux/4.2.1/../../../../arm-linux/include/stdio.h:
+
+/usr/local/arm-linux/lib/gcc/arm-linux/4.2.1/../../../../arm-linux/include/libio.h:
+
+/usr/local/arm-linux/lib/gcc/arm-linux/4.2.1/../../../../arm-linux/include/_G_config.h:
+
+/usr/local/arm-linux/lib/gcc/arm-linux/4.2.1/../../../../arm-linux/include/wchar.h:
+
+/usr/local/arm-linux/lib/gcc/arm-linux/4.2.1/../../../../arm-linux/include/gconv.h:
+
+/usr/local/arm-linux/lib/gcc/arm-linux/4.2.1/../../../../arm-linux/include/bits/stdio_lim.h:
+
+/usr/local/arm-linux/lib/gcc/arm-linux/4.2.1/../../../../arm-linux/include/bits/stdio.h:
+
+/usr/local/arm-linux/lib/gcc/arm-linux/4.2.1/../../../../arm-linux/include/ctype.h:
+
+/usr/local/arm-linux/lib/gcc/arm-linux/4.2.1/../../../../arm-linux/include/errno.h:
+
+/usr/local/arm-linux/lib/gcc/arm-linux/4.2.1/../../../../arm-linux/include/bits/errno.h:
+
+/usr/local/arm-linux/lib/gcc/arm-linux/4.2.1/../../../../arm-linux/include/linux/errno.h:
+
+/usr/local/arm-linux/lib/gcc/arm-linux/4.2.1/../../../../arm-linux/include/asm/errno.h:
+
+/usr/local/arm-linux/lib/gcc/arm-linux/4.2.1/../../../../arm-linux/include/asm-generic/errno.h:
+
+/usr/local/arm-linux/lib/gcc/arm-linux/4.2.1/../../../../arm-linux/include/asm-generic/errno-base.h:
+
+/usr/local/arm-linux/lib/gcc/arm-linux/4.2.1/../../../../arm-linux/include/syslog.h:
+
+/usr/local/arm-linux/lib/gcc/arm-linux/4.2.1/../../../../arm-linux/include/sys/syslog.h:
+
+/usr/local/arm-linux/lib/gcc/arm-linux/4.2.1/../../../../arm-linux/include/pwd.h:
+
+/usr/local/arm-linux/lib/gcc/arm-linux/4.2.1/../../../../arm-linux/include/grp.h:
+
+/usr/local/arm-linux/lib/gcc/arm-linux/4.2.1/../../../../arm-linux/include/dlfcn.h:
+
+/usr/local/arm-linux/lib/gcc/arm-linux/4.2.1/../../../../arm-linux/include/bits/dlfcn.h:
+
+/usr/local/arm-linux/lib/gcc/arm-linux/4.2.1/../../../../arm-linux/include/netdb.h:
+
+/usr/local/arm-linux/lib/gcc/arm-linux/4.2.1/../../../../arm-linux/include/netinet/in.h:
+
+/usr/local/arm-linux/lib/gcc/arm-linux/4.2.1/../../../../arm-linux/include/bits/in.h:
+
+/usr/local/arm-linux/lib/gcc/arm-linux/4.2.1/../../../../arm-linux/include/bits/byteswap.h:
+
+/usr/local/arm-linux/lib/gcc/arm-linux/4.2.1/../../../../arm-linux/include/rpc/netdb.h:
+
+/usr/local/arm-linux/lib/gcc/arm-linux/4.2.1/../../../../arm-linux/include/bits/netdb.h:
+
+/usr/local/arm-linux/lib/gcc/arm-linux/4.2.1/../../../../arm-linux/include/sys/poll.h:
+
+/usr/local/arm-linux/lib/gcc/arm-linux/4.2.1/../../../../arm-linux/include/bits/poll.h:
+
+/usr/local/arm-linux/lib/gcc/arm-linux/4.2.1/../../../../arm-linux/include/string.h:
+
+/usr/local/arm-linux/lib/gcc/arm-linux/4.2.1/../../../../arm-linux/include/bits/string.h:
+
+/usr/local/arm-linux/lib/gcc/arm-linux/4.2.1/../../../../arm-linux/include/bits/string2.h:
+
+/usr/local/arm-linux/lib/gcc/arm-linux/4.2.1/../../../../arm-linux/include/arpa/inet.h:
+
+/usr/local/arm-linux/lib/gcc/arm-linux/4.2.1/../../../../arm-linux/include/net/if.h:
+
+/usr/local/arm-linux/lib/gcc/arm-linux/4.2.1/../../../../arm-linux/include/netinet/if_ether.h:
+
+/usr/local/arm-linux/lib/gcc/arm-linux/4.2.1/../../../../arm-linux/include/linux/if_ether.h:
+
+/usr/local/arm-linux/lib/gcc/arm-linux/4.2.1/../../../../arm-linux/include/linux/types.h:
+
+/usr/local/arm-linux/lib/gcc/arm-linux/4.2.1/../../../../arm-linux/include/linux/posix_types.h:
+
+/usr/local/arm-linux/lib/gcc/arm-linux/4.2.1/../../../../arm-linux/include/linux/stddef.h:
+
+/usr/local/arm-linux/lib/gcc/arm-linux/4.2.1/../../../../arm-linux/include/linux/compiler.h:
+
+/usr/local/arm-linux/lib/gcc/arm-linux/4.2.1/../../../../arm-linux/include/asm/posix_types.h:
+
+/usr/local/arm-linux/lib/gcc/arm-linux/4.2.1/../../../../arm-linux/include/asm/types.h:
+
+/usr/local/arm-linux/lib/gcc/arm-linux/4.2.1/../../../../arm-linux/include/net/ethernet.h:
+
+/usr/local/arm-linux/lib/gcc/arm-linux/4.2.1/../../../../arm-linux/include/net/if_arp.h:
+
+/usr/local/arm-linux/lib/gcc/arm-linux/4.2.1/../../../../arm-linux/include/linux/if_tun.h:
+
+/usr/local/arm-linux/lib/gcc/arm-linux/4.2.1/../../../../arm-linux/include/netinet/ip.h:
+
+/usr/local/arm-linux/lib/gcc/arm-linux/4.2.1/../../../../arm-linux/include/linux/sockios.h:
+
+/usr/local/arm-linux/lib/gcc/arm-linux/4.2.1/../../../../arm-linux/include/linux/errqueue.h:
+
+/usr/local/arm-linux/lib/gcc/arm-linux/4.2.1/../../../../arm-linux/include/sys/mman.h:
+
+/usr/local/arm-linux/lib/gcc/arm-linux/4.2.1/../../../../arm-linux/include/bits/mman.h:
+
+../error.h:
+
+../basic.h:
+
+../thread.h:
+
+../common.h:
+
+../errlevel.h:
+
+../fdmisc.h:
+
+../options.h:
+
+../mtu.h:
+
+../buffer.h:
+
+../route.h:
+
+../tun.h:
+
+../win32.h:
+
+../event.h:
+
+../sig.h:
+
+../status.h:
+
+../interval.h:
+
+../otime.h:
+
+../integer.h:
+
+../perf.h:
+
+../proto.h:
+
+../misc.h:
+
+../socket.h:
+
+../proxy.h:
+
+../socks.h:
+
+../plugin.h:
+
+../openvpn-plugin.h:
+
+../manage.h:
+
+../memdbg.h:

@@ -1,0 +1,257 @@
+Only in glibc-2.10.1.new: autom4te.cache
+Only in glibc-2.10.1.new: build-arm-be
+Only in glibc-2.10.1.new: build-arm-gnueabi-be
+Only in glibc-2.10.1.new: build-arm-gnueabi-le
+Only in glibc-2.10.1.new: build-arm-le
+diff -crB glibc-2.10.1/config.make.in glibc-2.10.1.new/config.make.in
+*** glibc-2.10.1/config.make.in	2009-05-09 11:59:38.000000000 -0400
+--- glibc-2.10.1.new/config.make.in	2010-12-02 09:12:12.000000000 -0500
+***************
+*** 10,16 ****
+  exec_prefix = @exec_prefix@
+  datadir = @datadir@
+  libdir = @libdir@
+! slibdir = @libc_cv_slibdir@
+  localedir = @libc_cv_localedir@
+  sysconfdir = @libc_cv_sysconfdir@
+  libexecdir = @libexecdir@
+--- 10,17 ----
+  exec_prefix = @exec_prefix@
+  datadir = @datadir@
+  libdir = @libdir@
+! #slibdir = @libc_cv_slibdir@
+! slibdir = @libdir@
+  localedir = @libc_cv_localedir@
+  sysconfdir = @libc_cv_sysconfdir@
+  libexecdir = @libexecdir@
+***************
+*** 61,66 ****
+--- 62,68 ----
+  have-libaudit = @have_libaudit@
+  have-libcap = @have_libcap@
+  have-cc-with-libunwind = @libc_cv_cc_with_libunwind@
++ have-cc-with-libgcc_eh = @libc_cv_cc_with_libgcc_eh@
+  fno-unit-at-a-time = @fno_unit_at_a_time@
+  bind-now = @bindnow@
+  have-hash-style = @libc_cv_hashstyle@
+diff -crB glibc-2.10.1/configure glibc-2.10.1.new/configure
+*** glibc-2.10.1/configure	2009-05-17 08:19:31.000000000 -0400
+--- glibc-2.10.1.new/configure	2010-12-02 09:11:12.000000000 -0500
+***************
+*** 691,696 ****
+--- 691,697 ----
+  libc_cv_libgcc_s_suffix
+  libc_cv_Bgroup
+  libc_cv_cc_with_libunwind
++ libc_cv_cc_with_libgcc_eh
+  VERSIONING
+  BISON
+  INSTALL_INFO
+***************
+*** 6392,6397 ****
+--- 6393,6425 ----
+  
+    fi
+  
++   { echo "$as_me:$LINENO: checking whether to link against libgcc_eh" >&5
++ echo $ECHO_N "checking whether to link against libgcc_eh... $ECHO_C" >&6; }
++ if test "${libc_cv_cc_with_libgcc_eh+set}" = set; then
++   echo $ECHO_N "(cached) $ECHO_C" >&6
++ else
++ 
++     cat > conftest.c <<EOF
++ int main (void) { return 0; }
++ EOF
++     if ${CC-cc} $CFLAGS $CPPFLAGS $LDFLAGS -static -o conftest \
++        conftest.c -v 2>&1 >/dev/null | grep -q " -lgcc_eh "; then
++       libc_cv_cc_with_libgcc_eh=yes
++     else
++       libc_cv_cc_with_libgcc_eh=no
++     fi
++     rm -f conftest*
++ fi
++ { echo "$as_me:$LINENO: result: $libc_cv_cc_with_libgcc_eh" >&5
++ echo "${ECHO_T}$libc_cv_cc_with_libgcc_eh" >&6; }
++ 
++   if test $libc_cv_cc_with_libgcc_eh = yes; then
++     cat >>confdefs.h <<\_ACEOF
++ #define HAVE_CC_WITH_LIBGCC_EH 1
++ _ACEOF
++ 
++   fi
++ 
+    { $as_echo "$as_me:$LINENO: checking for -z nodelete option" >&5
+  $as_echo_n "checking for -z nodelete option... " >&6; }
+  if test "${libc_cv_z_nodelete+set}" = set; then
+diff -crB glibc-2.10.1/configure.in glibc-2.10.1.new/configure.in
+*** glibc-2.10.1/configure.in	2009-04-03 19:51:47.000000000 -0400
+--- glibc-2.10.1.new/configure.in	2010-12-02 09:11:12.000000000 -0500
+***************
+*** 1470,1475 ****
+--- 1470,1492 ----
+      AC_DEFINE(HAVE_CC_WITH_LIBUNWIND)
+    fi
+  
++   AC_CACHE_CHECK(whether to link against libgcc_eh,
++                  libc_cv_cc_with_libgcc_eh, [
++     cat > conftest.c <<EOF
++ int main (void) { return 0; }
++ EOF
++     if ${CC-cc} $CFLAGS $CPPFLAGS $LDFLAGS -static -o conftest \
++        conftest.c -v 2>&1 >/dev/null | grep -q " -lgcc_eh "; then
++       libc_cv_cc_with_libgcc_eh=yes
++     else
++       libc_cv_cc_with_libgcc_eh=no
++     fi
++     rm -f conftest*])
++   AC_SUBST(libc_cv_cc_with_libgcc_eh)
++   if test $libc_cv_cc_with_libgcc_eh = yes; then
++     AC_DEFINE(HAVE_CC_WITH_LIBGCC_EH)
++   fi
++ 
+    AC_CACHE_CHECK(for -z nodelete option,
+  		 libc_cv_z_nodelete, [dnl
+    cat > conftest.c <<EOF
+Only in glibc-2.10.1.new: configure.in.orig
+Only in glibc-2.10.1.new: doall-gnueabi.sh
+Only in glibc-2.10.1.new: doall.sh
+diff -crB glibc-2.10.1/Makeconfig glibc-2.10.1.new/Makeconfig
+*** glibc-2.10.1/Makeconfig	2009-05-09 17:57:56.000000000 -0400
+--- glibc-2.10.1.new/Makeconfig	2010-12-02 09:13:00.000000000 -0500
+***************
+*** 192,197 ****
+--- 192,198 ----
+  inst_libdir = $(install_root)$(libdir)
+  
+  # Where to install the shared library and dynamic linker.
++ slibdir = $(libdir)
+  ifndef slibdir
+  slibdir = $(exec_prefix)/lib
+  endif
+***************
+*** 525,536 ****
+    libunwind = -lunwind
+  endif
+  ifneq ($(have-as-needed),yes)
+   libgcc_eh := -lgcc_eh $(libunwind)
+  else
+   libgcc_eh := -Wl,--as-needed -lgcc_s$(libgcc_s_suffix) $(libunwind) -Wl,--no-as-needed
+  endif
+  gnulib := -lgcc $(libgcc_eh)
+! static-gnulib := -lgcc -lgcc_eh $(libunwind)
+  libc.so-gnulib := -lgcc
+  endif
+  ifeq ($(elf),yes)
+--- 526,545 ----
+    libunwind = -lunwind
+  endif
+  ifneq ($(have-as-needed),yes)
++ ifneq ($(have-cc-with-libgcc_eh),yes)
++  libgcc_eh := $(libunwind)
++ else
+   libgcc_eh := -lgcc_eh $(libunwind)
++ endif
+  else
+   libgcc_eh := -Wl,--as-needed -lgcc_s$(libgcc_s_suffix) $(libunwind) -Wl,--no-as-needed
+  endif
+  gnulib := -lgcc $(libgcc_eh)
+! ifneq ($(have-cc-with-libgcc_eh),yes)
+!  static-gnulib := -lgcc $(libunwind)
+! else
+!  static-gnulib := -lgcc -lgcc_eh $(libunwind)
+! endif
+  libc.so-gnulib := -lgcc
+  endif
+  ifeq ($(elf),yes)
+Only in glibc-2.10.1.new/manual: add.c.texi
+Only in glibc-2.10.1.new/manual: argp-ex1.c.texi
+Only in glibc-2.10.1.new/manual: argp-ex2.c.texi
+Only in glibc-2.10.1.new/manual: argp-ex3.c.texi
+Only in glibc-2.10.1.new/manual: argp-ex4.c.texi
+Only in glibc-2.10.1.new/manual: atexit.c.texi
+Only in glibc-2.10.1.new/manual: chapters.texi
+Only in glibc-2.10.1.new/manual: db.c.texi
+Only in glibc-2.10.1.new/manual: dir2.c.texi
+Only in glibc-2.10.1.new/manual: dir-add.texi
+Only in glibc-2.10.1.new/manual: dir.c.texi
+Only in glibc-2.10.1.new/manual: execinfo.c.texi
+Only in glibc-2.10.1.new/manual: filecli.c.texi
+Only in glibc-2.10.1.new/manual: filesrv.c.texi
+Only in glibc-2.10.1.new/manual: fmtmsgexpl.c.texi
+Only in glibc-2.10.1.new/manual: genpass.c.texi
+Only in glibc-2.10.1.new/manual: inetcli.c.texi
+Only in glibc-2.10.1.new/manual: inetsrv.c.texi
+Only in glibc-2.10.1.new/manual: isockad.c.texi
+Only in glibc-2.10.1.new/manual: libc.info
+Only in glibc-2.10.1.new/manual: libc.info-1
+Only in glibc-2.10.1.new/manual: libc.info-10
+Only in glibc-2.10.1.new/manual: libc.info-11
+Only in glibc-2.10.1.new/manual: libc.info-2
+Only in glibc-2.10.1.new/manual: libc.info-3
+Only in glibc-2.10.1.new/manual: libc.info-4
+Only in glibc-2.10.1.new/manual: libc.info-5
+Only in glibc-2.10.1.new/manual: libc.info-6
+Only in glibc-2.10.1.new/manual: libc.info-7
+Only in glibc-2.10.1.new/manual: libc.info-8
+Only in glibc-2.10.1.new/manual: libc.info-9
+Only in glibc-2.10.1.new/manual: libm-err.texi
+Only in glibc-2.10.1.new/manual: longopt.c.texi
+Only in glibc-2.10.1.new/manual: memopen.c.texi
+Only in glibc-2.10.1.new/manual: memstrm.c.texi
+Only in glibc-2.10.1.new/manual: mkfsock.c.texi
+Only in glibc-2.10.1.new/manual: mkisock.c.texi
+Only in glibc-2.10.1.new/manual: mygetpass.c.texi
+Only in glibc-2.10.1.new/manual: pipe.c.texi
+Only in glibc-2.10.1.new/manual: popen.c.texi
+Only in glibc-2.10.1.new/manual: rprintf.c.texi
+Only in glibc-2.10.1.new/manual: search.c.texi
+Only in glibc-2.10.1.new/manual: select.c.texi
+Only in glibc-2.10.1.new/manual: setjmp.c.texi
+Only in glibc-2.10.1.new/manual: sigh1.c.texi
+Only in glibc-2.10.1.new/manual: sigusr.c.texi
+Only in glibc-2.10.1.new/manual: stamp-libm-err
+Only in glibc-2.10.1.new/manual: stamp-summary
+Only in glibc-2.10.1.new/manual: stpcpy.c.texi
+Only in glibc-2.10.1.new/manual: strdupa.c.texi
+Only in glibc-2.10.1.new/manual: strftim.c.texi
+Only in glibc-2.10.1.new/manual: strncat.c.texi
+Only in glibc-2.10.1.new/manual: subopt.c.texi
+Only in glibc-2.10.1.new/manual: summary.texi
+Only in glibc-2.10.1.new/manual: swapcontext.c.texi
+Only in glibc-2.10.1.new/manual: termios.c.texi
+Only in glibc-2.10.1.new/manual: testopt.c.texi
+Only in glibc-2.10.1.new/manual: testpass.c.texi
+Only in glibc-2.10.1.new/manual: texis
+Only in glibc-2.10.1.new/manual: top-menu.texi
+Only in glibc-2.10.1.new/po: be.mo
+Only in glibc-2.10.1.new/po: bg.mo
+Only in glibc-2.10.1.new/po: ca.mo
+Only in glibc-2.10.1.new/po: cs.mo
+Only in glibc-2.10.1.new/po: da.mo
+Only in glibc-2.10.1.new/po: de.mo
+Only in glibc-2.10.1.new/po: el.mo
+Only in glibc-2.10.1.new/po: en_GB.mo
+Only in glibc-2.10.1.new/po: es.mo
+Only in glibc-2.10.1.new/po: fi.mo
+Only in glibc-2.10.1.new/po: fr.mo
+Only in glibc-2.10.1.new/po: gl.mo
+Only in glibc-2.10.1.new/po: hr.mo
+Only in glibc-2.10.1.new/po: hu.mo
+Only in glibc-2.10.1.new/po: id.mo
+Only in glibc-2.10.1.new/po: it.mo
+Only in glibc-2.10.1.new/po: ja.mo
+Only in glibc-2.10.1.new/po: ko.mo
+Only in glibc-2.10.1.new/po: lt.mo
+Only in glibc-2.10.1.new/po: nb.mo
+Only in glibc-2.10.1.new/po: nl.mo
+Only in glibc-2.10.1.new/po: pl.mo
+Only in glibc-2.10.1.new/po: pt_BR.mo
+Only in glibc-2.10.1.new/po: ru.mo
+Only in glibc-2.10.1.new/po: rw.mo
+Only in glibc-2.10.1.new/po: sk.mo
+Only in glibc-2.10.1.new/po: sv.mo
+Only in glibc-2.10.1.new/po: tr.mo
+Only in glibc-2.10.1.new/po: vi.mo
+Only in glibc-2.10.1.new/po: zh_CN.mo
+Only in glibc-2.10.1.new/po: zh_TW.mo
+Only in glibc-2.10.1.new: ports

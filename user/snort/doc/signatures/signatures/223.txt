@@ -1,0 +1,76 @@
+
+
+--
+Rule:
+alert udp $EXTERNAL_NET any -> $HOME_NET 31335 (msg:"DDOS
+Trin00\:DaemontoMaster(PONGdetected)";
+content:"PONG";reference:arachnids,187; classtype:attempted-recon;
+sid:223; rev:1;) 
+
+--
+Sid:
+223
+
+--
+Summary:
+A pong packet for the Trinoo (aka trin00) DDos suite was
+detected heading from a trin00 client (daemon) to the trin00 master.
+This is in response to a "png" command (ping) from the master.
+
+--
+Impact:
+System comprimise if the PONG packet was destined for your machine
+(indicating your machine is the master).  On the flipside, if your
+machine is the one sending the PONG packet, chances are high that you
+have also been comprimised.  Once a machine becomes part of a trin00
+network, a Denial of Service (DoS) is typically initiated against one
+(or more) victim machines.
+
+--
+Detailed Information:
+Trinoo was the first DDoS tool to make serious headlines.  Once the
+client has been installed on a comprimised machine and a master is
+ready and listening, the master sends a "png" (ping) command to its
+drones in an attempt to see who is alive.  A client that is alive will
+respond to port 31335/udp with the text "PONG".
+
+--
+Attack Scenarios:
+As part of a large scale attack against a machine or a network, an
+attacker will comprimise large numbers of machines which will form the
+army that the trin00 master daemon will command.  The master daemon
+typically instructs the clients to send mass-quantities of packets to
+a set of victim hosts.  If the traffic is sufficient, the victim
+machines will become resource deprived.
+
+--
+Ease of Attack:
+Medium.  Use of this tool requires a comprimised system from which to
+to run (unless you choose to just run it on your own machine).  Once a
+machine has been comprimsed, 
+
+--
+False Positives:
+Rare.  The current version of trin00 ships with a configuration
+sending a PONG packet over udp to port 31335.  Communication via udp
+to such a high port is fairly uncommon.  That, coupled with the
+PONG string, make this rule fairly foolproof.
+
+--
+False Negatives:
+Rare unless newer versions change port/protocol/message.
+
+--
+Corrective Action:
+Disconnect your machine(s) from the network immediately.  Attempt to
+determine if your machine was being used as part of a trin00 network.
+This may be difficult, given that the system has likely been
+comprimised and had a root kit installed.   
+
+--
+Contributors:
+Jon Hart <warchild@spoofed.org>
+
+-- 
+Additional References:
+http://www.sans.org/newlook/resources/IDFAQ/trinoo.htm

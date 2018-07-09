@@ -1,0 +1,32 @@
+diff -urN dhcp-3.1.1/configure dhcp-3.1.1.new/configure
+--- dhcp-3.1.1/configure	2005-03-18 04:14:55.000000000 +0800
++++ dhcp-3.1.1.new/configure	2013-11-28 13:41:19.000000000 +0800
+@@ -1,7 +1,5 @@
+ #!/bin/sh
+ 
+-#sysname=$1
+-
+ while [ $# != 0 ]; do
+   if [ x$1 = x--with-nsupdate ]; then
+     echo "nsupdate is always built now."
+@@ -189,7 +187,11 @@
+ 
+ if [ "$sysname" = "" ]; then
+   if [ x$print_sysname = xyes ]; then
+-    echo "unknown"
++    if [ -f ./.sysname ]; then
++      cat ./.sysname
++    else
++      echo "unknown"
++    fi
+   else
+     echo "UNIX name: $uname    machine: $machine"
+     echo
+@@ -234,6 +236,7 @@
+   fi
+ fi
+ 
++echo $sysname > ./.sysname
+ echo "System Type: $sysname"
+ 
+ if [ x$major != x ] && [ x$minor != x ]; then

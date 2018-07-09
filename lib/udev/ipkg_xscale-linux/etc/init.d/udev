@@ -1,0 +1,115 @@
+#!/bin/sh -e
+
+create_dev_root_rule() {
+  local udevroot="$1"
+  [ -e $udevroot/rules.d/61-dev-root-link.rules ] && return 0
+
+  eval $(udevadm info --export --export-prefix=ROOT_ --device-id-of-file=/ \
+    || true)
+  [ "$ROOT_MAJOR" -a "$ROOT_MINOR" ] || return 0
+
+  echo 'ACTION=="add|change", SUBSYSTEM=="block", ENV{MAJOR}=="'$ROOT_MAJOR'", ENV{MINOR}=="'$ROOT_MINOR'", SYMLINK+="root"' \
+    > $udevroot/root-link-rule
+  mv $udevroot/root-link-rule $udevroot/rules.d/61-dev-root-link.rules
+}
+
+##############################################################################
+
+[ -x /sbin/udevd ] || exit 0
+
+PATH="/sbin:/bin"
+
+# defaults
+tmpfs_size="4M"
+udev_root="/dev"
+
+if [ -e /etc/udev/udev.conf ]; then
+  . /etc/udev/udev.conf
+fi
+
+##############################################################################
+
+udev_root="/dev"
+
+dev_mount_options='mode=0755'
+if [ "$tmpfs_size" ]; then
+  dev_mount_options="size=${tmpfs_size},${dev_mount_options}"
+fi
+
+case "$1" in
+    start)
+
+    echo > /sys/kernel/uevent_helper
+
+    mount -n -o $dev_mount_options -t tmpfs nodev $udev_root
+
+    echo "Starting the hotplug events dispatcher" "udevd"
+    if udevd --daemon; then
+	echo "$?"
+    else
+	echo "$?"
+    fi
+
+    mkdir -p $udev_root/.udev/rules.d/
+    create_dev_root_rule $udev_root/.udev/
+
+    # Jared, Create udev for mounting /dev/shm and pts
+    mkdir -p $udev_root/shm \
+    $udev_root/pts
+    mknod /dev/null -m 0666 c 1 3
+    #mount -t tmpfs nodev $udev_root/shm
+
+    echo "Synthesizing initial hotplug events"
+    if udevadm trigger --action=add; then
+	echo "$?"
+    else
+	echo "$?"
+    fi
+
+    # Jared, if not trigger the crda event, kernel will pending the regulatory request and
+    # `iw reg set <COUNTRY>` command will not work
+    echo "Synthesizing initial crda events"
+    if udevadm trigger /sys/devices/platform/regulatory.0 ; then
+	echo "$?"
+    else
+	echo "$?"
+    fi
+
+    ;;
+    stop)
+    echo "Stopping the hotplug events dispatcher" "udevd"
+    if start-stop-daemon --stop --name udevd --quiet --oknodo --retry 5; then
+	echo "$?"
+    else
+	echo "$?"
+    fi
+
+    umount /dev/shm
+    rm -rf /dev/null
+    
+    echo "Unmounting $udev_root"
+    # unmounting with -l should never fail
+    if umount -n -l $udev_root; then
+	echo "$?"
+    else
+	echo "$?"
+    fi
+    ;;
+
+    restart)
+    $0 stop
+    $0 start
+    ;;
+
+    reload|force-reload)
+    udevadm control --reload-rules
+    ;;
+
+    *)
+    echo "Usage: /etc/init.d/udev {start|stop|restart|reload|force-reload}"
+    exit 1
+    ;;
+esac
+
+exit 0
+

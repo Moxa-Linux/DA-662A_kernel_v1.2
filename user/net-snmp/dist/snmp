@@ -1,0 +1,59 @@
+#!/bin/sh
+#
+# snmp This shell script takes care of starting and
+# stopping the net-snmp SNMP daemon
+#
+# description: snmpd is net-snmp SNMP daemon.
+
+RETVAL=0
+
+name="snmpd"
+prog="/usr/sbin/snmpd"
+args="-a -Lf /dev/null"
+pidf="/var/run/snmpd.pid"
+rundir="/var/lock/subsys"
+snmplib="/usr/lib"
+
+
+start() {
+	# Set the library path
+	find=`echo ${LD_LIBRARY_PATH} | grep "${snmplib}"`
+	[[ "${find}" = "" ]] && export LD_LIBRARY_PATH="${LD_LIBRARY_PATH}:${snmplib}"
+
+	# Start daemons.
+	echo -n "Starting ${name}: "
+	start-stop-daemon -S -m -b -p ${pidf} -x ${prog} -- ${args}
+	RETVAL=$?
+	[[ ${RETVAL} -eq 0 ]] && mkdir -p ${rundir} && touch ${rundir}/${name} && echo "done."
+}
+
+stop() {
+	# Stop daemons.
+	echo -n $"Shutting down ${name}: "
+	start-stop-daemon -K -n ${name}
+	RETVAL=$?
+	[[ ${RETVAL} -eq 0 ]] && rm -f ${rundir}/${name} && echo "done."
+}
+
+
+[ -x ${prog} ] || exit 0
+
+# See how we were called.
+case "$1" in
+	start)
+		start
+	;;
+	stop)
+		stop
+	;;
+	restart|reload)
+		stop
+		sleep 1
+		start
+	;;
+	*)
+		echo $"Usage: $0 {start|stop|restart|reload}"
+		exit 1
+esac
+
+exit ${RETVAL}

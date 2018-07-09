@@ -1,0 +1,11 @@
+Package: inetd-ipv6
+Version: 1.0.30
+Architecture: arm
+Maintainer: Victor Yu <victor.yu@moxa.com>
+Section: base
+Priority: required
+Description: inetd server daemon.
+ It is supported IPv6.
+ .
+Source: http://tiswww.case.edu/php/chet/bash/bashtop.html
+Depends:

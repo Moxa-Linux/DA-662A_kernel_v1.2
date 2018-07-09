@@ -1,0 +1,117 @@
+diff -crB ./build_xscale-linux/modutils/insmod.c build_xscale-linux.new/modutils/insmod.c
+*** ./build_xscale-linux/modutils/insmod.c	2009-05-28 00:00:23.000000000 +0800
+--- build_xscale-linux.new/modutils/insmod.c	2010-06-13 22:44:44.655527383 +0800
+***************
+*** 13,18 ****
+--- 13,21 ----
+  int insmod_main(int argc, char **argv) MAIN_EXTERNALLY_VISIBLE;
+  int insmod_main(int argc UNUSED_PARAM, char **argv)
+  {
++ #if 1  // Jared 2009-10-1
++         char **phead_argv=argv;
++ #endif
+  	char *filename;
+  	int rc;
+  
+***************
+*** 34,39 ****
+--- 37,47 ----
+  		bb_show_usage();
+  
+  	rc = bb_init_module(filename, parse_cmdline_module_options(argv));
++ 
++ #if 1 // Jared 2009-10-01
++ 	if (rc)
++         	rc = modprobe_main(argc, phead_argv);
++ #endif
+  	if (rc)
+  		bb_error_msg("can't insert '%s': %s", filename, moderror(rc));
+  
+diff -crB ./build_xscale-linux/modutils/modprobe.c build_xscale-linux.new/modutils/modprobe.c
+*** ./build_xscale-linux/modutils/modprobe.c	2010-06-13 23:02:43.880034734 +0800
+--- build_xscale-linux.new/modutils/modprobe.c	2010-06-13 22:44:44.655527383 +0800
+***************
+*** 235,241 ****
+--- 235,245 ----
+  		m2 = get_or_add_modentry(fn);
+  		if (option_mask32 & MODPROBE_OPT_REMOVE) {
+  			if (m2->flags & MODULE_FLAG_LOADED) {
++ #if 0 // Jared 11-02-2009 remove a module without blocking
+  				if (bb_delete_module(m2->modname, O_EXCL) != 0) {
++ #else
++ 	 			if (bb_delete_module(m->modname, O_NONBLOCK|O_EXCL) != 0) {
++ #endif
+  					if (first)
+  						rc = errno;
+  				} else {
+diff -crB ./build_xscale-linux/networking/ifupdown.c build_xscale-linux.new/networking/ifupdown.c
+*** ./build_xscale-linux/networking/ifupdown.c	2009-05-28 00:00:23.000000000 +0800
+--- build_xscale-linux.new/networking/ifupdown.c	2010-06-13 22:44:44.659528672 +0800
+***************
+*** 1272,1278 ****
+--- 1272,1284 ----
+  			if (cmds == iface_up) {
+  				char * const newiface = xasprintf("%s=%s", iface, liface);
+  				if (iface_state == NULL) {
++ #if 1 // Jared, 10-29-2009, If `ifdown lo`, it alwasy got hanged while the 6to4 tunneling is up. There should be some issue in the kernel, we skip to downing a lo interface in the /var/run/ifstate file. 
++ 					if ( strncmp(iface, "lo", 2 ) != 0 ) {
++ #endif
+  					llist_add_to_end(&state_list, newiface);
++ #if 1 // Jared, 10-29-2009, If `ifdown lo`, it alwasy got hanged while the 6to4 tunneling is up. There should be some issue in the kernel, we skip to downing a lo interface in the /var/run/ifstate file. 
++ 					}
++ #endif
+  				} else {
+  					free(iface_state->data);
+  					iface_state->data = newiface;
+diff -crB ./build_xscale-linux/networking/interface.c build_xscale-linux.new/networking/interface.c
+*** ./build_xscale-linux/networking/interface.c	2009-05-13 22:32:07.000000000 +0800
+--- build_xscale-linux.new/networking/interface.c	2010-06-13 22:56:18.647538740 +0800
+***************
+*** 812,817 ****
+--- 812,822 ----
+  };
+  #endif
+  #if ENABLE_FEATURE_HWIB
++ 
++ #ifndef ARPHRD_INFINIBAND  // Jared, 06-13-2010
++ 	#define ARPHRD_INFINIBAND 32             /* InfiniBand */ 
++ #endif
++ 
+  static const struct hwtype ib_hwtype = {
+  	.name  = "infiniband",
+  	.title = "InfiniBand",
+diff -crB ./build_xscale-linux/networking/libiproute/iplink.c build_xscale-linux.new/networking/libiproute/iplink.c
+*** ./build_xscale-linux/networking/libiproute/iplink.c	2009-05-28 00:00:23.000000000 +0800
+--- build_xscale-linux.new/networking/libiproute/iplink.c	2010-06-13 22:44:44.659528672 +0800
+***************
+*** 275,280 ****
+--- 275,286 ----
+  			set_address(&ifr0, 0);
+  		}
+  	}
++ #if 1 //Jared, 11-04-2009
++ 	if (strncmp(dev, "lo", 2)==0 && key == ARG_down) {
++ 		mask &= ~IFF_UP;
++ 		flags |= IFF_UP;
++ 	}
++ #endif
+  	if (mask)
+  		do_chflags(dev, flags, mask);
+  	return 0;
+diff -crB ./build_xscale-linux/util-linux/mount.c build_xscale-linux.new/util-linux/mount.c
+*** ./build_xscale-linux/util-linux/mount.c	2009-05-28 00:00:23.000000000 +0800
+--- build_xscale-linux.new/util-linux/mount.c	2010-06-13 22:44:44.659528672 +0800
+***************
+*** 1052,1058 ****
+--- 1052,1062 ----
+  	noac = 0;
+  	nordirplus = 0;
+  	retry = 10000;		/* 10000 minutes ~ 1 week */
++ #if 0 // Jared
+  	tcp = 0;
++ #else
++ 	tcp = 1;
++ #endif
+  
+  	mountprog = MOUNTPROG;
+  	mountvers = 0;

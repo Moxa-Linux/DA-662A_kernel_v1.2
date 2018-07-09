@@ -1,0 +1,22 @@
+=head2 Tue Jan 18 10:03:18 2011: C<Module> L<Device::SerialPort|Device::SerialPort>
+
+=over 4
+
+=item *
+
+C<installed into: /usr/local/arm-linux/lib/perl5/site_perl/5.10.1>
+
+=item *
+
+C<LINKTYPE: dynamic>
+
+=item *
+
+C<VERSION: 1.04>
+
+=item *
+
+C<EXE_FILES: modemtest>
+
+=back
+

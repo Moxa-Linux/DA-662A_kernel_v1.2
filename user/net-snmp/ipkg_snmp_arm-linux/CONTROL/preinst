@@ -1,0 +1,32 @@
+#!/bin/sh
+
+#echo "$0, $1"  >> /var/preinst
+
+
+case "$1" in
+  update)
+    ;;
+  install)
+  	# remove the original snmpd to replace with net-snmp
+  	[ -n "`ps|grep snmpd|grep -v grep`" ] && killall snmpd
+  	[ -n "`ps|grep snmptrapd|grep -v grep`" ] && killall snmptrapd
+
+	# remount the root file system to rw
+	mount -o remount,rw /
+
+	# remove the previous objects
+	mv /etc/snmp/snmpd.conf /etc/snmp/snmpd.conf.old
+	rm -rf /etc/snmp/mibs
+	rm -f /usr/bin/snmp*
+	rm -f /usr/sbin/snmp*
+	rm -f /usr/lib/libnetsnmp*
+    ;;
+  configure)
+    ;;
+  remove)
+    ;;
+  *)
+    ;;
+esac
+
+exit 0

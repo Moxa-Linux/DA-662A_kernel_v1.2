@@ -1,0 +1,80 @@
+
+CONFIGURE_TARGET := $(strip $(subst -, ,$(CROSS)))
+CONFIGURE_TARGET := $(word 1,$(CONFIGURE_TARGET))-$(word 2,$(CONFIGURE_TARGET))
+
+
+INSTALL_PREFIX = $(CURDIR)/build_$(CONFIGURE_TARGET)/install-me-here
+TC_INSTALL_PREFIX = $(TOOLCHAIN_DIR)/$(CONFIGURE_TARGET)
+TARGET_SRC=expat-2.0.1
+
+
+all: $(INSTALL_PREFIX)/lib/libexpat.so
+
+untar-all-source:
+	if [ ! -d $(TARGET_SRC) ]; then \
+		[ ! -f $(TARGET_SRC).tar.bz2 ] && wget http://www.stats.ox.ac.uk/pub/Rtools/goodies/sources/$(TARGET_SRC).tar.bz2; \
+		[ -f $(TARGET_SRC).tar.bz2 ] && tar xjf $(TARGET_SRC).tar.bz2; \
+	fi
+
+build:
+	if [ -d "build_$(CONFIGURE_TARGET)" ]; then \
+		rm -rf build_$(CONFIGURE_TARGET); \
+	fi
+	mkdir -p build_$(CONFIGURE_TARGET)
+	(cd build_$(CONFIGURE_TARGET); \
+	CC=$(CONFIGURE_TARGET)-gcc \
+	LD=$(CONFIGURE_TARGET)-ld \
+	STRIP=$(CONFIGURE_TARGET)-strip \
+	CXX=$(CONFIGURE_TARGET)-g++ \
+	CPP="$(CONFIGURE_TARGET)-gcc -E" \
+	AS=$(CONFIGURE_TARGET)-as \
+	NM=$(CONFIGURE_TARGET)-nm \
+	AR=$(CONFIGURE_TARGET)-ar \
+	RANLIB=$(CONFIGURE_TARGET)-ranlib \
+	../$(TARGET_SRC)/configure \
+	--prefix="$(INSTALL_PREFIX)" \
+	--host=arm-linux \
+	--build=i686-pc-linux \
+	--enable-shared \
+	)
+	make -C build_$(CONFIGURE_TARGET)
+	make -C build_$(CONFIGURE_TARGET) install
+
+
+$(INSTALL_PREFIX)/lib/libexpat.so:
+	make untar-all-source
+	make build
+
+$(TC_INSTALL_PREFIX)/lib/libexpat.so: $(INSTALL_PREFIX)lib/libexpat.so
+	make install
+
+
+# install into toolchain
+install:
+	cp -R $(INSTALL_PREFIX)/* $(TC_INSTALL_PREFIX)
+
+
+# install to romfs
+romfs: $(INSTALL_PREFIX)lib/libexpat.so
+	$(ROMFSINST) "$(INSTALL_PREFIX)/lib/libexpat.so*" /lib
+
+
+# copy from toolchain to romfs
+tc2romfs: $(TC_INSTALL_PREFIX)/lib/libexpat.so
+	$(ROMFSINST) "$(TC_INSTALL_PREFIX)/lib/libexpat.so*" /lib
+
+
+# only install include files & libraries
+min-install: $(INSTALL_PREFIX)lib/libexpat.so
+	cp -a $(INSTALL_PREFIX)/include/* $(TC_INSTALL_PREFIX)/include
+	cp -a $(INSTALL_PREFIX)/lib/*.a $(TC_INSTALL_PREFIX)/lib
+	cp -a $(INSTALL_PREFIX)/lib/*.so* $(TC_INSTALL_PREFIX)/lib
+
+
+clean:
+	make -f Makefile -C build_$(CONFIGURE_TARGET) distclean
+
+
+distclean: #clean
+	rm -rf build_*
+	rm -rf $(TARGET_SRC)

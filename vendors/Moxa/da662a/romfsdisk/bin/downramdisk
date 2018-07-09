@@ -1,0 +1,6 @@
+#!/bin/sh
+cd /
+fuser -m -k /mnt/ramdisk
+umount /mnt/ramdisk &> /dev/null
+freeramdisk /dev/ram1 &> /dev/null
+rm -fr /var/ramdisk

@@ -1,0 +1,9 @@
+Package: gettext
+Version: 0.18.1.1
+Architecture: arm
+Maintainer: Jared_wu <Jared_Wu@moxa.com>
+Section: base
+Priority: optional
+Description: translate message
+Source: http://www.gnu.org/software/gettext/
+Depends: 

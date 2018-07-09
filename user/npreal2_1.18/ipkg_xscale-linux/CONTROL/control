@@ -1,0 +1,9 @@
+Package: npreald
+Version: 1.18
+Architecture: xscale
+Maintainer: Jared.wu <Jared.Wu@moxa.com>
+Section: base
+Priority: optional
+Description: MOXA Linux Real TTY Driver
+Source: http://www.moxa.com/support/DownloadFile.aspx?type=support&id=952
+Depends: 

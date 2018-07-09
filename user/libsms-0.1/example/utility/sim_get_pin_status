@@ -1,0 +1,19 @@
+#!/bin/sh
+LPATH=/bin
+print_usage()
+{
+	echo "Usage: $0 [-h]        ; Get SIM card status";
+	echo ""
+}
+
+while getopts h options
+do
+	case $options in
+	h) print_usage;
+	   exit 0;;
+	?) print_usage;
+	   exit 2;;
+	esac
+done
+
+${LPATH}/egprscmd -b

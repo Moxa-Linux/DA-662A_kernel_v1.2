@@ -1,0 +1,9 @@
+Package: libphp5
+Version: 5.0.5
+Architecture: arm
+Maintainer: Jared_wu <Jared_Wu@moxa.com>
+Section: base
+Priority: optional
+Description: This package provides libphp5.so, which supports php web programming.
+Source: http://tw2.php.net/get/php-5.2.5.tar.bz2/from/tw.php.net/mirror
+Depends: libmysqlclient5 libxml2

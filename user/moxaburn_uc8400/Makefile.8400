@@ -1,0 +1,22 @@
+CC=xscale-linux-gcc
+STRIP=xscale-linux-strip
+
+EXEC=moxaburn
+LDFLAGS=-lpthread
+CFLAGS += -DFACTORY_MODE
+CFLAGS += -I../../lib/redboot_config -DARCH_UC8400 -DDEBUG -I../mtd-utils/include
+LDFLAGS += -lredboot -L../../lib/redboot_config
+
+all: $(EXEC)
+
+$(EXEC): $(EXEC).c
+	$(CC) $(CFLAGS) -o $@ $(EXEC).c $(LDFLAGS)
+	$(STRIP) $(EXEC)
+
+romfs:
+	$(STRIP) -s $(EXEC)
+	$(ROMFSINST) /bin/$(EXEC)
+#	cp -f ../../vendors/Moxa/$(CONFIG_PRODUCT)/moxaburn .
+
+clean:
+	rm -fr $(EXEC) $(EXEC).o

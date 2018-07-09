@@ -1,0 +1,73 @@
+#!/bin/sh
+
+IWCONFIG=/sbin/iwconfig
+
+if [ ! -x $IWCONFIG ]
+then
+  exit 0
+fi
+
+if [ -n "$IF_WIRELESS_SENS" ]
+then
+  $IWCONFIG sens "$IF_WIRELESS_SENS"
+fi
+
+if [ -n "$IF_WIRELESS_RATE" ]
+then
+  $IWCONFIG rate "$IF_WIRELESS_RATE"
+fi
+
+if [ -n "$IF_WIRELESS_RTS" ]
+then
+  $IWCONFIG rts "$IF_WIRELESS_RTS"
+fi
+
+if [ -n "$IF_WIRELESS_FRAG" ]
+then
+  $IWCONFIG frag "$IF_WIRELESS_FRAG"
+fi
+
+if [ -n "$IF_WIRELESS_POWER" ]
+then
+  $IWCONFIG power "$IF_WIRELESS_POWER"
+fi
+
+if [ -n "$IF_WIRELESS_TXPOWER" ]
+then
+  $IWCONFIG txpower "$IF_WIRELESS_TXPOWER"
+fi
+
+if [ -n "$IF_WIRELESS_FREQ" ]
+then
+  $IWCONFIG freq "$IF_WIRELESS_FREQ"
+fi
+
+if [ -n "$IF_WIRELESS_CHANNEL" ]
+then
+  $IWCONFIG channel "$IF_WIRELESS_CHANNEL"
+fi
+
+if [ -n "$IF_WIRELESS_ESSID" ]
+then
+  $IWCONFIG essid "$IF_WIRELESS_ESSID"
+fi
+
+if [ -n "$IF_WIRELESS_NICK" ]
+then
+  $IWCONFIG nick "$IF_WIRELESS_NICK"
+fi
+
+if [ -n "$IF_WIRELESS_NWID" ]
+then
+  $IWCONFIG nwid "$IF_WIRELESS_NWID"
+fi
+
+if [ -n "$IF_WIRELESS_ENC" ]
+then
+  $IWCONFIG enc "$IF_WIRELESS_ENC"
+fi
+
+if [ -n "$IF_WIRELESS_MODE" ]
+then
+  $IWCONFIG mode "$IF_WIRELESS_MODE"
+fi

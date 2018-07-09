@@ -1,0 +1,1119 @@
+2001-06-15  Chip Salzenberg  <chip@debian.org>
+
+	* debian/changelog: Version 0.3.2-2.
+	* debian/*.init: Minor fixes.
+
+2001-06-07  Lon H. Hohberger <hohberger@missioncriticallinux.com>
+
+	* etc/nodist/nfs-server: Fixed a bug where the script would
+	disable mounts from NFSv3 clients if NFSv3 is present.
+
+2001-06-05  H.J. Lu <hjl@lucon.org>
+
+	* utils/mountd/mountd.c (longopts): Add "descriptors/o".
+	(main): Support --descriptors/-o to set the limit of the number
+	of open file descriptors.
+	(usage): Updated.
+
+	* utils/mountd/mountd.man: Updated for --descriptors/-o.
+
+2001-06-04  H.J. Lu <hjl@lucon.org>
+
+	* nfs-utils.spec (Release): Set to 6.
+
+2001-05-28  H.J. Lu <hjl@lucon.org>
+
+	* utils/lockd/lockd.c (main): chdir to NFS_STATEDIR.
+	* utils/mountd/mountd.c (main): Likewise.
+	* utils/nfsd/nfsd.c (main): Likewise.
+	* utils/rquotad/rquota_svc.c (main): Likewise.
+
+2001-05-06  Anne Milicia <milicia@missioncriticallinux.com>
+
+	* support/export/client.c (client_check): Check IP address
+	againet netgroup.
+
+2001-05-06  Neil Brown <neilb@cse.unsw.edu.au>
+
+	* support/export/client.c (client_gettype): Treat `*' as
+	MCL_ANONYMOUS.
+
+2001-04-22  H.J. Lu <hjl@lucon.org>
+
+	* nfs-utils.spec.in: Fix a typo.
+	* nfs-utils.spec: Regenerated.
+
+2001-04-21  H.J. Lu <hjl@lucon.org>
+
+	* nfs-utils.spec.in: Fix cross build.
+	* nfs-utils.spec: Regenerated.
+	(Release): Set to 5.
+
+2001-04-18  H.J. Lu <hjl@lucon.org>
+
+	* nfs-utils.spec.in: Support cross build.
+	* nfs-utils.spec: Regenerated.
+	(Release): Set to 4.
+
+	* config.sub: New.
+	* config.guess: New.
+
+	* config.mk.in (BUILD_CC): New.
+	(CC): Set to  $(BUILD_CC) if BUILD is defined.
+	(AR): Set to @AR@.
+	(LD): Set to @LD@.
+	(RANLIB): Set to @RANLIB@.
+
+	* configure.in: Check BUILD_CC, RANLIB, AR and LD.
+	* configure: Regenerated.
+
+	* tools/rpcgen/Makefile (BUILD): Set to true.
+
+2001-04-01  Chip Salzenberg  <chip@valinux.com>
+
+	* tools/rpcgen/rpc_svcout.c (write_timeout_func): Remove
+	redundant, and sometimes broken, declaration of svc_fdset;
+	it may be a macro.
+	* support/nfs/rpcmisc.c (closedown): Likewise.
+	
+2001-03-21  H.J. Lu <hjl@lucon.org>
+
+	* nfs-utils.spec: Regenerated.
+	(Release): Set to 3.
+
+2001-03-21  Ion Badulescu  <ionut@cs.columbia.edu>
+
+	* utils/statd/statd.c (main): make sure file descriptors 0-2
+	are open to /dev/null.
+
+2001-03-21  H.J. Lu <hjl@lucon.org>
+
+	* support/nfs/rpcmisc.c: Restore the change made on 2001-03-10.
+	* support/nfs/rpcmisc.c: Likewise.
+	* utils/rquotad/rquota_svc.c: Likewise.
+	* utils/rquotad/rquotad.man: Likewise.
+	* utils/statd/Makefile: Likewise.
+	* utils/statd/rmtcall.c: Likewise.
+	* utils/statd/simulate.c: Likewise.
+	* utils/statd/statd.c: Likewise.
+	* utils/statd/statd.man: Likewise.
+
+2001-03-11  H.J. Lu <hjl@lucon.org>
+
+	* configure.in (RELEASE): New. Default to 1, set by
+	--with-release=XXX. Substitute nfs-utils.spec.
+	* nfs-utils.spec.in (Release): Set to @RELEASE@.
+	* configure: Regenerated.
+	* nfs-utils.spec: Likewise.
+
+2001-03-11  H.J. Lu <hjl@lucon.org>
+
+	* utils/rquotad/rquotad.man: Fix a typo.
+
+2001-03-11  H.J. Lu <hjl@lucon.org>
+
+	* support/include/rpcmisc.h: Undo the change made on 2001-03-10.
+	* support/nfs/rpcmisc.c: Likewise.
+	* utils/rquotad/rquota_svc.c: Likewise.
+	* utils/rquotad/rquotad.man: Likewise.
+	* utils/statd/Makefile: Likewise.
+	* utils/statd/rmtcall.c: Likewise.
+	* utils/statd/simulate.c: Likewise.
+	* utils/statd/statd.c: Likewise.
+	* utils/statd/statd.man: Likewise.
+
+2001-03-10  H.J. Lu <hjl@lucon.org>
+
+	* configure.in (VERSION): Set to "0.3.2".
+	* configure: Regenerated.
+	* nfs-utils.spec: Likewise.
+
+	* README: Updated for 0.3.2.
+
+2001-03-10  Tavis Barr <tavis@boole.isetr.columbia.edu>
+
+	* utils/rquotad/rquotad.man: Updated for -p.
+	* utils/statd/statd.man: Likewise.
+
+2001-03-10  Ion Badulescu  <ionut@cs.columbia.edu>
+
+	* support/nfs/rpcmisc.c: export makesock()
+
+	* support/include/rpcmisc.h (makesock): Declared.
+
+	* utils/rquotad/rquota_svc.c: added longopts, added support for
+	specifying the port to bind to on the command line.
+
+	* utils/statd/statd.c: ditto, also specify port used for
+	outgoing connections.
+	(do_regist): Removed.
+
+	* utils/statd/rmtcall.c (statd_get_socket): Renamed from
+	get_socket. Make it extern.
+
+	* utils/statd/simulate.c (daemon_simulator): Call rpc_init
+	instead of do_regist.
+
+	* utils/statd/Makefile (LIBS): link with our own libnfs
+
+2001-03-09  H.J. Lu <hjl@lucon.org>
+
+	* etc/redhat/nfslock.init: Changed chkconfig line to 60 86.
+	* etc/nodist/nfs-client: Likewise.
+
+2001-02-26  Chip Salzenberg  <chip@valinux.com>
+
+	* debian/changelog: Version 0.3.1-1.
+	* Mention upstream source and license in copyright file.
+	* Add build-Depends for debhelper and libwrap0-dev.
+
+2001-02-20  Lon Hohberger <hohberger@missioncriticallinux.com>
+
+	* etc/nodist/nfs-server: Changed chkconfig line to 60 20
+	* etc/nodist/nfs-client: Likewise.
+
+2001-02-18  Lon Hohberger <hohberger@missioncriticallinux.com>
+
+	* utils/statd/statd.man: Changed /usr/sbin/rpc.statd to
+	/sbin/rpc.statd.
+
+2001-02-17  Patrick J. LoPresti <patl@curl.com>
+
+	* utils/statd/log.c (log_init): Use LOG_DAEMON instead of
+	LOG_LOCAL5.
+
+2001-02-14  H.J. Lu <hjl@lucon.org>
+
+	* utils/statd/rmtcall.c: Include <time.h>.
+	* utils/statd/svc_run.c: Likewise.
+
+2001-02-14  H.J. Lu <hjl@lucon.org>
+
+	* configure.in (VERSION): Set to "0.3.1".
+	* configure: Regenerated.
+	* nfs-utils.spec: Likewise.
+
+	* README: Updated for 0.3.1.
+
+2001-02-14  H.J. Lu <hjl@lucon.org>
+
+	* support/nfs/rpcmisc.c: Include <time.h>.
+
+2001-02-14  Chip Salzenberg  <chip@valinux.com>
+
+	* debian/control: Change priority of nhfsstone package to 'extra'.
+
+2001-02-12  Chip Salzenberg  <chip@valinux.com>
+
+	* debian/changelog: Version 0.3-2.
+
+2001-02-02  H.J. Lu <hjl@lucon.org>
+
+	* support/include/rpcmisc.h (rpc_init): Remove bufsize.
+	
+	* support/nfs/rpcmisc.c (makesock): Remove socksz and comment
+	out SO_SNDBUF/SO_RCVBUF.
+	(rpc_init): Remove bufsize and remove socksz in calls to
+	makesock ().
+
+	* utils/mountd/mountd.c (main): Remove bufsize in calls to
+	rpc_init ().
+
+2001-01-28  Chip Salzenberg  <chip@valinux.com>
+
+	* debian/changelog: Version 0.3-1.
+
+2001-01-25  H.J. Lu <hjl@lucon.org>
+
+	* configure.in (VERSION): Set to "0.3".
+	* configure: Regenerated.
+	* nfs-utils.spec: Likewise.
+
+	* README: Updated for 0.3.
+
+2001-01-25  H.J. Lu <hjl@lucon.org>
+
+	* utils/lockd/lockd.c (main): Ignore errno == EINVAL.
+
+2001-01-20  Chip Salzenberg  <chip@valinux.com>
+
+	* support/include/xio.h (xgetc): Declare to return int.
+	* support/nfs/xio.c (xgetc): Return int.
+	(xgettok, xskip, xskipcomment): Use int for value of xgetc.
+	* utils/statd/statd.c (main): Use int for value of getopt.
+	* debian/changelog: Version 0.2.1-5.
+	
+2000-12-10  Chip Salzenberg  <chip@valinux.com>
+
+	* utils/statd/monitor.c (sm_mon_1_svc): Fix buggy check for
+	program and procedure numbers of kernel lockd's callback.  Also,
+	besides the old (and broken) procedure #24, allow #16 per Trond.
+
+2000-12-03  Chip Salzenberg  <chip@valinux.com>
+
+	* support/nfs/xio.c (xfopen): Initialize x_line to one, not zero.
+	* debian/control: Let nhfsstone replace files in nfs-kernel-server.
+	* debian/changelog: Version 0.2.1-4.
+
+2000-11-27  Tobias Ringstrom <tori@tellus.mine.nu>
+
+	* utils/mountd/auth.c (auth_authenticate): Log the bad path
+	warning.
+
+2000-11-24  Neil Brown <neilb@cse.unsw.edu.au>
+
+        * support/nfs/exports.c (getexportent): Check for host name
+	without option, or options without hostname, and print a warning,
+	as this is most likely a typo.
+
+2000-11-19  Chip Salzenberg  <chip@valinux.com>
+
+	* debian/control: Add dependency on portmap.
+	* debian/changelog: Version 0.2.1-3.
+
+2000-11-10  H.J. Lu <hjl@lucon.org>
+
+	* nfs-utils.spec.in: Don't use libtool.
+	Add ChangeLog and COPYING to doc.
+	* nfs-utils.spec: Rebuild.
+
+2000-11-09  H.J. Lu <hjl@lucon.org>
+
+	* etc/redhat/nfs.init (start): Back out the last change.
+
+2000-11-09  H.J. Lu <hjl@lucon.org>
+
+	* etc/redhat/nfs.init (start): Pass --no-tcp to mountd if
+	TCP is not supported by kernel.
+
+	* support/nfs/rpcmisc.c (rpc_init): Don't set _rpcfdtype to 0.
+
+	* utils/mountd/mountd.c (longopts): Add "-n/--no-tcp".
+	(main): Set to _rpcfdtype to SOCK_DGRAM for "-n/--no-tcp".
+
+	* utils/mountd/mountd.man: Updated for "-n/--no-tcp".
+
+2000-10-24  Lon Hohberger <hohberger@missioncriticallinux.com>
+
+	* utils/statd/callback.c: Fix bug preventing callbacks to local lockd.
+	* utils/statd/rmtcall.c: Add some IP address paranoia when doing
+	callbacks to local lockd.
+
+2000-10-18  Scott McDermott <mcdermot@questra.com>
+
+	* utils/exportfs/exports.man: Updated for CIDR netmask.
+
+2000-10-17  Scott McDermott <mcdermot@questra.com>
+
+	* support/export/client.c (client_init): Support CIDR netmask
+	in /etc/exports.
+
+2000-10-11  H.J. Lu <hjl@lucon.org>
+
+	* aclocal.m4 (AC_TCP_WRAPPER): Fix a typo.
+	* configure: Rebuilt.
+
+2000-10-06  Lon Hohberger <hohberger@missioncriticallinux.com>
+
+	* utils/statd/statd.man: Change "/var/lib/nfs/sm/state" to
+	"/var/lib/nfs/state".
+
+2000-10-05  Lon Hohberger <hohberger@missioncriticallinux.com>
+
+	* utils/statd/statd.h (run_mode): New global bitmask of runtime
+	behaviors: fg/bg, logging, etc.
+	* utils/statd/statd.c: New command line options: -V -h -? -d .
+	* utils/statd/statd.man: Update for changes to statd.
+
+	* utils/statd/log.h (log_init): Remove parameter of function; use
+	global variable "name_p" instead.
+	* utils/statd/log.c: Add support for logging to stderr.
+
+	* utils/statd/notlist.c: Partially rewrite notify list handling
+	functions.  Eliminate run-off-end-of-list bug when calling
+	nlist_insert_timer.  Add lots of comments.
+	
+2000-09-27  H.J. Lu <hjl@lucon.org>
+
+	* README: Updated for RedHat 7.0.
+
+2000-09-27  H.J. Lu <hjl@lucon.org>
+
+	* nfs-utils.spec: Rebuild.
+
+2000-09-27  H.J. Lu <hjl@lucon.org>
+
+	* README: Updated for 0.2.1.
+
+2000-09-27  H.J. Lu <hjl@lucon.org>
+
+	* nfs-utils.spec.in: Updated to use rpm macros and support
+	RedHat 7.0.
+
+2000-09-25  H.J. Lu <hjl@lucon.org>
+
+	* configure.in (VERSION): Set to "0.2.1".
+	* configure: Regenerated.
+	* nfs-utils.spec: Updated.
+
+2000-09-25  H.J. Lu <hjl@lucon.org>
+
+	* utils/mountd/auth.c (auth_authenticate_internal): Make sure a
+	non-NULL hostent is always returned.
+
+2000-09-11  Ion Badulescu  <ionut@cs.columbia.edu>
+
+	* etc/redhat/nfslock.init: don't kill lockd processes that do not
+	have an executable (i.e. kernel threads)
+
+2000-09-01  H.J. Lu <hjl@lucon.org>
+
+	* README: Updated for 0.2.
+
+2000-09-01  Jay Weber <jweber@valinux.com>
+
+	* etc/redhat/nfs.init: Added ability for rpc.mountd to default to
+	supporting version 3 of nfs if available, else it will fall back to
+	version 2 support only.
+
+2000-08-30  H.J. Lu <hjl@lucon.org>
+
+	* configure.in (VERSION): Set to "0.2".
+	* configure: Regenerated.
+	* nfs-utils.spec: Updated.
+
+2000-08-25  H.J. Lu <hjl@lucon.org>
+
+	* support/misc/tcpwrapper.c (logit): Modify the log output.
+
+2000-08-25  Ion Badulescu  <ionut@cs.columbia.edu>
+
+	* utils/rquotad/rquotad.man, utils/statd/statd.man,
+	utils/mountd/mountd.man: updated
+        
+	* utils/mountd/Makefile (LIBS): added -lmisc $(LIBWRAP) $(LIBNSL)
+	* utils/rquotad/Makefile: fix comment
+
+	* support/misc/tcpwrapper.c (logit): added comment about waiting
+	for the children after fork()
+	
+	* utils/mountd/mountd.c (main): ignore SIGCHLD to prevent leaving
+	zombies behind (from logit()'s fork)
+	* utils/rquotad/rquota_svc.c (main): ditto
+	* utils/statd/statd.c (main): ditto
+
+	* utils/rquotad/rquota_svc.c (rquotaprog_1): pass RQUOTAPROG
+	to check_default instead of 0, for prognum
+
+	* utils/statd/statd.c (sm_prog_1_wrapper): pass SM_PROG
+	to check_default instead of 0, for prognum
+
+	* utils/mountd/mount_dispatch.c: Include "tcpwrapper.h" if
+	HAVE_TCP_WRAPPER is defined.
+	(mount_dispatch): Call check_default () if HAVE_TCP_WRAPPER is
+	defined. Reject an RPC call if check_default () fails.
+
+2000-08-25  H.J. Lu <hjl@lucon.org>
+
+	* support/include/tcpwrapper.h: New for the tcp wrapper
+	support.
+	* support/misc/Makefile: Likewise.
+	* support/misc/from_local.c: Likewise.
+	* support/misc/tcpwrapper.c: Likewise.
+
+	* aclocal.m4 (AC_TCP_WRAPPER): New.
+	* configure.in: Use it. Substitute LIBWRAP.
+	* configure: Rebuilt.
+
+	* config.mk.in (LIBNSL): New.
+	(LIBWRAP): Likewise.
+
+	* support/Makefile (SUBDIRS): Add misc.
+
+	* support/lib/Makefile (LIBS): Add libmisc.a.
+
+	* utils/rquotad/Makefile (LIBS): Add
+	
+		-lmisc $(LIBWRAP) $(LIBNSL)
+
+	* utils/statd/Makefile (LIBS): Likewise.
+
+	* utils/rquotad/rquota_svc.c: Include "tcpwrapper.h" if
+	HAVE_TCP_WRAPPER is defined.
+	(rquotaprog_1): Call check_default () if HAVE_TCP_WRAPPER is
+	defined. Reject an RPC call if check_default () fails.
+
+	* utils/statd/statd.c: Include "tcpwrapper.h" if
+	HAVE_TCP_WRAPPER is defined.
+	(sm_prog_1_wrapper): New. A wrapper for sm_prog_1. Call
+	check_default () before calling sm_prog_1 (). Define it as
+	sm_prog_1_wrapper if HAVE_TCP_WRAPPER is defined.
+
+2000-08-25  Chip Salzenberg  <chip@valinux.com>
+
+	* debian/*: Complete Debian build support.
+	* etc/debian/*: Remove.
+
+2000-08-24  Neil Brown <neilb@cse.unsw.edu.au>
+
+	* support/export/client.c(client_check): removed the "dot+1" as a
+	  ypdomain argument to innetgr as this is entirely bogus.
+	  It should always be NULL.
+	
+2000-08-23  Neil Brown <neilb@cse.unsw.edu.au>
+
+	* support/export/xtab.c(xtab_read): introduce new mode for
+	   reading xtab. i.e. a list of exports that might be known to the
+	   kernel, or might not.  These are flagged as m_exported == -1
+	* support/export/xtab.c(xtab_mount_read):  call xtab_read with new
+	   value "2" for xtab, meaning don't trust this too much.
+	* support/include/exportfs.h(struct mexport): changed m_exported
+	   from one bit to an int so that it can hold new value
+	* utils/exportfs/exportfs.c(exportfs_ipdate): add an export to the
+	   kernel if it is uncertain whether the kernel knows (m_exported == -1)
+	* utils/mountd/mountd.c(get_rootfh): similarly export to kernel if
+	   status is uncertain
+
+	* support/nfs/xio.c(xflock): added O_CREAT when getting
+	   a write lock so that missing files aren't fatal.
+
+	* etc/debian/nfs-common: new file from "potato"
+	* etc/debian/nfs-kernel-server: new file from "potato" plus fixes.
+	 
+2000-08-09  H.J. Lu <hjl@lucon.org>
+
+	* etc/redhat/nfs.init: Run /usr/sbin/exportfs first during
+	startup to ensure all existing clients work fine.
+
+	* support/export/xtab.c (xtab_mount_read): Pass 1 instead of 0
+	to xtab_read () for reading _PATH_XTAB.
+
+2000-08-02  H.J. Lu <hjl@lucon.org>
+
+	* utils/mountd/auth.c (auth_authenticate_internal): Try to
+	avoid the reverse name lookup.
+
+2000-07-04  H.J. Lu <hjl@lucon.org>
+
+	* utils/statd/log.c: Include <stdlib.h> for exit ().
+
+	* utils/statd/misc.c (xunlink): Add `{' and `}' to quiet the
+	gcc warning.
+
+2000-07-04  H.J. Lu <hjl@lucon.org>
+
+	* configure.in (VERSION): Set to "0.1.9.1".
+	* configure: Regenerated.
+	* nfs-utils.spec: Updated.
+
+	* README: Updated.
+
+2000-07-04  Neil Brown  <neilb@cse.unsw.edu.au>
+
+	* support/export/hostname.c (hostent_dup): Handle the NULL
+	h_aliases field.
+
+2000-07-03  H.J. Lu <hjl@lucon.org>
+
+	* README: Update the util-linux requirement.
+
+2000-07-03  H.J. Lu <hjl@lucon.org>
+
+	* configure.in (VERSION): Set to "0.1.9".
+	* configure: Regenerated.
+	* nfs-utils.spec: Updated.
+
+	* README: Updated.
+
+2000-07-03  H.J. Lu <hjl@lucon.org>
+
+	* etc/redhat/nfs.init: Run /usr/sbin/exportfs last during
+	stop to ensure all clients can still access the server
+	before it is shutdown.
+
+2000-06-30  Jeff Uphoff <juphoff@transmeta.com>
+
+	* tools/rpcgen/rpc_svcout.c (write_msg_out): Generate syslog()
+ 	calls with format string.
+	
+2000-06-28  Chip Salzenberg  <chip@valinux.com>
+
+	* utils/statd/log.c (log): Call syslog with format string.
+
+2000-06-27  H.J. Lu <hjl@lucon.org>
+
+	* utils/statd/statd.c (main): Use sysconf (_SC_OPEN_MAX)
+	instead of OPEN_MAX.
+
+2000-06-27  H.J. Lu <hjl@lucon.org>
+
+	* README: Updated.
+
+2000-06-27  H.J. Lu <hjl@lucon.org>
+
+	* etc/redhat/nfs.init: Run /usr/sbin/exportfs last during
+	startup to ensure all existing clients are exported.
+
+	* configure.in (VERSION): Set to "0.1.8.2".
+	* configure: Regenerated.
+	* nfs-utils.spec: Updated.
+
+2000-06-06  H.J. Lu <hjl@lucon.org>
+
+	* configure.in (VERSION): Set to "0.1.8.1".
+	* configure: Regenerated.
+	* nfs-utils.spec: Updated.
+
+2000-06-06  H.J. Lu <hjl@lucon.org>
+
+	* utils/mountd/mountd.c (mount_dump_1_svc): Cast svc_getcaller
+	to "struct sockaddr_in *" for glibc 2.2.
+	(mount_umnt_1_svc): Likewise.
+	(mount_umntall_1_svc): Likewise.
+	(mount_export_1_svc): Likewise.
+	(mount_exportall_1_svc): Likewise.
+	(mount_pathconf_2_svc): Likewise.
+	(get_rootfh): Likewise.
+
+2000-06-04  H.J. Lu <hjl@lucon.org>
+
+	* etc/redhat/nfs.init: Fix a typo in comment.
+
+2000-05-31  H.J. Lu <hjl@lucon.org>
+
+	* configure.in (VERSION): Set to "0.1.8".
+	* configure: Regenerated.
+	* nfs-utils.spec: Updated.
+
+	* README: Updated.
+
+2000-05-31  H.J. Lu <hjl@lucon.org>
+
+	* configure.in (VERSION): Set to "0.1.7.5".
+	* configure: Regenerated.
+	* nfs-utils.spec: Updated.
+
+	* support/include/nfslib.h (exportent): Add a new field,
+	r_count, to count the number of mounts from a client.
+	(getrmtabent): Take a new argument for position in file.
+	(putrmtabent): Likewise.
+	(fgetrmtabent): Likewise.
+	(fputrmtabent): Likewise.
+	* support/nfs/rmtab.c (getrmtabent): Handle the new argument
+	for position in file.
+	(fgetrmtabent): Likewise.
+	(putrmtabent): Likewise.
+	(fputrmtabent): Likewise.
+
+	* support/nfs/rmtab.c (fgetrmtabent): Get value for the new
+	field, r_count.
+
+	* support/export/rmtab.c (rmtab_read): Pass NULL as the new
+	argument to getrmtabent (), fgetrmtabent (), putrmtabent ()
+	and fputrmtabent ().
+	* utils/mountd/rmtab.c (mountlist_add): Likewise.
+	(mountlist_del): Likewise.
+	(mountlist_del_all): Likewise.
+	(mountlist_list): Likewise.
+
+	* utils/mountd/rmtab.c (mountlist_add): Increment "r_count"
+	for the existing entry and initialize "r_count" to 1.
+	(mountlist_del): Decrement "r_count".
+
+2000-05-18  H.J. Lu <hjl@lucon.org>
+
+	* configure.in (VERSION): Set to "0.1.7.4".
+	* configure: Regenerated.
+	* nfs-utils.spec: Updated.
+
+2000-05-18  H.J. Lu <hjl@lucon.org>
+
+	* etc/redhat/nfs.init (restart): Just do stop and start.
+
+2000-05-09  Jay Weber <jweber@valinux.com>
+
+	* utils/rquotad/hasquota.c: added support for ext3 recognition
+	in rquotad.
+	* utils/rquotad/mntent.h: Likewise.
+
+2000-05-01  H.J. Lu <hjl@lucon.org>
+
+	* configure.in (VERSION): Set to "0.1.7.3".
+	* configure: Regenerated.
+	* nfs-utils.spec: Updated.
+
+2000-05-01  H.J. Lu <hjl@lucon.org>
+
+	* utils/rquotad/rquota_server.c (getquotainfo): Skip bad
+	mounting poins in /etc/fstab.
+
+2000-05-01  H.J. Lu <hjl@lucon.org>
+
+	* configure.in (VERSION): Set to "0.1.7.2".
+	* configure: Regenerated.
+	* nfs-utils.spec: Updated.
+
+2000-05-01  H.J. Lu <hjl@lucon.org>
+
+	* utils/rquotad/rquota_server.c (getquotainfo): Call stat ()
+	to check for the mounting point.
+
+2000-04-29  Chip Salzenberg  <chip@valinux.com>
+	    Neil Brown  <neilb@cse.unsw.edu.au>
+
+	* Really re-use RPC ports.
+	  (Fixes earlier patch.  Sorry, Neil.)
+
+2000-04-26  H.J. Lu <hjl@lucon.org>
+
+	* configure.in (VERSION): Set to "0.1.7.1".
+	* configure: Regenerated.
+	* nfs-utils.spec: Updated.
+
+2000-04-26  H.J. Lu <hjl@lucon.org>
+
+	* etc/redhat/nfslock.init: Check if lockd exits before killing
+	it.
+
+2000-04-25  H.J. Lu <hjl@lucon.org>
+
+	* README: Require util-linux-2.10f-mount-rpc.patch for mount.
+
+2000-03-21 Michael Weiser <michael@weiser.saale-net.de>
+
+	* support/nfs/exports.c (parsesquash): Correctly set the
+	return pointer.
+
+Tue Mar 21 11:38:48 EST 2000 NeilBrown <neilb@cse.unsw.edu.au>
+
+	* support/include/nfs/nfs.h: Removed knowledge of internals of
+	     kernel filehandles (which can change) and defined nfs_fh_size
+	     which has variable size
+	
+	* support/nfs/getfh.c: defined getfh_size to use new syscall to
+	     get variable sized file handles, and change getfh{,old} to
+	     use nfs_fh_size	    
+	
+	* utils/mountd/mountd.c: use nfd_fh_size and call getfh_size for
+	     NFSv3 file handles
+
+	* tools/Makefile, tools/nlmtest/nlmtest.c
+	     nlmtest.c depended on internel format of file handles, so now
+	     doesn't work.
+
+	
+2000-03-12  Chip Salzenberg  <chip@valinux.com>
+	    Neil Brown  <neilb@cse.unsw.edu.au>
+
+	* support/nfs/rpcmisc.c (rpc_init): Share transports.
+
+2000-03-13 H.J. Lu <hjl@lucon.org>
+
+	* etc/redhat/nfsd.init: Updated.
+
+	* etc/redhat/nfslock.init: Updated.
+
+	* nfs-utils.spec.in: Updated.
+
+	* configure.in (VERSION): Set to "0.1.7".
+	* configure: Regenerated.
+	* nfs-utils.spec: Updated.
+
+	* README: Updated.
+
+Wed Mar  8 09:42:43 2000 Neil Brown <neilb@cse.unsw.edu.au>
+
+	* utils/exportfs/exportfs.c (dump): Included printing of
+	   nohide, no_subtree_check, and insecure_locks
+
+2000-02-26  Chip Salzenberg  <chip@valinux.com>
+
+	* config.mk.in (INSTALLSUID): Strip ("-s").
+	(INSTALLSCRIPT): Define.
+	* utils/nhfsstone/Makefile: Use it.
+
+2000-02-26  Chip Salzenberg  <chip@valinux.com>
+
+	* utils/lockd/lockd.man: Create.
+	* utils/lockd/Makefile: Install it.
+	* utils/nhfsstone/nhfs{run,nums,graph}.man: Create.
+	* utils/nhfsstone/nhfsstone.man: Change suffix from ".1".
+	* utils/nhfsstone/Makefile: Install the helper scripts and
+	  all four man pages.
+	* utils/exportfs/exports.man: Fix typo.
+
+2000-02-26  Chip Salzenberg  <chip@valinux.com>
+
+	* support/nfs/xio.c (xungetc): Decrement line number when
+	character to unget is newline.  Make first parameter int, so
+	it can distinguish EOF from \377.
+	* support/include/xio.h (xungetc): Adjust prototype.
+
+Fri Feb  4 23:42:23 2000 Neil Brown <neilb@cse.unsw.edu.au>
+
+	* support/include/nfs/export.h: added NFSEXP_NOAUTHNLM
+	* support/nfs/exports.c: added handling for NFSEXP_NOAUTHNLM
+	* utils/exportfs/exports.man: added documentation for no_auth_nlm.
+
+	This is for supporting a new option introduced in 2.3.42
+
+Thu Feb  3 14:55:48 2000 H.J. Lu <hjl@lucon.org>
+
+	* COPYING: Added. GPL.
+
+Thu Feb 03 14:40:40 2000 Cristian Gafton <gafton@redhat.com>
+
+	* utils/rquotad/rquota_server.c (getquotainfo): Call statfs ()
+	to get the block size.
+
+Tue Jan 25 11:04:17 2000 H.J. Lu <hjl@lucon.org>
+
+	* nfs-utils.spec.in: Update ftp site.
+
+Mon Jan 17 11:48:18 2000 H.J. Lu <hjl@lucon.org>
+
+	* README: Update hostnames.
+
+Tue Jan 11 10:06:22 2000 H.J. Lu <hjl@lucon.org>
+
+	* configure.in (VERSION): Set to "0.1.6".
+	* configure: Regenerated.
+	* nfs-utils.spec: Updated.
+
+	* README: Updated.
+
+Mon Jan 10 14:26:33 2000 H.J. Lu <hjl@lucon.org>
+
+	* utils/mountd/auth.c (auth_authenticate_internal): Call
+	xstrdup for hostname before passing it to gethostbyname.
+
+	* utils/mountd/mountd.c (get_exportlist): Use xstrdup instead
+	of strdup.
+
+Sun Dec 19 09:35:01 1999  H.J. Lu <hjl@lucon.org>
+
+	* README: Update the mailing list address.
+
+Sun Dec 19 09:22:28 1999  H.J. Lu <hjl@lucon.org>
+
+	* configure.in (VERSION): Set to "0.1.5".
+	* configure: Regenerated.
+	* nfs-utils.spec: Updated.
+
+	* README: Updated.
+
+Mon Dec 13 13:40:20 1999  H.J. Lu <hjl@lucon.org>
+
+	* utils/rquotad/hasquota.c (hasquota): Malloc one more char
+	for '/'.
+
+Mon Dec  6 09:42:45 1999  H.J. Lu <hjl@lucon.org>
+
+	* configure.in (VERSION): Set to "0.1.4".
+	* configure: Regenerated.
+	* nfs-utils.spec: Updated.
+
+	* README: Updated.
+
+Mon Dec  6 09:28:07 1999  H.J. Lu <hjl@lucon.org>
+
+	* nfs-utils.spec.in: New file.
+
+	* config.mk.in (VERSION): Changed to "nfs-utils @VERSION@".
+
+	* configure.in (nfs-utils.spec): Added to AC_OUTPUT.
+
+1999-12-04  Chip Salzenberg  <chip@valinux.com>
+
+	* config.mk.in: Use $(CC) as set by configure.
+
+1999-12-04  Chip Salzenberg  <chip@valinux.com>
+
+	* rules.mk: Call $(MAKE) with $(MFLAGS).
+
+Mon Nov 29 11:17:35 1999  H.J. Lu <hjl@lucon.org>
+
+	* tools/rpcgen/rpc_main.c (h_output): Generate IXDR_GET_INT32,
+	IXDR_PUT_INT32, IXDR_GET_U_INT32 and IXDR_PUT_U_INT32.
+
+Mon Nov 29 11:17:35 1999  H.J. Lu <hjl@lucon.org>
+
+	* nfs-utils.spec (Version): Set to 0.1.3.
+
+	* configure.in (VERSION): Set to "nfs-utils 0.1.3".
+	* configure: Regenerated.
+
+	* README: Updated.
+
+Mon Nov 29 11:15:47 1999  H.J. Lu <hjl@lucon.org>
+
+	* utils/rquotad/rquota_server.c (nfsmount_to_devname): Removed.
+	(_PATH_DEV_DSK): Likewise.
+	(getquotainfo): Match the mounting point from /etc/mtab
+	instead of calling nfsmount_to_devname ().
+
+1999-11-24  Chip Salzenberg  <chip@valinux.com>
+
+	* utils/statd/monitor.c (sm_mon_1_svc): Accept lockd callbacks
+	to the new port 24 as well as the historical port 100021.
+
+Tue Nov 23 10:21:34 1999 Neil Brown <neilb@cse.unsw.edu.au>
+
+	* etc/redhat/nfsd.init (stop): moved exportfs -ua after
+	stopping nfsd to stop spurious ESTALE on server shutdown.
+	
+Tue Nov 23 10:13:39 1999  Neil Brown <neilb@cse.unsw.edu.au>
+
+	* support/nfs/exports.c (parseopts): make copy of opt string
+	before 'nul'ing out commas so that
+
+	# exportfs -o option1,option2 hosta:/fs hostb:/fs
+
+        applies both options to both exports.
+
+Thu Oct 28 12:55:42 1999  H.J. Lu <hjl@lucon.org>
+
+	* README: Fix a few typos.
+
+	* tools/rpcgen/rpc_cout.c (print_header): Use int32_t instead
+	of long.
+	* tools/rpcgen/rpc_hout.c (pdefine): Likewise.
+	* tools/rpcgen/rpc_main.c (c_initialize): Likewise.
+	* tools/rpcgen/rpc_parse.c (get_type): Likewise.
+	(unsigned_dec): Likewise.
+	* tools/rpcgen/rpc_scan.c (symbols): Likewise.
+	* tools/rpcgen/rpc_util.c (tokstrings): Likewise.
+
+	* tools/rpcgen/rpc_cout.c (emit_single_in_line): Use INT32
+	instead of LONG.
+	* tools/rpcgen/rpc_parse.c (get_type): Likewise.
+	(unsigned_dec): Likewise.
+	* tools/rpcgen/rpc_scan.c (symbols): Likewise.
+	* tools/rpcgen/rpc_scan.h (tok_kind): Likewise.
+	* tools/rpcgen/rpc_util.c (tokstrings): Likewise.
+
+Thu Oct 28 11:27:51 1999 Neil Brown <neilb@cse.unsw.edu.au>
+
+        * support/include/nfs/export.h addedd NFSEXP_NOSUBTREECHECK
+        * support/nfs/exports.c: added {no_,}subtree_check and changed
+          crossmnt to nohide
+        * utils/exportfs/exports.man: added no_subtree_check and nohide
+          and removed irrelevant stuff from unfsd.
+        * support/export/rmtab.c: rmtab_read didn't quite do the right
+          thing if a pathname from rmtab was a subdirectory of an export-point
+
+Tue Oct 26 17:22:40 1999  H.J. Lu <hjl@lucon.org>
+
+	* README: Updated ftp site.
+
+Mon Oct 25 18:12:45 1999  H.J. Lu <hjl@lucon.org>
+
+	* nfs-utils.spec (Version): Set to 0.1.2.
+
+	* configure.in (VERSION): Set to "nfs-utils 0.1.2".
+	* configure: Regenerated.
+
+	* README: Updated.
+
+Mon Oct 25 18:11:21 1999  H.J. Lu <hjl@lucon.org>
+
+	* utils/mountd/auth.c (auth_error): Add "no_forward_dns".
+	(auth_authenticate_internal): Check for NULL return on forward
+	DNS lookup.
+	(auth_authenticate): Handle "no_forward_dns".
+
+Thu Oct 21 16:22:06 1999  H.J. Lu <hjl@lucon.org>
+
+	* Version 0.1.1 released.
+
+	* nfs-utils.spec (Version): Set to 0.1.1.
+
+	* configure.in (VERSION): Set to "nfs-utils 0.1.1".
+	* configure: Regenerated.
+
+	* README: Updated.
+
+Mon Oct 18 17:43:29 1999  H.J. Lu <hjl@lucon.org>
+
+	* nfs-utils.spec (Obsoletes): Fixed a typo, change knfsd-client
+	to knfsd-clients.
+	(Provides): Likewise.
+
+Mon Oct 18 14:56:22 1999  H.J. Lu <hjl@lucon.org>
+
+	* Initial version 0.1 released.
+
+	* configure.in (VERSION): Set to "nfs-utils 0.1".
+	* configure: Regenerated.
+
+Mon Oct 18 14:54:57 1999  H.J. Lu <hjl@lucon.org>
+
+	* utils/mountd/mountd.c (get_exportlist): Cleanup.
+
+	* utils/exportfs/exportfs.c (unexport_all): Unexport from
+	kernel only if the entry is exported to kernel.
+	(unexportfs): Likewise.
+
+Wed Sep 08 16:49:32 1999  Neil Brown <neilb@cse.unsw.edu.au>
+
+1/ utils/mountd/rmtab.c::mountlist_list
+
+     This routine stats the rmtab file to see if it has changed.  It
+     if has, it cleans up it's old copy of the data. But it still
+     always re-read the file, thus returning multiple copies of the
+     data on consecutive calls without intervening changes.
+     "Showmount -a" didn't show this as it appears to sort/unique the
+     data, but 'strace showmount -a' showed that the size of the
+     datagram that it received grew.
+
+     I moved the getrmtabent loop inside the mtime test.
+
+2/ utils/exportfs/exportfs.c
+   
+     Many routines used the m_path field of m_export instead of
+     e_path.
+     According to the comment in nfslib.h, m_path should only
+     be used when processing a mount request (i.e. in mountd)
+     where the mountpoint may be a subdirectory of the export point.
+
+     I changed all occurances of m_path to e_path
+
+
+3/ utils/exportfs/exportfs.c:main
+
+      extra arguments are not meaningful with -a or -r, but
+      exportfs accepted them and then ignored the -a/-r, expect that
+      -r would still unexport everything first.
+
+      I generate an error if there are extra args and f_all
+
+4/ utils/exportfs/exportfs.c:main
+     extract dump out as a special case.
+
+5/ utils/exportfs/exportfs.c
+     made f_reexport a local variable.
+
+
+6/ utils/exportfs/exportfs.c:main,exportall
+
+    support/export/rmtab.c
+       only  mayexport on newly created entries, don't set xtabent at all
+
+7/ support/include/nfslib.h
+
+      add #define _PATH_PROC_EXPORTS to be /proc/fs/nds/exports
+
+8/ support/export/xtab.c
+
+      xtab_mount_read loads data from _PATH_PROC_EXPORTS if it exists,
+      else from xtab
+
+
+9/ support/export/xtab.c
+
+      xtab_mount_read now sets m_exported, and NOT
+	xtabent and mayexport
+
+      removed the append arguement from xtab_write as it was
+	never used.
+
+      added is_export flag to xtab_write similar to xtab_read
+	if is_export, only write entries with m_xtabent or m_addxtab
+	if !is_export, only write entries with m_exported
+     
+10/ support/export/export.c::export_allowed_internal
+
+      added test for exp->m_mayexport, as the export tree
+	may have entries that are no longer allowed to be exported,
+	and so shouldn't caused deduced exported by rmtab_read
+
+11/ utils/exportfs/exportfs.c::main
+	error checking of flags.
+
+12/ utils/exportfs/exportfs.c
+
+	total rewrite of export and unexport logic.
+	We now:
+	-  build an exportslist of valid exports, based on
+	   current etab file  and arguments,
+        -  read rmtab to instantiate relevant wild card entries
+	-  read etab to find out what is currently exported
+	-  synchronise intention with reality
+	-  write out etab and xtab
+
+13/  various
+	discard the m_addxtab flag
+	add m_changed flag so we know what to report in exportfs
+
+14/ utils/mountd/auth.c:auth_authenticate
+
+	the value returned by gethostbyaddr was trusted.
+
+	It now follows this with a call to gethostbyname
+	and checks that the address is in the list.
+
+15/ support/export/nfsctl.c::cltsetup,expsetup
+
+	force client names to lowercase as kernel is
+	sensitive to case
+
+16/ quietened a few compiler warnings
+
+17/ support/export/client:client_lookup
+
+     look for pre-existing client with same name before creating
+	a new one.
+
+18/ support/include/exportfs.h
+
+     The ordering of the MCL_* enum was:
+	ANONYMOUS, FQDN, SUBNETWORK, WILDCARD, NETGROUP
+
+     I moved ANONYMOUS to the end.
+
+     The ordering is significant when an export entry is being searched for to 
+	match a given address.  There are two problems with ANONYMOUS being first.
+
+	1/ if a directory is exported rw to a couple of hosts and ro to everyone else,
+	   then the ro case will always be found first and the privileged hosts won't get
+	   their privilege
+	2/ When mountd gets a request to mount an ANONYMOUSly exported tree, it creates a FQDN
+	   export entry for the specific host, and writes it to xtab.
+	   When another request comes from the same host, the ANONYMOUS entry is found again, 
+	   before the new FQDN entry, so it creates another FQDN entry and writes it to xtab
+	   again.  If causes bloat in xtab.
+
+      Putting ANONYMOUS at the end reflects it's nature as a catch-all
+
+19/ utils/exportfs/exportfs.man
+	many updates to the man page to reflect changes to the code
+
+-----------------------
+
+
+
+TODO:
+
+- allow exportfs to modify rmtab file
+- make sure kernel never gets two clients with same IP address
+    - possible kernel should reject
+    - needs to be some way to lookup client in kernel by IP address
+- maybe get kernel to do case-insensitive comparisons on client names
+- remove unused clients from kernel
+
+- change etab to xtab and xtab to xtab.active
+
+- timestamp and/or statd-stamp in rmtab for removing old entries.
+
+Mon Oct 18 11:48:07 1999  H.J. Lu <hjl@lucon.org>
+
+	* linux-nfs: New directory.
+	* linux-nfs/ChangeLog: Moved from ..
+	* linux-nfs/INSTALL: Likewise.
+	* linux-nfs/KNOWNBUGS: Likewise.
+	* linux-nfs/NEW: Likewise.
+	* linux-nfs/README: Likewise.
+	* linux-nfs/THANKS: Likewise.
+	* linux-nfs/TODO: Likewise.
+
+	* Starting from knfsd 1.4.7.

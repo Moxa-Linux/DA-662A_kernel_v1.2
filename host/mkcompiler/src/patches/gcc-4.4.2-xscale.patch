@@ -1,0 +1,131 @@
+Only in gcc-4.4.2.new/gcc/config/arm: xscale-linux.h
+diff -crB gcc-4.4.2/gcc/config.gcc gcc-4.4.2.new/gcc/config.gcc
+*** gcc-4.4.2/gcc/config.gcc	2009-09-13 21:01:13.000000000 +0800
+--- gcc-4.4.2.new/gcc/config.gcc	2011-12-23 22:08:35.000000000 +0800
+***************
+*** 274,280 ****
+  am33_2.0-*-linux*)
+  	cpu_type=mn10300
+  	;;
+! arm*-*-*)
+  	cpu_type=arm
+  	extra_headers="mmintrin.h arm_neon.h"
+  	c_target_objs="arm-c.o"
+--- 274,280 ----
+  am33_2.0-*-linux*)
+  	cpu_type=mn10300
+  	;;
+! arm*-*-* | xscale*-*-*)
+  	cpu_type=arm
+  	extra_headers="mmintrin.h arm_neon.h"
+  	c_target_objs="arm-c.o"
+***************
+*** 2378,2383 ****
+--- 2378,2413 ----
+  	tm_file="vax/vax.h vax/openbsd1.h openbsd.h vax/openbsd.h"
+  	use_collect2=yes
+  	;;
++ xscale-*-coff*)
++ 	tm_file="arm/semi.h arm/aout.h arm/arm.h arm/coff.h dbxcoff.h"
++ 	tmake_file="arm/t-arm arm/t-arm-coff"
++ 	md_file=arm/arm.md
++ 	out_file=arm/arm.c
++ 	;;
++ xscale*-*-linux*)			# Xscale GNU/Linux with ELF
++ 	tm_file="dbxelf.h elfos.h linux.h arm/elf.h arm/linux-gas.h arm/xscale-linux.h"
++ 	tm_defines="${tm_defines} TARGET_BIG_ENDIAN_DEFAULT=1"
++ 	md_file=arm/arm.md
++ 	out_file=arm/arm.c
++ 	tmake_file="${tmake_file} t-linux arm/t-arm"
++ 	case ${target} in
++ 	xscale*-*-linux-*eabi)
++ 	    tm_file="$tm_file arm/bpabi.h arm/linux-eabi.h"
++ 	    tmake_file="$tmake_file arm/t-arm-elf arm/t-bpabi arm/t-linux-eabi"
++   	    # The BPABI long long divmod functions return a 128-bit value in
++ 	    # registers r0-r3.  Correctly modeling that requires the use of
++ 	    # TImode.
++ 	    need_64bit_hwint=yes
++ 	    # The EABI requires the use of __cxa_atexit.
++ 	    default_use_cxa_atexit=yes
++ 	    ;;
++ 	*)
++ 	    tmake_file="$tmake_file arm/t-linux"
++ 	    ;;
++ 	esac
++ 	tm_file="$tm_file arm/aout.h arm/arm.h"
++ 	tmake_file="${tmake_file} arm/t-arm-softfp soft-fp/t-softfp"
++ 	;;
+  xstormy16-*-elf)
+  	# For historical reasons, the target files omit the 'x'.
+  	tm_file="dbxelf.h elfos.h svr4.h stormy16/stormy16.h"
+***************
+*** 2625,2631 ****
+  		done
+  		;;
+  
+! 	arm*-*-*)
+  		supported_defaults="arch cpu float tune fpu abi mode"
+  		for which in cpu tune; do
+  			# See if it matches any of the entries in arm-cores.def
+--- 2655,2661 ----
+  		done
+  		;;
+  
+! 	arm*-*-* | xscale*-*-*)
+  		supported_defaults="arch cpu float tune fpu abi mode"
+  		for which in cpu tune; do
+  			# See if it matches any of the entries in arm-cores.def
+diff -crB gcc-4.4.2/libgcc/config.host gcc-4.4.2.new/libgcc/config.host
+*** gcc-4.4.2/libgcc/config.host	2009-04-17 19:58:41.000000000 +0800
+--- gcc-4.4.2.new/libgcc/config.host	2011-12-23 22:55:58.000000000 +0800
+***************
+*** 70,76 ****
+  am33_2.0-*-linux*)
+  	cpu_type=mn10300
+  	;;
+! arm*-*-*)
+  	cpu_type=arm
+  	;;
+  avr-*-*)
+--- 70,76 ----
+  am33_2.0-*-linux*)
+  	cpu_type=mn10300
+  	;;
+! arm*-*-* | xscale*-*-*)
+  	cpu_type=arm
+  	;;
+  avr-*-*)
+***************
+*** 190,196 ****
+  	;;
+  arc-*-elf*)
+  	;;
+! arm-*-coff* | armel-*-coff*)
+  	;;
+  arm-semi-aof | armel-semi-aof)
+  	;;
+--- 190,196 ----
+  	;;
+  arc-*-elf*)
+  	;;
+! arm-*-coff* | armel-*-coff* | xscale-*-coff*)
+  	;;
+  arm-semi-aof | armel-semi-aof)
+  	;;
+***************
+*** 202,208 ****
+  	;;
+  arm*-*-netbsd*)
+  	;;
+! arm*-*-linux*)			# ARM GNU/Linux with ELF
+  	;;
+  arm*-*-uclinux*)		# ARM ucLinux
+  	;;
+--- 202,208 ----
+  	;;
+  arm*-*-netbsd*)
+  	;;
+! arm*-*-linux* | xscale*-*-linux*)	# ARM GNU/Linux with ELF
+  	;;
+  arm*-*-uclinux*)		# ARM ucLinux
+  	;;

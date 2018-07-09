@@ -1,0 +1,31 @@
+# make CONFIG_PRODUCT="uc8400" CC=xscale-linux-gcc STRIP=xscale-linux-strip CFLAGS=-DARCH_UC8400
+-include $(ARCH_CONFIG)
+
+EXEC=moxaburn
+OBJS=moxaburn.o
+LDFLAGS=-lpthread
+CFLAGS += -DFACTORY_MODE -I../mtd-utils/include -I../../lib/redboot_config -DDEBUG $(VENDOR_CFLAGS)
+
+ifeq ("$(CROSS_COMPILE)","xscale-linux-")
+LDFLAGS += -lredboot -L../../lib/redboot_config
+endif
+
+all: $(INSTALL_ROOT)/bin/$(EXEC).$(CONFIG_PRODUCT)
+	cp $(EXEC) $(INSTALL_ROOT)/bin/$(EXEC).$(CONFIG_PRODUCT)
+
+$(INSTALL_ROOT)/bin/$(EXEC).$(CONFIG_PRODUCT): $(EXEC)
+
+$(EXEC): $(OBJS) 
+	$(CC) -o $@ $(OBJS) $(LDFLAGS)
+
+.c.o:
+	$(CC) $(CFLAGS) $? -c
+
+romfs: $(INSTALL_ROOT)/bin/$(EXEC).$(CONFIG_PRODUCT)
+	$(ROMFSINST) $(INSTALL_ROOT)/bin/$(EXEC).$(CONFIG_PRODUCT) /bin/$(EXEC)
+	$(STRIP) -s $(ROMFSDIR)/bin/$(EXEC)
+
+package:
+
+clean:
+	rm -fr $(EXEC) $(OBJS)

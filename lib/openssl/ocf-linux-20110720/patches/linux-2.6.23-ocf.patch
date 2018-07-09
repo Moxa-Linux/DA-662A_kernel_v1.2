@@ -1,0 +1,179 @@
+Index: linux-2.6.x/crypto/Kconfig
+===================================================================
+RCS file: /cvs/sw/linux-2.6.x/crypto/Kconfig,v
+retrieving revision 1.1.1.29
+diff -u -r1.1.1.29 Kconfig
+--- linux-2.6.x/crypto/Kconfig	10 Oct 2007 00:54:29 -0000	1.1.1.29
++++ linux-2.6.x/crypto/Kconfig	15 Dec 2007 11:08:08 -0000
+@@ -471,3 +471,6 @@
+ source "drivers/crypto/Kconfig"
+ 
+ endif	# if CRYPTO
++
++source "crypto/ocf/Kconfig"
++
+Index: linux-2.6.x/crypto/Makefile
+===================================================================
+RCS file: /cvs/sw/linux-2.6.x/crypto/Makefile,v
+retrieving revision 1.1.1.23
+diff -u -r1.1.1.23 Makefile
+--- linux-2.6.x/crypto/Makefile	10 Oct 2007 00:54:29 -0000	1.1.1.23
++++ linux-2.6.x/crypto/Makefile	15 Dec 2007 11:08:08 -0000
+@@ -51,6 +51,8 @@
+ 
+ obj-$(CONFIG_CRYPTO_TEST) += tcrypt.o
+ 
++obj-$(CONFIG_OCF_OCF) += ocf/
++
+ #
+ # generic algorithms and the async_tx api
+ #
+Index: linux-2.6.x/drivers/char/random.c
+===================================================================
+RCS file: /cvs/sw/linux-2.6.x/drivers/char/random.c,v
+retrieving revision 1.1.1.39
+diff -u -r1.1.1.39 random.c
+--- linux-2.6.x/drivers/char/random.c	10 Oct 2007 00:53:55 -0000	1.1.1.39
++++ linux-2.6.x/drivers/char/random.c	15 Dec 2007 11:08:08 -0000
+@@ -129,6 +129,9 @@
+  *                                unsigned int value);
+  * 	void add_interrupt_randomness(int irq);
+  *
++ *      void random_input_words(__u32 *buf, size_t wordcount, int ent_count)
++ *      int random_input_wait(void);
++ *
+  * add_input_randomness() uses the input layer interrupt timing, as well as
+  * the event type information from the hardware.
+  *
+@@ -140,6 +143,13 @@
+  * a better measure, since the timing of the disk interrupts are more
+  * unpredictable.
+  *
++ * random_input_words() just provides a raw block of entropy to the input
++ * pool, such as from a hardware entropy generator.
++ *
++ * random_input_wait() suspends the caller until such time as the
++ * entropy pool falls below the write threshold, and returns a count of how
++ * much entropy (in bits) is needed to sustain the pool.
++ *
+  * All of these routines try to estimate how many bits of randomness a
+  * particular randomness source.  They do this by keeping track of the
+  * first and second order deltas of the event timings.
+@@ -671,6 +681,61 @@
+ EXPORT_SYMBOL(add_disk_randomness);
+ #endif
+ 
++/*
++ * random_input_words - add bulk entropy to pool
++ *
++ * @buf: buffer to add
++ * @wordcount: number of __u32 words to add
++ * @ent_count: total amount of entropy (in bits) to credit
++ *
++ * this provides bulk input of entropy to the input pool
++ *
++ */
++void random_input_words(__u32 *buf, size_t wordcount, int ent_count)
++{
++	add_entropy_words(&input_pool, buf, wordcount);
++
++	credit_entropy_store(&input_pool, ent_count);
++
++	DEBUG_ENT("crediting %d bits => %d\n",
++		  ent_count, input_pool.entropy_count);
++	/*
++	 * Wake up waiting processes if we have enough
++	 * entropy.
++	 */
++	if (input_pool.entropy_count >= random_read_wakeup_thresh)
++		wake_up_interruptible(&random_read_wait);
++}
++EXPORT_SYMBOL(random_input_words);
++
++/*
++ * random_input_wait - wait until random needs entropy
++ *
++ * this function sleeps until the /dev/random subsystem actually
++ * needs more entropy, and then return the amount of entropy
++ * that it would be nice to have added to the system.
++ */
++int random_input_wait(void)
++{
++	int count;
++
++	wait_event_interruptible(random_write_wait, 
++			 input_pool.entropy_count < random_write_wakeup_thresh);
++
++	count = random_write_wakeup_thresh - input_pool.entropy_count;
++
++        /* likely we got woken up due to a signal */
++	if (count <= 0) count = random_read_wakeup_thresh; 
++
++	DEBUG_ENT("requesting %d bits from input_wait()er %d<%d\n",
++		  count,
++		  input_pool.entropy_count, random_write_wakeup_thresh);
++
++	return count;
++}
++EXPORT_SYMBOL(random_input_wait);
++
++
+ #define EXTRACT_SIZE 10
+ 
+ /*********************************************************************
+Index: linux-2.6.x/fs/fcntl.c
+===================================================================
+RCS file: /cvs/sw/linux-2.6.x/fs/fcntl.c,v
+retrieving revision 1.1.1.37
+diff -u -r1.1.1.37 fcntl.c
+--- linux-2.6.x/fs/fcntl.c	10 Oct 2007 00:54:26 -0000	1.1.1.37
++++ linux-2.6.x/fs/fcntl.c	15 Dec 2007 11:08:08 -0000
+@@ -198,6 +198,7 @@
+ 		ret = dupfd(file, 0);
+ 	return ret;
+ }
++EXPORT_SYMBOL(sys_dup);
+ 
+ #define SETFL_MASK (O_APPEND | O_NONBLOCK | O_NDELAY | FASYNC | O_DIRECT | O_NOATIME)
+ 
+Index: linux-2.6.x/include/linux/miscdevice.h
+===================================================================
+RCS file: /cvs/sw/linux-2.6.x/include/linux/miscdevice.h,v
+retrieving revision 1.1.1.15
+diff -u -r1.1.1.15 miscdevice.h
+--- linux-2.6.x/include/linux/miscdevice.h	9 Jul 2007 04:54:15 -0000	1.1.1.15
++++ linux-2.6.x/include/linux/miscdevice.h	15 Dec 2007 11:08:08 -0000
+@@ -12,6 +12,7 @@
+ #define APOLLO_MOUSE_MINOR 7
+ #define PC110PAD_MINOR 9
+ /*#define ADB_MOUSE_MINOR 10	FIXME OBSOLETE */
++#define CRYPTODEV_MINOR		70	/* /dev/crypto */
+ #define WATCHDOG_MINOR		130	/* Watchdog timer     */
+ #define TEMP_MINOR		131	/* Temperature Sensor */
+ #define RTC_MINOR 135
+Index: linux-2.6.x/include/linux/random.h
+===================================================================
+RCS file: /cvs/sw/linux-2.6.x/include/linux/random.h,v
+retrieving revision 1.1.1.12
+diff -u -r1.1.1.12 random.h
+--- linux-2.6.x/include/linux/random.h	26 Apr 2007 11:16:52 -0000	1.1.1.12
++++ linux-2.6.x/include/linux/random.h	15 Dec 2007 11:08:08 -0000
+@@ -8,6 +8,7 @@
+ #define _LINUX_RANDOM_H
+ 
+ #include <linux/ioctl.h>
++#include <linux/types.h> /* for __u32 in user space */
+ 
+ /* ioctl()'s for the random number generator */
+ 
+@@ -48,6 +49,10 @@
+ 				 unsigned int value);
+ extern void add_interrupt_randomness(int irq);
+ 
++extern void random_input_words(__u32 *buf, size_t wordcount, int ent_count);
++extern int random_input_wait(void);
++#define HAS_RANDOM_INPUT_WAIT 1
++
+ extern void get_random_bytes(void *buf, int nbytes);
+ void generate_random_uuid(unsigned char uuid_out[16]);
+ 

@@ -1,0 +1,63 @@
+# This is a template for submitting snort signature descriptions to
+# the snort.org website
+#
+# Ensure that your descriptions are your own
+# and not the work of others.  References in the rules themselves
+# should be used for linking to other's work. 
+#
+# If you are unsure of some part of a rule, use that as a commentary
+# and someone else perhaps will be able to fix it.
+# 
+# $Id: 474.txt,v 1.1 2002/06/02 18:51:53 cazz Exp $
+#
+# 
+
+Rule:
+alert icmp $EXTERNAL_NET any -> $HOME_NET any (msg:"ICMP superscan echo"; content:"|0000000000000000|";
+itype: 8; dsize:8; classtype:attempted-recon; sid:474; rev:1;)
+
+--
+Sid:
+474
+
+--
+Summary:
+ICMP Echo Request from the Windows based scanner SuperScan.
+
+--
+Impact:
+Detection of live hosts on the network.
+
+--
+Detailed Information:
+SuperScan is a Windowsbased scanner from Foundstone and is free to use. As default the scanner sends an 
+ICMP Echo Request before starting the scan. This ICMP packet has a special payload of eight (8) bytes, 
+all the number zero (0). This scanner is fairly popular among Windows users.
+
+--
+Attack Scenarios:
+SuperScan may be used as an information gathering tool to detect active hosts on a network by sending 
+icmp echo requests. 
+
+--
+Ease of Attack:
+Very easy.  SuperScan is widely available.
+
+--
+False Positives:
+Tools other than SuperScan may generate echo requests with the same content.
+
+--
+False Negatives:
+
+--
+Corrective Action:
+
+--
+Contributors:
+Johan Augustsson johan.augustsson@adm.gu.se Initial Research
+Josh Gray Edits
+-- 
+Additional References:
+http://www.foundstone.com/
+

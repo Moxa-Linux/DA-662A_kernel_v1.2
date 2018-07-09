@@ -1,0 +1,262 @@
+#!/bin/sh
+#
+# rcS		Call all S??* scripts in /etc/rcS.d in
+#		numerical/alphabetical order.
+#
+# Version:	@(#)/etc/init.d/rcS  2.76  19-Apr-1999  miquels@cistron.nl
+#
+
+PATH=/sbin:/bin:/usr/sbin:/usr/bin:/usr/local/bin:/usr/local/sbin
+runlevel=S
+prevlevel=N
+umask 022
+export PATH runlevel prevlevel
+
+/bin/sync
+/bin/mount -t proc none /proc
+/bin/mount -t sysfs none /sys
+/bin/mount -t usbfs none /proc/bus/usb
+# Mount the /dev path on static ramdisk
+#/bin/gunzip -c /etc/dev.gz > /dev/ram15
+#/bin/mount -t ext2 /dev/ram15 /dev
+/bin/gunzip -c /etc/usrvar.gz > /dev/ram0
+/bin/mount -t ext2 /dev/ram0 /var
+/bin/mount -t devpts devpts /dev/pts
+
+# Load the supported filesystem modules.
+modprobe nls_cp437
+modprobe vfat
+modprobe sunrpc
+modprobe lockd
+modprobe nfs_acl
+modprobe nfs
+modprobe ext2
+modprobe ext3
+modprobe ext4
+# These device drivers are common for all models.
+modprobe ixp4xx_eth
+modprobe ixp4xx-rng
+modprobe mxser_ha
+modprobe moxa_software_id
+modprobe moxa_uc8400_dio
+# Load the ocf crypto driver
+modprobe ocf
+modprobe cryptosoft
+modprobe cryptodev
+modprobe ixp4xx_crypto
+
+# Because moxacan are not need by all models,
+# we load each driver for different model here.
+get_swid() {
+
+  swid="8410";
+ 
+  nMU860=`cat /proc/bus/pci/devices | grep 13930001 -c`
+  nRTL8139=`cat /proc/bus/pci/devices | grep 10ec8139 -c`;
+  nCAN=`cat /proc/bus/pci/devices | grep 13930100 -c`;
+  nATH9K=`cat /proc/bus/pci/devices | grep 168c0029 -c`;
+  nSM502=`cat /proc/bus/pci/devices | grep 126f0501 -c`;
+  
+  if [ "${nRTL8139}" = "0" -a "${nMU860}" = "1" -a "${nCAN}" = "0" -a "${nATH9K}" = "1" ]; then
+    swid="8481";
+  elif [ "${nRTL8139}" = "0" -a "${nMU860}" = "1" -a "${nCAN}" = "0" -a "${nATH9K}" = "2" ]; then
+    swid="8482";
+  elif [ "${nRTL8139}" = "0" -a "${nMU860}" = "1" -a "${nCAN}" = "0" -a "${nATH9K}" = "3" ]; then
+    swid="8483";
+  elif [ "${nRTL8139}" = "0" -a "${nMU860}" = "1" -a "${nCAN}" = "0" -a "${nSM502}" = "0" ]; then
+    swid="8411";
+  elif [ "${nRTL8139}" = "2" -a "${nMU860}" = "1" -a "${nCAN}" = "0" -a "${nSM502}" = "0" ]; then
+    swid="8416";
+  elif [ "${nRTL8139}" = "1" -a "${nMU860}" = "1" -a "${nCAN}" = "1" -a "${nSM502}" = "0" ]; then
+    swid="8418";
+  elif [ "${nRTL8139}" = "1" -a "${nMU860}" = "1" -a "${nCAN}" = "0" -a "${nSM502}" = "1" ]; then
+    swid="8430";
+  elif [ "${nRTL8139}" = "1" -a "${nMU860}" = "1" -a "${nCAN}" = "0" -a "${nSM502}" = "0" ]; then
+    swid="8410";
+  fi
+
+  echo "${swid}";
+}
+
+swid=$(get_swid);
+#echo "Model:${swid}";
+
+# Customize to load different drivers for different models
+
+case "${swid}" in
+  "8410" )
+    # Load modules for 8410
+    modprobe ehci-hcd
+    modprobe uhci-hcd
+    modprobe usb-storage
+    modprobe sd_mod
+    modprobe sg
+    modprobe scsi_mod
+    ;;
+  "8411" )
+    # Load modules for 8411
+    ;;
+  "8416" )
+    # Load modules for 8416
+    modprobe ehci-hcd
+    modprobe uhci-hcd
+    modprobe usb-storage
+    modprobe sd_mod
+    modprobe sg
+    modprobe scsi_mod
+    ;;
+  "8418" )
+    # Load modules for 8418
+    modprobe ehci-hcd
+    modprobe uhci-hcd
+    modprobe usb-storage
+    modprobe sd_mod
+    modprobe sg
+    modprobe scsi_mod
+    modprobe moxacan;
+    ;;
+   "8481"|"8482"|"8483" )
+    # Remove the non-used /dev/ttyM2 ~ /dev/ttyM32 files in UC-8481-LX
+    for j in 1 2 3; do
+      for i in 0 1 2 3 4 5 6 7 8 9; do
+        rm -rf /dev/ttyM$j$i
+      done
+    done
+    rm -rf /dev/ttyM[2-9]
+    # Load modules for 8481
+    modprobe moxa_uc8480_pled
+    modprobe ehci-hcd
+    modprobe uhci-hcd
+    # Load the usbserial for Cinterion PH8
+    modprobe usbserial vendor=0x1e2d product=0x0053
+    # Load the moxa_usb_gpio for reseting PH8 module
+    modprobe moxa_usb_gpio
+    # Load the cdc-acm for ublox lea-6r GPS module
+    modprobe cdc-acm
+    modprobe usb-storage
+    modprobe sd_mod
+    modprobe sg
+    modprobe scsi_mod
+    # Load the ath9k for WAPN001 module
+    modprobe ath9k
+    ## Because PH8 module supports 2 modes, CDC ACM mode and USBSerial mode.
+    ## Default PH8 is in CDC ACM mode. We will set to USBSerial mode.
+    ## If PH8 is in CDC ACM mode, the USBSerial driver driver cannot create 
+    ## /dev/ttyUSB0. We should switch PH8 to USBSerial mode by 'AT^SDPORT=3'
+    ## command.
+    ## 'AT^SDPORT=6' command can let PH8 back to CDC ACM mode.
+    nPH8=`cat /proc/bus/usb/devices |grep "Vendor=1e2d ProdID=0054" -c`;
+    if [ "${nPH8}" != "0" ]; then
+	/etc/init.d/PH8_usbserial_mode.sh start
+
+        # Unload the cdc-acm and reload it for ublox lea-6r GPS module again
+        echo "Re-probing cdc-acm device..."
+        rmmod cdc-acm
+        modprobe cdc-acm
+    fi
+    ;;
+ * )
+    echo "Unknown model:${swid}";
+    ;;
+esac
+
+/bin/mount -t yaffs2 /dev/mtdblock4 /tmp
+if [ "$?" != "0" ]; then
+	echo "Userdisk partitions had been destroy, create it!!"
+	eraseall /dev/mtd4
+	/bin/mount -t yaffs2 /dev/mtdblock4 /tmp
+fi
+chmod og+w /tmp
+
+# 04-29-2010, Create a folder for recovering flag
+[ ! -d /tmp/.__recover ] && mkdir /tmp/.__recover
+
+/bin/mount -o bind /tmp/.__home /home
+if [ "$?" != "0" ]; then
+	echo "Recovering home partition..."
+	/bin/cp -a /home /tmp/.__home
+	/bin/mount -o bind /tmp/.__home /home
+	# 04-29-2010, /tmp/.__recover/home_copy_ok is the recovery complete flag
+	touch /tmp/.__recover/home_copy_ok
+	[ -d /home/.__usr/local/bin ] || mkdir -p /home/.__usr/local/bin
+	[ -d /home/.__usr/local/sbin ] || mkdir -p /home/.__usr/local/sbin
+	[ -d /home/.__usr/local/lib ] || mkdir -p /home/.__usr/local/lib
+	[ -d /home/.__usr/local/libexec ] || mkdir -p /home/.__usr/local/libexec
+	/bin/sync
+elif [ ! -f /tmp/.__recover/home_copy_ok ] ;then
+	umount /home
+	[ -d /tmp/.__home ] && rm -rf /tmp/.__home
+	echo "Recovering home partition..."
+	/bin/cp -a /home /tmp/.__home
+	/bin/mount -o bind /tmp/.__home /home
+	# 04-29-2010, /tmp/.__recover/home_copy_ok is the recovery complete flag
+	mkdir -p /tmp/.__recover
+	touch /tmp/.__recover/home_copy_ok
+	[ -d /home/.__usr/local/bin ] || mkdir -p /home/.__usr/local/bin
+	[ -d /home/.__usr/local/sbin ] || mkdir -p /home/.__usr/local/sbin
+	[ -d /home/.__usr/local/lib ] || mkdir -p /home/.__usr/local/lib
+	[ -d /home/.__usr/local/libexec ] || mkdir -p /home/.__usr/local/libexec
+	/bin/sync
+fi
+
+if [ ! -f "/tmp/.__recover/etc_copy_ok" ]; then
+	# 04-29-2010, Recover the again if the /etc is not complete
+	echo "Recovering etc partition..."
+	[ -d /tmp/.__etc ] && rm -rf /tmp/.__etc
+	/bin/cp -a /etc /tmp/.__etc
+	rm -f /tmp/.__etc/init.d/moxarcs
+	rm -f /tmp/.__etc/usrvar.gz
+	# 04-29-2010, /tmp/.__recover/etc_copy_ok is the recovery complete flag
+	mkdir -p /tmp/.__recover
+	touch /tmp/.__recover/etc_copy_ok
+	/bin/sync
+fi
+
+/bin/mount -o bind /tmp/.__etc /etc
+
+# Post handling after /etc remounted
+# Miles, 10-29-2010, Sync the hardware clock to system clock after remount /etc
+hwclock --hctosys
+
+# Customize /etc/ configure files for different model
+case "${swid}" in
+  "8481"|"8482"|"8483" )
+    # Customize configurations for 8481
+    [ -f /etc/network/interfaces.8416 ] && rm -f /etc/network/interfaces.8416
+    [ -f /etc/network/interfaces.8411 ] && rm -f /etc/network/interfaces.8411
+    [ -f /etc/network/interfaces.8481 ] && cp -a /etc/network/interfaces.8481 /etc/network/interfaces
+    [ -f /etc/network/interfaces.8481 ] && rm -f /etc/network/interfaces.8481
+    ;;
+  "8410" )
+    # Customize configurations for 8410
+    [ -f /etc/network/interfaces.8416 ] && rm -f /etc/network/interfaces.8416
+    [ -f /etc/network/interfaces.8411 ] && rm -f /etc/network/interfaces.8411
+    [ -f /etc/network/interfaces.8481 ] && rm -f /etc/network/interfaces.8481
+    ;;
+  "8411" )
+    # Customize configurations for 8411
+    [ -f /etc/network/interfaces.8416 ] && rm -f /etc/network/interfaces.8416
+    [ -f /etc/network/interfaces.8411 ] && cp -a /etc/network/interfaces.8411 /etc/network/interfaces
+    [ -f /etc/network/interfaces.8411 ] && rm -f /etc/network/interfaces.8411
+    [ -f /etc/network/interfaces.8481 ] && rm -f /etc/network/interfaces.8481
+    ;;
+  "8416" )
+    # Customize configurations for 8416
+    [ -f /etc/network/interfaces.8411 ] && rm -f /etc/network/interfaces.8411
+    [ -f /etc/network/interfaces.8416 ] && cp -a /etc/network/interfaces.8416 /etc/network/interfaces
+    [ -f /etc/network/interfaces.8416 ] && rm -f /etc/network/interfaces.8416
+    [ -f /etc/network/interfaces.8481 ] && rm -f /etc/network/interfaces.8481
+    ;;
+  "8418" )
+    # Customize configurations for 8418
+    [ -f /etc/network/interfaces.8411 ] && rm -f /etc/network/interfaces.8411
+    [ -f /etc/network/interfaces.8416 ] && rm -f /etc/network/interfaces.8416
+    [ -f /etc/network/interfaces.8481 ] && rm -f /etc/network/interfaces.8481
+    ;;
+  * )
+    echo "Unknown model:${swid}";
+    ;;
+esac
+
+/sbin/init q
+/etc/init.d/rcS

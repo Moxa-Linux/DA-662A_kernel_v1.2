@@ -1,0 +1,9 @@
+Package: mx-igt
+Version: 1.0
+Architecture: arm
+Maintainer: Jared_wu <Jared_Wu@moxa.com>
+Section: base
+Priority: optional
+Description: Read IGT status, bit 7, and if IGT keep open status over 10 sec, shutdown the system.
+Source:
+Depends: 

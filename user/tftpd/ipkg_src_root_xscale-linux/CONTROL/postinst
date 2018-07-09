@@ -1,0 +1,19 @@
+#!/bin/sh
+
+#echo "$0, $1"  >> /var/postinst
+
+case "$1" in
+  update)
+    ;;
+  install)
+    ;;
+  configure)
+  /etc/init.d/tftpd start
+    ;;
+  remove)
+    ;;
+  *)
+    ;;
+esac
+
+exit 0

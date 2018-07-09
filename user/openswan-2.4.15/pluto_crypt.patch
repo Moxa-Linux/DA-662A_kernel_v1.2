@@ -1,0 +1,104 @@
+*** openswan-2.4.15/programs/pluto/pluto_crypt.org.c	2009-07-26 22:24:12.000000000 +0800
+--- openswan-2.4.15/programs/pluto/pluto_crypt.c	2009-07-26 23:51:11.000000000 +0800
+***************
+*** 146,152 ****
+  
+  void pluto_crypto_helper(int fd, int helpernum)
+  {
+!     char reqbuf[PCR_REQ_SIZE];
+      struct pluto_crypto_req *r;
+  
+      signal(SIGHUP, catchhup);
+--- 146,152 ----
+  
+  void pluto_crypto_helper(int fd, int helpernum)
+  {
+!     char reqbuf[PCR_REQ_SIZE/sizeof(long)];
+      struct pluto_crypto_req *r;
+  
+      signal(SIGHUP, catchhup);
+***************
+*** 160,166 ****
+  			      , helpernum, fd));
+  
+      memset(reqbuf, 0, sizeof(reqbuf));
+!     while(read(fd, reqbuf, sizeof(r->pcr_len)) == sizeof(r->pcr_len)) {
+  	int restlen;
+  	int actlen;
+  
+--- 160,166 ----
+  			      , helpernum, fd));
+  
+      memset(reqbuf, 0, sizeof(reqbuf));
+!     while(read(fd, (char*)reqbuf, sizeof(r->pcr_len)) == sizeof(r->pcr_len)) {
+  	int restlen;
+  	int actlen;
+  
+***************
+*** 170,176 ****
+  	passert(restlen < (signed)PCR_REQ_SIZE);
+  
+  	/* okay, got a basic size, read the rest of it */
+! 	if((actlen= read(fd, reqbuf+sizeof(r->pcr_len), restlen)) != restlen) {
+  	    /* faulty read. die, parent will restart us */
+  	    
+  	    loglog(RC_LOG_SERIOUS, "cryptographic helper(%d) read(%d)=%d failed: %s\n",
+--- 170,176 ----
+  	passert(restlen < (signed)PCR_REQ_SIZE);
+  
+  	/* okay, got a basic size, read the rest of it */
+! 	if((actlen= read(fd, ((char*)reqbuf)+sizeof(r->pcr_len), restlen)) != restlen) {
+  	    /* faulty read. die, parent will restart us */
+  	    
+  	    loglog(RC_LOG_SERIOUS, "cryptographic helper(%d) read(%d)=%d failed: %s\n",
+***************
+*** 475,481 ****
+   */
+  void handle_helper_comm(struct pluto_crypto_worker *w)
+  {
+!     char reqbuf[PCR_REQ_SIZE];
+      struct pluto_crypto_req *r;
+      int restlen;
+      int actlen;
+--- 475,481 ----
+   */
+  void handle_helper_comm(struct pluto_crypto_worker *w)
+  {
+!     char reqbuf[PCR_REQ_SIZE/sizeof(long)];
+      struct pluto_crypto_req *r;
+      int restlen;
+      int actlen;
+***************
+*** 489,495 ****
+  			   ,w->pcw_work));
+  
+      /* read from the pipe */
+!     actlen = read(w->pcw_pipe, reqbuf, sizeof(r->pcr_len));
+  
+      if(actlen != sizeof(r->pcr_len)) {
+  	if(actlen != 0) {
+--- 489,495 ----
+  			   ,w->pcw_work));
+  
+      /* read from the pipe */
+!     actlen = read(w->pcw_pipe, (char*)reqbuf, sizeof(r->pcr_len));
+  
+      if(actlen != sizeof(r->pcr_len)) {
+  	if(actlen != 0) {
+***************
+*** 522,528 ****
+  	
+      /* okay, got a basic size, read the rest of it */
+      if((actlen= read(w->pcw_pipe
+! 		     , reqbuf+sizeof(r->pcr_len)
+  		     , restlen)) != restlen) {
+  	/* faulty read. die, parent will restart us */
+  	
+--- 522,528 ----
+  	
+      /* okay, got a basic size, read the rest of it */
+      if((actlen= read(w->pcw_pipe
+! 		     , ((char*)reqbuf)+sizeof(r->pcr_len)
+  		     , restlen)) != restlen) {
+  	/* faulty read. die, parent will restart us */
+  	

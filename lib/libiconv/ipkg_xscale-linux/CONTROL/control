@@ -1,0 +1,9 @@
+Package: libiconv
+Version: 1.13.1
+Architecture: xscale
+Maintainer: Jared_wu <Jared.Wu@moxa.com>
+Section: base
+Priority: optional
+Description: character set conversion
+Source: http://mozbuildtools.googlecode.com/files/libiconv-1.13.1.tar.gz
+Depends:

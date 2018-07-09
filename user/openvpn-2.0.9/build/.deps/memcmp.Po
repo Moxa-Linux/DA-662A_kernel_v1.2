@@ -1,0 +1,25 @@
+memcmp.o memcmp.o: ../memcmp.c \
+  /usr/local/arm-linux/lib/gcc/arm-linux/4.2.1/../../../../arm-linux/include/string.h \
+  /usr/local/arm-linux/lib/gcc/arm-linux/4.2.1/../../../../arm-linux/include/features.h \
+  /usr/local/arm-linux/lib/gcc/arm-linux/4.2.1/../../../../arm-linux/include/sys/cdefs.h \
+  /usr/local/arm-linux/lib/gcc/arm-linux/4.2.1/../../../../arm-linux/include/gnu/stubs.h \
+  /usr/local/arm-linux/lib/gcc/arm-linux/4.2.1/include/stddef.h \
+  /usr/local/arm-linux/lib/gcc/arm-linux/4.2.1/../../../../arm-linux/include/bits/string.h \
+  /usr/local/arm-linux/lib/gcc/arm-linux/4.2.1/../../../../arm-linux/include/bits/string2.h \
+  /usr/local/arm-linux/lib/gcc/arm-linux/4.2.1/../../../../arm-linux/include/stdlib.h
+
+/usr/local/arm-linux/lib/gcc/arm-linux/4.2.1/../../../../arm-linux/include/string.h:
+
+/usr/local/arm-linux/lib/gcc/arm-linux/4.2.1/../../../../arm-linux/include/features.h:
+
+/usr/local/arm-linux/lib/gcc/arm-linux/4.2.1/../../../../arm-linux/include/sys/cdefs.h:
+
+/usr/local/arm-linux/lib/gcc/arm-linux/4.2.1/../../../../arm-linux/include/gnu/stubs.h:
+
+/usr/local/arm-linux/lib/gcc/arm-linux/4.2.1/include/stddef.h:
+
+/usr/local/arm-linux/lib/gcc/arm-linux/4.2.1/../../../../arm-linux/include/bits/string.h:
+
+/usr/local/arm-linux/lib/gcc/arm-linux/4.2.1/../../../../arm-linux/include/bits/string2.h:
+
+/usr/local/arm-linux/lib/gcc/arm-linux/4.2.1/../../../../arm-linux/include/stdlib.h:

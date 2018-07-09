@@ -1,0 +1,6 @@
+# /etc/fstab: static file system information.
+#
+# <file system> <mount point>   <type>  <options>               <dump>  <pass>
+tmpfs		/dev/shm	tmpfs	size=32M,mode=0755		0 0
+usbfs		/proc/bus/usb	usbfs	defaults			0 0
+devpts		/dev/pts	devpts	mode=0622			0 0

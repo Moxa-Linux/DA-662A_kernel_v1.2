@@ -1,0 +1,9 @@
+# This is DA-66X and UC7400-LX-PLUS series V3.3 redboot directory configuration file
+# output output_rfis size_of_output_rfis
+output rfis 0x1F000
+file RedBoot 0x50000000 0x00080000 0x00080000 0x00000000
+file "RedBoot config" 0x50FFF000 0x50FFF000 0x00001000 0x50FF0000
+file "FIS directory" 0x50FE0000 0x50FE0000 0x0001F000 0x50FE0000
+file zImage 0x50080000 0x01600000 0x00200000 0x01600000
+file RootDisk 0x50280000 0x50280000 0x00d60000 0x50280000
+file UserDisk 0x51000000 0x52000000 0x01000000 0x51000000

@@ -1,0 +1,21 @@
+#!/bin/sh
+
+#echo "$0, $1"  >> /var/prerm
+
+
+case "$1" in
+  update)
+    ;;
+  install)
+    ;;
+  configure)
+    ;;
+  remove)
+    /etc/init.d/ipsec stop
+    mount -o remount,rw /dev/mtdblock2 /
+    ;;
+  *)
+    ;;
+esac
+
+exit 0

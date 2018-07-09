@@ -1,0 +1,55 @@
+Rule:  
+alert tcp $EXTERNAL_NET any -> $HTTP_SERVERS 80 (msg:"WEB-IIS ism.dll attempt"; flags: A+; content:"%20%20%20%20%20.htr"; nocase; reference:cve,CAN-2000-0457; reference:bugtraq,1193; classtype:web-application-attack; sid:1021; rev:3;)
+--
+
+Sid:
+1021
+
+--
+
+Summary:
+An attacker may have attempted to retrieve file contents by exploiting
+an ISAPI web vulnerability in IIS.
+
+--
+Impact:
+An attacker may have been able to retrieve file contents, including sensitive
+things like source code to web applications.
+
+--
+Detailed Information:
+Default installations of IIS 4.0 and IIS 5.0 contain a vulnerability in
+ISM.DLL that can allow an attacker to retrieve the contents of
+files on the system.  This could be used to retrieve web application
+source code or the contents of other sensitive files.
+
+--
+Attack Scenarios:
+Attacker sends a URL containing the file to be retrieved (without the
+extension), followed by approximately 230 "%20" characters and then
+".htr".
+
+
+--
+Ease of Attack:
+Simple hand-crafted URL.
+
+--
+False Positives:
+
+--
+False Negatives:
+
+--
+Corrective Action:
+Examine packet to determine whether a malicious web request was made.
+Determine whether the target machine was running a vulnerable installation
+of IIS 4.0 or IIS 5.0.
+
+--
+Contributors:
+
+--
+References:
+CVE:   CAN-2000-0457
+Bugtraq:  BID 1193

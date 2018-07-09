@@ -1,0 +1,9 @@
+Package: libxml2
+Version: 2.6.32
+Architecture: arm
+Maintainer: Jared_wu <Jared.Wu@moxa.com>
+Section: base
+Priority: optional
+Description: libxml is a software library for parsing XML documents. It is also the basis for another library which parses XSLT-1.0 stylesheets.
+Source: ftp://ftp.gnome.org/pub/GNOME/sources/libxml2/2.6/
+Depends:

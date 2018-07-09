@@ -1,0 +1,122 @@
+diff -crB iw-3.1/Makefile iw-3.1.xscale/Makefile
+*** iw-3.1/Makefile	Mon Sep  5 18:21:59 2011
+--- iw-3.1.xscale/Makefile	Thu Oct  6 11:21:30 2011
+***************
+*** 22,46 ****
+  OBJS += sections.o
+  ALL = iw
+  
+! NL1FOUND := $(shell $(PKG_CONFIG) --atleast-version=1 libnl-1 && echo Y)
+! NL2FOUND := $(shell $(PKG_CONFIG) --atleast-version=2 libnl-2.0 && echo Y)
+  
+! ifeq ($(NL1FOUND),Y)
+  NLLIBNAME = libnl-1
+! endif
+! 
+! ifeq ($(NL2FOUND),Y)
+! CFLAGS += -DCONFIG_LIBNL20
+! LIBS += -lnl-genl
+! NLLIBNAME = libnl-2.0
+! endif
+  
+! ifeq ($(NLLIBNAME),)
+! $(error Cannot find development files for any supported version of libnl)
+! endif
+  
+! LIBS += $(shell $(PKG_CONFIG) --libs $(NLLIBNAME))
+! CFLAGS += $(shell $(PKG_CONFIG) --cflags $(NLLIBNAME))
+  
+  ifeq ($(V),1)
+  Q=
+--- 22,46 ----
+  OBJS += sections.o
+  ALL = iw
+  
+! #NL1FOUND := $(shell $(PKG_CONFIG) --atleast-version=1 libnl-1 && echo Y)
+! #NL2FOUND := $(shell $(PKG_CONFIG) --atleast-version=2 libnl-2.0 && echo Y)
+  
+! #ifeq ($(NL1FOUND),Y)
+  NLLIBNAME = libnl-1
+! #endif
+  
+! #ifeq ($(NL2FOUND),Y)
+! #CFLAGS += -DCONFIG_LIBNL20
+! #LIBS += -lnl-genl
+! #NLLIBNAME = libnl-2.0
+! #endif
+! 
+! #ifeq ($(NLLIBNAME),)
+! #$(error Cannot find development files for any supported version of libnl)
+! #endif
+  
+! #LIBS += $(shell $(PKG_CONFIG) --libs $(NLLIBNAME))
+! #CFLAGS += $(shell $(PKG_CONFIG) --cflags $(NLLIBNAME))
+  
+  ifeq ($(V),1)
+  Q=
+***************
+*** 50,56 ****
+  NQ=echo
+  endif
+  
+! all: version_check $(ALL)
+  
+  version_check:
+  ifeq ($(NL2FOUND),Y)
+--- 50,57 ----
+  NQ=echo
+  endif
+  
+! #all: version_check $(ALL)
+! all: $(ALL)
+  
+  version_check:
+  ifeq ($(NL2FOUND),Y)
+***************
+*** 67,73 ****
+  version.c: version.sh $(patsubst %.o,%.c,$(VERSION_OBJS)) nl80211.h iw.h Makefile \
+  		$(wildcard .git/index .git/refs/tags)
+  	@$(NQ) ' GEN ' $@
+! 	$(Q)./version.sh $@
+  
+  %.o: %.c iw.h nl80211.h
+  	@$(NQ) ' CC  ' $@
+--- 68,74 ----
+  version.c: version.sh $(patsubst %.o,%.c,$(VERSION_OBJS)) nl80211.h iw.h Makefile \
+  		$(wildcard .git/index .git/refs/tags)
+  	@$(NQ) ' GEN ' $@
+! 	#$(Q)./version.sh $@
+  
+  %.o: %.c iw.h nl80211.h
+  	@$(NQ) ' CC  ' $@
+***************
+*** 84,96 ****
+  	@$(NQ) ' GZIP' $<
+  	$(Q)gzip < $< > $@
+  
+! install: iw iw.8.gz
+  	@$(NQ) ' INST iw'
+  	$(Q)$(MKDIR) $(DESTDIR)$(SBINDIR)
+  	$(Q)$(INSTALL) -m 755 iw $(DESTDIR)$(SBINDIR)
+! 	@$(NQ) ' INST iw.8'
+! 	$(Q)$(MKDIR) $(DESTDIR)$(MANDIR)/man8/
+! 	$(Q)$(INSTALL) -m 644 iw.8.gz $(DESTDIR)$(MANDIR)/man8/
+  
+  clean:
+! 	$(Q)rm -f iw *.o *~ *.gz version.c *-stamp
+--- 85,98 ----
+  	@$(NQ) ' GZIP' $<
+  	$(Q)gzip < $< > $@
+  
+! install: iw #iw.8.gz
+  	@$(NQ) ' INST iw'
+  	$(Q)$(MKDIR) $(DESTDIR)$(SBINDIR)
+  	$(Q)$(INSTALL) -m 755 iw $(DESTDIR)$(SBINDIR)
+! 	#@$(NQ) ' INST iw.8'
+! 	#$(Q)$(MKDIR) $(DESTDIR)$(MANDIR)/man8/
+! 	#$(Q)$(INSTALL) -m 644 iw.8.gz $(DESTDIR)$(MANDIR)/man8/
+  
+  clean:
+! 	#$(Q)rm -f iw *.o *~ *.gz version.c *-stamp
+! 	$(Q)rm -f iw *.o *~ *.gz *-stamp
+Only in iw-3.1.xscale: version.c

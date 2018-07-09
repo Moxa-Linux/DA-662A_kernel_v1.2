@@ -1,0 +1,9 @@
+Package: pimd
+Version: 2.1.0
+Architecture: xscale
+Maintainer: Jared_wu <Jared_Wu@moxa.com>
+Section: base
+Priority: optional
+Description: PIMv2-SM multicast routing daemon
+Source: http://pimd.sourcearchive.com/
+Depends: 

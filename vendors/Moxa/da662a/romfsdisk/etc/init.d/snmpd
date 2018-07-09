@@ -1,0 +1,22 @@
+#!/bin/sh
+PATH=/bin:/usr/bin:/sbin:/usr/sbin
+if ! [ -x /bin/snmpd ]; then
+	exit 0
+fi
+
+case "$1" in
+    start)
+	echo "Starting snmpd"
+	start-stop-daemon --start --quiet --pidfile /var/run/snmpd.pid --exec /bin/snmpd
+	;;
+    stop)
+	echo "Stopping snmpd"
+	start-stop-daemon --stop --quiet --oknodo /var/run/snmpd.pid --exec /bin/snmpd
+	;;
+    *)
+	echo "Usage: /etc/init.d/snmpd {start|stop}"
+	exit 1
+	;;
+esac
+
+exit 0

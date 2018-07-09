@@ -1,0 +1,9 @@
+Package: tcpdump
+Version: 3.9.8
+Architecture: xscale
+Maintainer: Jared_wu <Jared_Wu@moxa.com>
+Section: base
+Priority: optional
+Description: dump the traffic on a network
+Source: http://www.tcpdump.org
+Depends: 

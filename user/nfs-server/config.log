@@ -1,0 +1,12 @@
+This file contains any messages produced by compilers while
+running configure, to aid debugging if configure makes a mistake.
+
+configure:3328: arm-linux-gcc -o conftest -g -O -D_GNU_SOURCE   conftest.c -lcrypt -lnsl  -L/usr/lib -lwrap 1>&5
+/usr/local/arm-linux/bin/../lib/gcc-lib/arm-linux/3.3.2/../../../../arm-linux/bin/ld: skipping incompatible /usr/lib/libcrypt.so when searching for -lcrypt
+/usr/local/arm-linux/bin/../lib/gcc-lib/arm-linux/3.3.2/../../../../arm-linux/bin/ld: skipping incompatible /usr/lib/libcrypt.a when searching for -lcrypt
+/usr/local/arm-linux/bin/../lib/gcc-lib/arm-linux/3.3.2/../../../../arm-linux/bin/ld: skipping incompatible /usr/lib/libnsl.so when searching for -lnsl
+/usr/local/arm-linux/bin/../lib/gcc-lib/arm-linux/3.3.2/../../../../arm-linux/bin/ld: skipping incompatible /usr/lib/libnsl.a when searching for -lnsl
+/usr/local/arm-linux/bin/../lib/gcc-lib/arm-linux/3.3.2/../../../../arm-linux/bin/ld: skipping incompatible /usr/lib/libwrap.so when searching for -lwrap
+/usr/local/arm-linux/bin/../lib/gcc-lib/arm-linux/3.3.2/../../../../arm-linux/bin/ld: skipping incompatible /usr/lib/libwrap.a when searching for -lwrap
+/usr/local/arm-linux/bin/../lib/gcc-lib/arm-linux/3.3.2/../../../../arm-linux/bin/ld: cannot find -lwrap
+collect2: ld returned 1 exit status

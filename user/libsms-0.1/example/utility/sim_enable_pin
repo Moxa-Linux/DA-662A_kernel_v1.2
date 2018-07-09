@@ -1,0 +1,31 @@
+#!/bin/sh
+LPATH=/bin
+state=
+password=
+print_usage()
+{
+	echo "Usage: $0 [-h] | [-e -p pin_code | -d -p pin_code]   ; Enable or Disable the PIN authentication";
+	echo ""
+	echo "e.g.: sim_enable_pin                  ; display this message"
+	echo "    : sim_enable_pin -h               ; display help message"
+	echo "    : sim_enable_pin -e -p pin_code   ; enable the PIN code authentication"
+	echo "    : sim_enable_pin -d -p pin_code   ; disable the PIN code authentication"
+}
+while getopts dep:h options
+do
+	case $options in
+	d) state="-u";;
+	e) state="-l";;
+	p) password="$OPTARG";;
+	h) print_usage;
+	   exit 0;;
+	?) print_usage;
+	   exit 2;;
+	esac
+done
+
+if [ "$password" != "" ]; then
+	${LPATH}/egprscmd ${state} $password
+else
+	print_usage;
+fi

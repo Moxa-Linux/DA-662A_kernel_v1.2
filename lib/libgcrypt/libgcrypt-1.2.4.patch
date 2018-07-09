@@ -1,0 +1,67 @@
+diff -crB libgcrypt-1.2.4/cipher/Makefile.in libgcrypt-1.2.4.new/cipher/Makefile.in
+*** libgcrypt-1.2.4/cipher/Makefile.in	2010-10-21 09:54:59.000000000 +0800
+--- libgcrypt-1.2.4.new/cipher/Makefile.in	2011-12-06 10:18:05.000000000 +0800
+***************
+*** 230,236 ****
+  target_os = @target_os@
+  target_vendor = @target_vendor@
+  EXTRA_DIST = Manifest
+! INCLUDES = -I$(top_srcdir)/src 
+  noinst_LTLIBRARIES = libcipher.la
+  GCRYPT_MODULES = @GCRYPT_CIPHERS@ @GCRYPT_PUBKEY_CIPHERS@ @GCRYPT_DIGESTS@ \
+                   @GCRYPT_RANDOM@
+--- 230,236 ----
+  target_os = @target_os@
+  target_vendor = @target_vendor@
+  EXTRA_DIST = Manifest
+! INCLUDES = -I$(top_srcdir)/src -I../src
+  noinst_LTLIBRARIES = libcipher.la
+  GCRYPT_MODULES = @GCRYPT_CIPHERS@ @GCRYPT_PUBKEY_CIPHERS@ @GCRYPT_DIGESTS@ \
+                   @GCRYPT_RANDOM@
+diff -crB libgcrypt-1.2.4/mpi/Makefile.in libgcrypt-1.2.4.new/mpi/Makefile.in
+*** libgcrypt-1.2.4/mpi/Makefile.in	2010-10-21 09:54:59.000000000 +0800
+--- libgcrypt-1.2.4.new/mpi/Makefile.in	2011-12-06 10:18:05.000000000 +0800
+***************
+*** 230,236 ****
+  target_cpu = @target_cpu@
+  target_os = @target_os@
+  target_vendor = @target_vendor@
+! INCLUDES = -I$(top_srcdir)/src
+  ASFLAGS = @MPI_SFLAGS@
+  AM_CCASFLAGS = $(NOEXECSTACK_FLAGS)
+  
+--- 230,236 ----
+  target_cpu = @target_cpu@
+  target_os = @target_os@
+  target_vendor = @target_vendor@
+! INCLUDES = -I$(top_srcdir)/src -I../src
+  ASFLAGS = @MPI_SFLAGS@
+  AM_CCASFLAGS = $(NOEXECSTACK_FLAGS)
+  
+Only in libgcrypt-1.2.4/mpi: mpih-add1.c
+Only in libgcrypt-1.2.4/mpi: mpih-lshift.c
+Only in libgcrypt-1.2.4/mpi: mpih-mul1.c
+Only in libgcrypt-1.2.4/mpi: mpih-mul2.c
+Only in libgcrypt-1.2.4/mpi: mpih-mul3.c
+Only in libgcrypt-1.2.4/mpi: mpih-rshift.c
+Only in libgcrypt-1.2.4/mpi: mpih-sub1.c
+diff -crB libgcrypt-1.2.4/tests/Makefile.in libgcrypt-1.2.4.new/tests/Makefile.in
+*** libgcrypt-1.2.4/tests/Makefile.in	2010-10-21 09:54:59.000000000 +0800
+--- libgcrypt-1.2.4.new/tests/Makefile.in	2011-12-06 10:26:26.000000000 +0800
+***************
+*** 275,281 ****
+  TESTS = prime register ac basic tsexp keygen pubkey benchmark random \
+  	t-mpi-bit
+  
+! INCLUDES = -I$(top_srcdir)/src
+  LDADD = ../src/libgcrypt.la
+  AM_CFLAGS = @GPG_ERROR_CFLAGS@
+  all: all-am
+--- 275,281 ----
+  TESTS = prime register ac basic tsexp keygen pubkey benchmark random \
+  	t-mpi-bit
+  
+! INCLUDES = -I$(top_srcdir)/src -I../src
+  LDADD = ../src/libgcrypt.la
+  AM_CFLAGS = @GPG_ERROR_CFLAGS@
+  all: all-am

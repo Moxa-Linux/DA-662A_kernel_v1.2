@@ -1,0 +1,3 @@
+# modprobe $modalias loads all possibly appropriate modules
+ACTION=="add", SUBSYSTEM=="pcmcia", MODALIAS=="?*", \
+		RUN+="/sbin/modprobe $modalias"

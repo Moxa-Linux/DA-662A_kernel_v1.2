@@ -1,0 +1,9 @@
+Package: curl
+Version: 7.52.1
+Architecture: arm
+Maintainer: Jared_wu <Jared_Wu@moxa.com>
+Section: base
+Priority: optional
+Description: transfer a URL
+Source: http://curl.haxx.se/download.html
+Depends: 

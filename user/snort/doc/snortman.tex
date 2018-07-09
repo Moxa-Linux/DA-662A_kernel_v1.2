@@ -1,0 +1,3242 @@
+\documentclass[english]{report}
+\usepackage[T1]{fontenc}
+\usepackage[latin1]{inputenc}
+\usepackage{geometry}
+\geometry{verbose,letterpaper,tmargin=1in,bmargin=1in,lmargin=1in,rmargin=1in}
+\IfFileExists{url.sty}{\usepackage{url}}
+                      {\newcommand{\url}{\texttt}}
+
+\makeatletter
+
+\usepackage{babel}
+\makeatother
+\begin{document}
+
+\title{Snort Users Manual\\
+Snort Release: 2.0.1}
+
+
+\author{Martin Roesch \\ Chris Green}
+\maketitle
+Copyright \copyright 1998-2003 Martin Roesch \\
+Copyright \copyright 2001-2003 Chris Green \\
+Copyright \copyright 2003 Sourcefire, Inc.
+
+\tableofcontents{}
+
+
+\chapter{Snort Overview}
+
+This manual is based off of \emph{Writing Snort Rules} by Martin Roesch.
+It is now maintained by Chris Green <cmg@snort.org>. Please send manual
+updates or links to translated documentation to Chris Green. This
+means that if you have a better way to say something or something
+in the documentation is outdated, drop me a line and I'll fix it.
+
+The documentation is now in \textsc{LaTeX} format in the
+\verb!doc/snortman.tex! file so if you wish, you can submit patches for documentation.
+Just small documentation updates are the easiest way to help the Snort
+Project out.
+
+\section{Getting Started}
+
+Snort really isn't very hard to use, but there are a lot of command
+line options to play with, and it's not always obvious which ones go
+together well. This file aims to make using Snort easier for new
+users.
+
+Before we proceed, there are a few basic concepts you should understand
+about Snort. There are three main modes in which Snort can be configured:
+sniffer, packet logger, and network intrusion detection system. Sniffer
+mode simply reads the packets off of the network and displays them
+for you in a continuous stream on the console. Packet logger mode
+logs the packets to the disk. Network intrusion detection mode is
+the most complex and configurable configuration, allowing Snort to
+analyze network traffic for matches against a user defined rule set
+and perform several actions based upon what it sees.
+
+
+\section{Sniffer Mode}
+
+First, let's start with the basics. If you just want to print out
+the TCP/IP packet headers to the screen (i.e. sniffer mode), try this:
+
+\begin{verbatim}
+./snort -v
+\end{verbatim}
+This command will run Snort and just show the IP and TCP/UDP/ICMP
+headers, nothing else. If you want to see the application data in
+transit, try the following:
+
+\begin{verbatim}
+./snort -vd
+\end{verbatim}
+This instructs Snort to display the packet data as well as the headers.
+If you want an even more descriptive display, showing the data link
+layer headers do this:
+
+\begin{verbatim}
+./snort -vde
+\end{verbatim}
+(As an aside, these switches may be divided up or smashed together
+in any combination. The last command could also be typed out as:
+
+\begin{verbatim}
+./snort -d -v -e
+\end{verbatim}
+and it would do the same thing.)
+
+
+\section{Packet Logger Mode}
+
+OK, all of these commands are pretty cool, but if you want to record
+the packets to the disk, you need to specify a logging directory and
+Snort will automatically know to go into packet logger mode:
+
+\begin{verbatim}
+./snort -dev -l ./log
+\end{verbatim}
+Of course, this assumes you have a directory named log
+in the current directory. If you don't, Snort will exit with an error
+message. When Snort runs in this mode, it collects every packet it
+sees and places it in a directory hierarchy based upon the IP address
+of one of the hosts in the datagram.
+
+If you just specify a plain -l switch, you may
+notice that Snort sometimes uses the address of the remote computer
+as the directory in which it places packets, and sometimes it uses
+the local host address. In order to log relative to the home network,
+you need to tell Snort which network is the home network:
+
+\begin{verbatim}
+./snort -dev -l ./log -h 192.168.1.0/24
+\end{verbatim}
+This rule tells Snort that you want to print out the data link and
+TCP/IP headers as well as application data into the directory ./log,
+and you want to log the packets relative to the 192.168.1.0 class
+C network. All incoming packets will be recorded into subdirectories
+of the log directory, with the directory names being based on the
+address of the remote (non-192.168.1) host. Note that if both hosts
+are on the home network, then they are recorded based upon the higher
+of the two's port numbers, or in the case of a tie, the source address.
+
+If you're on a high speed network or you want to log the packets into
+a more compact form for later analysis you should consider logging
+in binary mode. Binary mode logs the packets in
+tcpdump format to a single binary file in the
+logging directory:
+
+\begin{verbatim}
+./snort -l ./log -b
+\end{verbatim}
+Note the command line changes here. We don't need to specify a home
+network any longer because binary mode logs everything into a single
+file, which eliminates the need to tell it how to format the output
+directory structure. Additionally, you don't need to run in verbose
+mode or specify the -d or -e switches because in binary mode the entire
+packet is logged, not just sections of it. All that is really required
+to place Snort into logger mode is the specification of a logging
+directory at the command line with the -l switch, the -b binary logging
+switch merely provides a modifier to tell it to log the packets in
+something other than the default output format of plain ASCII text.
+
+Once the packets have been logged to the binary file, you can read
+the packets back out of the file with any sniffer that supports the
+tcpdump binary format such as tcpdump or Ethereal. Snort can also
+read the packets back by using the -r switch, which puts it into playback
+mode. Packets from any tcpdump formatted file can be processed through
+Snort in any of its run modes. For example, if you wanted to run a
+binary log file through Snort in sniffer mode to dump the packets
+to the screen, you can try something like this:
+
+\begin{verbatim}
+./snort -dv -r packet.log
+\end{verbatim}
+You can manipulate the data in the file in a number of ways through
+Snort's packet logging and intrusion detection modes, as well as with
+the BPF interface that's available from the command line. For example,
+if you only wanted to see the ICMP packets from the log file, simply
+specify a BPF filter at the command line and Snort will only see
+the ICMP packets in the file:
+
+\begin{verbatim}
+./snort -dvr packet.log icmp 
+\end{verbatim}
+For more info on how to use the BPF interface, read the snort and
+tcpdump man pages.
+
+
+\section{Network Intrusion Detection Mode}
+
+To enable network intrusion detection (NIDS) mode (so that you don't
+record every single packet sent down the wire), try this:
+
+\begin{verbatim}
+./snort -dev -l ./log -h 192.168.1.0/24 -c snort.conf
+\end{verbatim}
+Where snort.conf is the name of your rules file. This will apply the
+rules set in the snort.conf file to each packet to decide if an action
+based upon the rule type in the file should be taken. If you don't
+specify an output directory for the program, it will default to /var/log/snort.
+
+One thing to note about the last command line is that if Snort is
+going to be used in a long term way as an IDS, the -v
+switch should be left off the command line for the sake of speed.
+The screen is a slow place to write data to, and packets can be dropped
+while writing to the display.
+
+It's also not necessary to record the data link headers for most applications,
+so it's not necessary to specify the -e switch either.
+
+\begin{verbatim}
+./snort -d -h 192.168.1.0/24 -l ./log -c snort.conf
+\end{verbatim}
+This will configure Snort to run in it's most basic NIDS form, logging
+packets that the rules tell it to in plain ASCII to a hierarchical
+directory structure (just like packet logger mode). 
+
+
+\subsection{NIDS Mode Output Options}
+
+There are a number of ways to configure the output of Snort in NIDS
+mode. The default logging and alerting mechanisms are to log in decoded
+ASCII format and use full alerts. The full alert
+mechanism prints out the alert message in addition to the full packet
+headers. There are several other alert output modes available at the
+command line, as well as two logging facilities.
+
+Alert modes are somewhat more complex. There are six alert modes available
+at the command line, full, fast, socket, syslog, smb (WinPopup), and
+none. Four of these modes are accessed with the -A command line switch.
+The four options are:
+
+\begin{list}{}
+\item [-A~fast]fast alert mode, write the alert in a simple format with
+a timestamp, alert message, source and destination IPs/ports
+\item [-A~full]this is also the default alert mode, so if you specify
+nothing this will automatically be used 
+\item [-A~unsock]send alerts to a UNIX socket that another program can
+listen on 
+\item [-A~none]turn off alerting
+\end{list}
+Packets can be logged to their default decoded ASCII format or to
+a binary log file via the -b command line switch. If you wish to disable
+packet logging all together, use the -N command line switch.
+
+For output modes available through the configuration file, see Section
+\ref{output config example}. Note that command line logging options
+override any output options specified in the configuration file. This
+allows debugging of configuration issues quickly via the command line.
+
+To send alerts to syslog, use the ''-s '' switch. The default facilities
+for the syslog alerting mechanism are LOG\_AUTHPRIV and LOG\_ALERT.
+If you want to configure other facilities for syslog output, use the
+output plugin directives in the rules files. See Section\ref{alert syslog lable}
+for more details on configuring syslog output.
+
+Finally, there is the SMB alerting mechanism. This allows Snort to
+make calls to the smbclient that comes with Samba and send WinPopup
+alert messages to Windows machines. To use this alerting mode, you
+must configure Snort to use it at configure time with the --enable-smbalerts
+switch. 
+
+Here are some output configuration examples:
+
+\begin{itemize}
+\item Log to default (decoded ASCII) facility and send alerts to syslog 
+\end{itemize}
+\begin{verbatim}
+./snort -c snort.conf -l ./log -h 192.168.1.0/24 -s
+\end{verbatim}
+\begin{itemize}
+\item Log to the default facility in /var/log/snort and send alerts to a
+fast alert file: 
+\end{itemize}
+\begin{verbatim}
+./snort -c snort.conf -A fast -h 192.168.1.0/24
+\end{verbatim}
+\begin{itemize}
+\item Log to a binary file and send alerts to Windows workstation: 
+\end{itemize}
+\begin{verbatim}
+./snort -c snort.conf -b -M WORKSTATIONS
+\end{verbatim}
+
+\subsection{High Performance Configuration}
+
+If you want Snort to go \emph{fast} (like keep up with a 100 Mbps
+net fast) use the -b and -A fast
+or -s (syslog) options. This will log packets
+in tcpdump format and produce minimal alerts. For example:
+
+\begin{verbatim}
+./snort -b -A fast -c snort.conf
+\end{verbatim}
+In this configuration, Snort has been able to log multiple simultaneous
+probes and attacks on a 100 Mbps LAN running at a saturation level
+of approximately 80 Mbps. In this configuration, the logs are written
+in binary format to the snort.log tcpdump-formatted file. To read
+this file back and break out the data in the familiar Snort format,
+just rerun Snort on the data file with the -r
+option and the other options you would normally use. For example:
+
+\begin{verbatim}
+./snort -d -c snort.conf -l ./log -h 192.168.1.0/24 -r snort.log 
+\end{verbatim}
+Once this is done running, all of the data will be sitting in the
+log directory in its normal decoded format. Cool, eh?
+
+
+\subsection{Changing Alert Order}
+
+Some people don't like the default way in which Snort applies it's
+rules to packets. The Alert rules applied first, then the Pass rules,
+and finally the Log rules. This sequence is somewhat counterintuitive,
+but it's a more foolproof method than allowing the user to write a
+hundred alert rules and then disable them all with an errant pass
+rule. For more information on rule types, see Section \ref{rules action section}.
+
+For people who know what they're doing, the -o
+switch has been provided to change the default rule application behavior
+to Pass rules, then Alert, then Log:
+
+\begin{verbatim}
+./snort -d -h 192.168.1.0/24 -l ./log -c snort.conf -o
+\end{verbatim}
+
+\section{Miscellaneous}
+
+If you are willing to run snort in daemon mode,
+you can add -D switch to any combination above. Please NOTICE that
+if you want to be able to restart snort by sending SIGHUP signal to
+the daemon, you will need to use full path to snort binary, when you
+start it, i.g.:
+
+\begin{verbatim}
+/usr/local/bin/snort -d -h 192.168.1.0/24 -l \
+    /var/log/snortlogs -c /usr/local/etc/snort.conf -s -D
+\end{verbatim}
+Relative paths are not supported due to security concerns.
+
+If you're going to be posting packet logs to public mailing lists
+you might want to try out the -O switch. This switch obfuscates
+your the IP addresses in the packet printouts. This is handy if you
+don't want the people on the mailing list to know the IP addresses
+involved. You can also combine the -O switch with the -h switch to
+only obfuscate the IP addresses of hosts on the home network. This
+is useful if you don't care who sees the address of the attacking
+host. For example:
+
+\begin{verbatim}
+./snort -d -v -r snort.log -O -h 192.168.1.0/24
+\end{verbatim}
+This will read the packets from a log file and dump the packets to
+the screen, obfuscating only the addresses from the 192.168.1.0/24
+class C network.
+
+
+\section{More Information}
+
+Chapter \ref{writing snort rules chapter} contains much information
+about many configuration options available in the configuration file.
+The snort manual page and the output of 
+
+\begin{verbatim}
+snort -? 
+\end{verbatim}
+contain information that can help get Snort running in several different
+modes. Note that often \textbackslash{}? is needed to escape the ?
+in many shells. 
+
+The Snort web page ( \url{http://www.snort.org} ) and the Snort User's
+mailing list (\url{http://marc.theaimsgroup.com/?l=snort-users} at 
+\verb?snort-users@lists.sourceforge.net? provide informative announcements
+as well as a venue for community discussion and support. There's a lot
+to Snort so sit back with a beverage of your choosing and read the
+documentation and mailing list archives.
+
+
+\chapter{Writing Snort Rules\protect \\
+How to Write Snort Rules and Keep Your Sanity\label{writing snort rules chapter}}
+
+
+\section{The Basics}
+
+Snort uses a simple, lightweight rules description language that is
+flexible and quite powerful. There are a number of simple guidelines
+to remember when developing Snort rules.
+
+Most Snort rules are written in a single line. This was required in
+versions prior to 1.8. In current versions of Snort, rules may span
+multiple lines by adding a backslash \textbackslash{} to the end of
+the line. 
+
+Snort rules are divided into two logical sections, the rule header
+and the rule options. The rule header contains the rule's action,
+protocol, source and destination IP addresses and netmasks, and the
+source and destination ports information. The rule option section
+contains alert messages and information on which parts of the packet
+should be inspected to determine if the rule action should be taken.
+
+Figure \ref{sample snort rule} illustrates a sample Snort rule.
+
+%
+\begin{figure}[!hbpt]
+\begin{verbatim}
+alert tcp any any -> 192.168.1.0/24 111 (content:"|00 01 86 a5|"; msg:"mountd access";)
+\end{verbatim}
+
+\caption{Sample Snort Rule\label{sample snort rule}}
+\end{figure}
+
+
+The text up to the first parenthesis is the rule header and the section
+enclosed in parenthesis is the rule options. The words before the
+colons in the rule options section are called option keywords. Note
+that the rule options section is not specifically required by any
+rule, they are just used for the sake of making tighter definitions
+of packets to collect or alert on (or drop, for that matter). All
+of the elements in that make up a rule must be true for the indicated
+rule action to be taken. When taken together, the elements can be
+considered to form a logical \textsc{and} statement. At the same time,
+the various rules in a Snort rules library file can be considered
+to form a large logical \textsc{or} statement. 
+
+
+\subsection{Includes}
+
+The include keyword allows other rule files to be included within
+the rules file indicated on the Snort command line. It works much
+like an \#include from the C programming language,
+reading the contents of the named file and putting them in place in
+the file in the place where the include appears.
+
+
+\paragraph{Format }
+
+\begin{verbatim}
+include: <include file path/name>
+\end{verbatim}
+Note that there is no semicolon at the end of this line. Included
+files will substitute any predefined variable values into their own
+variable references. See the Variables section for more information
+on defining and using variables in Snort rule files.
+
+
+\subsection{Variables}
+
+Variables may be defined in Snort. These are simple substitution variables
+set with the var keyword as in Figure \ref{variable definition}.
+
+
+\subsubsection{Format}
+
+\begin{verbatim}
+var: <name> <value>
+\end{verbatim}
+
+
+%
+\begin{figure}[!hbpt]
+\begin{verbatim}
+var MY_NET [192.168.1.0/24,10.1.1.0/24]
+alert tcp any any -> $MY_NET any (flags:S; msg:"SYN packet";)
+\end{verbatim}
+
+\caption{Example of Variable Definition and Usage\label{variable definition}}
+\end{figure}
+
+The rule variable names can be modified in several ways. You can define
+meta-variables using the \$ operator. These can
+be used with the variable modifier operators, ?
+and -. {*} \$var - define meta variable {*} \$(var)
+- replace with the contents of variable var {*}
+\$(var:-default) - replace with the contents of the variable var
+or with default if var is
+undefined. {*} \$(var:?message) - replace with the contents of variable
+var or print out the error message message
+and exit
+
+See Figure \ref{advanced variable usage} for an example of these
+rules modifiers in action.
+
+%
+\begin{figure}[!hbpt]
+\begin{verbatim}
+var MY_NET 192.168.1.0/24
+log tcp any any -> $MY_NET 23
+\end{verbatim}
+
+\caption{Figure Advanced Variable Usage Example\label{advanced variable usage}}
+\end{figure}
+
+
+
+\subsection{Config}
+
+Many configuration and command line options of Snort can be specified
+in the configuration file. 
+
+
+\subsubsection{Format}
+
+\begin{verbatim}
+config <directive> [: <value>]
+\end{verbatim}
+
+\subsubsection{Directives}
+
+\begin{description}
+\item [order]Change the pass order of rules ( snort -o )
+\item [alertfile]Set the alerts output file. Example: config alertfile:
+alerts 
+\item [classification]Build rules classifications ( see Table \ref{Snort Default Classifications})
+\item [decode\_arp]Turn on arp decoding (snort -a) 
+\item [dump\_chars\_only]Turn on character dumps (snort -C)
+\item [dump\_payload]Dump application layer (snort -d)
+\item [decode\_data\_link]Decode Layer2 headers (snort -e)
+\item [bpf\_file]Specify BPF filters (snort -F). Example: config bpf\_file:
+filename.bpf
+\item [set\_gid]Change to this GID (snort -g). Example: config set\_gid:
+snort\_group
+\item [daemon]Fork as a daemon (snort -D) 
+\item [reference\_net]Set home network (snort -h). Example: config reference\_net:
+192.168.1.0/24
+\item [interface]Set the network interface (snort -i). Example: config
+interface: xl0
+\item [alert\_with\_interface\_name]Append interface name to alert (snort
+-I) 
+\item [logdir]Set the logdir (snort -l). Example: config logdir: /var/log/snort
+\item [umask]Umask when running (snort -m). Example: config umask: 022
+\item [pkt\_count]Exit after N packets (snort -n). Example: config pkt\_count:
+13
+\item [nolog]Disable Logging. Note: Alerts will still occur. (snort -N)
+\item [obfuscate]Obfuscate IP Addresses (snort -O)
+\item [no\_promisc]Disable promiscuous mode (snort -p)
+\item [quiet]Disable banner and status reports (snort -q)
+% \item [chroot]Chroot to specified dir (snort -t) Example: config chroot:/home/snort
+\item [checksum\_mode]Types of packets to calculate checksums. Values:
+none, noip, notcp, noicmp, noudp, all
+% \item [set\_uid]Set UID to <id> (snort -u). Example: config set\_uid: snort\_user
+\item [utc]Use UTC instead of local time for timestamps (snort -U)
+\item [verbose]Use Verbose logging to stdout (snort -v)
+\item [dump\_payload\_verbose]Dump raw packet starting at link layer ( snort -X )
+\item [show\_year]show year in timestamps (snort -y)
+\item [stateful]set assurance mode for stream4 ( est ). See also Table
+\ref{stream4 reassemble defaults}.
+\item [min\_ttl]sets a snort-wide minimum ttl to ignore all traffic.
+\item [disable\_decode\_alerts]turn off the alerts generated by the decode phase of snort
+\item [disable\_tcpopt\_experimental\_alerts]turn off alerts generated by experimental tcp options
+\item [disable\_tcpopt\_obsolete\_alerts]turn off alerts generated by obsolete tcp options
+\item [disable\_tcpopt\_ttcp\_alerts]turn off alerts generated by T/TCP options
+\item [disable\_tcpopt\_alerts] disable option length validation alerts
+\item [disable\_ipopt\_alerts] disable IP ption length validation alerts
+\item [detection] configure the detection engine ( Example: search-method lowmem )
+\item [reference] add a new reference system to snort
+\end{description}
+
+\section{Rules Headers}
+
+
+\subsection{Rule Actions \label{rules action section}}
+
+The rule header contains the information that defines the who,
+where, and what of a packet, as well as what to do in the
+event that a packet with all the attributes indicated in the rule
+should show up. The first item in a rule is the rule action. The rule
+action tells Snort what to do when it finds a packet that matches
+the rule criteria. There are 5 available default actions in Snort,
+alert, log, pass, activate, and dynamic. 
+
+\begin{enumerate}
+\item alert - generate an alert using the selected alert method, and then
+log the packet 
+\item log - log the packet 
+\item pass - ignore the packet 
+\item activate - alert and then turn on another dynamic rule  
+\item dynamic - remain idle until activated by an activate rule , then act
+as a log rule
+\end{enumerate}
+You can also define your own rule types and associate one or more
+output plugins with them. You can then use the rule types as actions
+in Snort rules.
+
+This example will create a type that will log to just tcpdump:
+
+\begin{verbatim}
+ruletype suspicious
+{
+    type log output
+    log_tcpdump: suspicious.log
+}
+\end{verbatim}
+
+This example will create a rule type that will log to syslog and a
+MySQL database:
+
+\begin{verbatim}
+ruletype redalert
+{
+      typealert output 
+      alert_syslog: LOG_AUTH LOG_ALERT 
+      output database: log, mysql, user=snort dbname=snort host=localhost 
+}
+\end{verbatim}
+
+\subsection{Protocols}
+
+The next field in a rule is the protocol. There are four Protocols
+that Snort currently analyzes for suspicious behavior -- tcp, udp,
+icmp, and ip. In the future there may be more, such as ARP, IGRP,
+GRE, OSPF, RIP, IPX, etc.
+
+
+\subsection{IP Addresses}
+
+The next portion of the rule header deals with the IP address and
+port information for a given rule. The keyword any
+may be used to define any address. Snort does not have a mechanism
+to provide host name lookup for the IP address fields in the rules
+file. The addresses are formed by a straight numeric IP address and
+a CIDR\cite{CIDRnotation} block. The CIDR block indicates the netmask
+that should be applied to the rule's address and any incoming packets
+that are tested against the rule. A CIDR block mask of /24 indicates
+a Class C network, /16 a Class B network, and /32 indicates a specific
+machine address. For example, the address/CIDR combination 192.168.1.0/24
+would signify the block of addresses from 192.168.1.1 to 192.168.1.255.
+Any rule that used this designation for, say, the destination address
+would match on any address in that range. The CIDR designations give
+us a nice short-hand way to designate large address spaces with just
+a few characters.
+
+In Figure \ref{sample snort rule}, the source IP address was set
+to match for any computer talking, and the destination address was
+set to match on the 192.168.1.0 Class C network.
+
+There is an operator that can be applied to IP addresses, the negation
+operator. This operator tells Snort to match any IP address except
+the one indicated by the listed IP address. The negation operator
+is indicated with a !. For example, an easy modification
+to the initial example is to make it alert on any traffic that originates
+outside of the local net with the negation operator as shown in Figure
+\ref{Example Negation}.
+
+%
+\begin{figure}[!hbpt]
+\begin{verbatim}
+alert tcp !192.168.1.0/24 any -> 192.168.1.0/24 111 \
+     (content: "|00 01 86 a5|"; msg: "external mountd access";)
+\end{verbatim}
+
+\caption{\label{Example Negation} Example IP Address Negation Rule}
+\end{figure}
+
+
+This rule's IP addresses indicate any tcp packet with a
+source IP address not originating from the internal network and a
+destination address on the internal network.
+
+You may also specify lists of IP addresses. An IP list is specified
+by enclosing a comma separated list of IP addresses and CIDR blocks
+within square brackets. For the time being, the IP list may not include
+spaces between the addresses. See Figure \ref{IP list usage} for
+an example of an IP list in action.
+
+%
+\begin{figure}[!hbpt]
+\begin{verbatim}
+alert tcp ![192.168.1.0/24,10.1.1.0/24] any -> \
+     [192.168.1.0/24,10.1.1.0/24] 111 (content: "|00 01 86 a5|"; \
+     msg: "external mountd access";)
+\end{verbatim}
+
+\caption{\label{IP list usage}IP Address Lists}
+\end{figure}
+
+
+
+\subsection{Port Numbers}
+
+Port numbers may be specified in a number of ways, including any
+ports, static port definitions, ranges, and by negation. Any
+ports are a wildcard value, meaning literally any port. Static ports
+are indicated by a single port number, such as 111 for portmapper,
+23 for telnet, or 80 for http, etc. Port ranges are indicated with
+the range operator :. The range operator may be
+applied in a number of ways to take on different meanings, such as
+in Figure \ref{port range examples}.
+
+%
+\begin{figure}[!hbpt]
+\begin{verbatim}
+log udp any any -> 192.168.1.0/24 1:1024 log udp 
+\end{verbatim}
+traffic coming from any port and destination ports ranging from 1
+to 1024
+
+\begin{verbatim}
+log tcp any any -> 192.168.1.0/24 :6000 
+\end{verbatim}
+log tcp traffic from any port going to ports less than or equal to
+6000
+
+\begin{verbatim}
+log tcp any :1024 -> 192.168.1.0/24 500: 
+\end{verbatim}
+log tcp traffic from privileged ports less than or equal to 1024 going
+to ports greater than or equal to 500
+
+
+\caption{\label{port range examples}Port Range Examples}
+\end{figure}
+
+
+Port negation is indicated by using the negation operator !.
+The negation operator may be applied against any of the other rule
+types (except any, which would translate to none, how Zen...). For
+example, if for some twisted reason you wanted to log everything except
+the X Windows ports, you could do something like the rule in Figure
+\ref{example port negation}.
+
+%
+\begin{figure}[!hbpt]
+\begin{verbatim}
+log tcp any any -> 192.168.1.0/24 !6000:6010
+\end{verbatim}
+
+\caption{\label{example port negation}Example of Port Negation}
+\end{figure}
+
+
+
+\subsection{The Direction Operator}
+
+The direction operator -> indicates the orientation,
+or direction, of the traffic that the rule applies
+to. The IP address and port numbers on the left side of the direction
+operator is considered to be the traffic coming from the source host,
+and the address and port information on the right side of the operator
+is the destination host. There is also a bidirectional operator, which
+is indicated with a <> symbol. This tells Snort
+to consider the address/port pairs in either the source or destination
+orientation. This is handy for recording/analyzing both sides of a
+conversation, such as telnet or POP3 sessions. An example of the bidirectional
+operator being used to record both sides of a telnet session is shown
+in Figure \ref{bidirectional operator}.
+
+Also, note that there is no <- operator. In snort
+versions before 1.8.7, the direction operator did not have proper
+error checking and many people used an invalid token. The reason the
+<- does not exist is so that rules always read
+consistently.
+
+%
+\begin{figure}[!hbpt]
+\begin{verbatim}
+log tcp !192.168.1.0/24 any <> 192.168.1.0/24 23
+\end{verbatim}
+
+\caption{\label{bidirectional operator}Snort rules using the Bidirectional
+Operator}
+\end{figure}
+
+
+
+\subsection{Activate/Dynamic Rules}
+
+Note: Activate and Dynamic rules are being phased out in favor of
+tagging. In future versions of snort, activate/dynamic will be completely
+replaced by improved tagging functionality. Please see Section \ref{tag section}
+for details.
+
+Activate/dynamic rule pairs give Snort a powerful capability. You
+can now have one rule activate another when it's action is performed
+for a set number of packets. This is very useful if you want to set
+Snort up to perform follow on recording when a specific rule goes
+off. Activate rules act just like alert rules, except they
+have a {*}required{*} option field: activates.
+Dynamic rules act just like log rules, but they have a different option
+field: activated\_by. Dynamic rules have a second
+required field as well, count. 
+
+Activate rules are just like alerts but also tell snort to add a rule
+when a specific network event occurs . Dynamic rules are just like
+log rules except are dynamically enabled when the activate rule id
+goes off. 
+
+Put 'em together and they look like Figure \ref{activate/dynamic rule example}.
+
+%
+\begin{figure}[!hbpt]
+\begin{verbatim}
+activate tcp !$HOME_NET any -> $HOME_NET 143 (flags: PA; \
+     content: "|E8C0FFFFFF|/bin"; activates: 1;  \
+     msg: "IMAP buffer overflow!\";)
+dynamic tcp !$HOME_NET any -> $HOME_NET 143 (activated_by: 1; count: 50;)
+\end{verbatim}
+
+\caption{Activate/Dynamic Rule Example\label{activate/dynamic rule example}}
+\end{figure}
+
+
+These rules tell Snort to alert when it detects an IMAP buffer overflow
+and collect the next 50 packets headed for port 143 coming from outside
+\$HOME\_NET headed to \$HOME\_NET. If the buffer overflow happened
+and was successful, there's a very good possibility that useful data
+will be contained within the next 50 (or whatever) packets going to
+that same service port on the network, so there's value in collecting
+those packets for later analysis.
+
+
+\section{Rule Options}
+
+Rule options form the heart of Snort's intrusion detection engine,
+combining ease of use with power and flexibility. All Snort rule options
+are separated from each other using the semicolon ;
+character. Rule option keywords are separated from their arguments
+with a colon : character. 
+
+
+\subsubsection{Available Keywords}
+
+\begin{description}
+\item [msg]prints a message in alerts and packet logs
+\item [logto]log the packet to a user specified filename instead of the
+standard output file
+\item [ttl]test the IP header's TTL field value 
+\item [tos]test the IP header's TOS field value 
+\item [id]test the IP header's fragment ID field for a specific value 
+\item [ipoption]watch the IP option fields for specific codes 
+\item [fragbits]test the fragmentation bits of the IP header 
+\item [dsize]test the packet's payload size against a value 
+\item [flags]test the TCP flags for certain values 
+\item [seq]test the TCP sequence number field for a specific value 
+\item [ack]test the TCP acknowledgement field for a specific value 
+\item [window]test the TCP window field for a specific value 
+\item [itype]test the ICMP type field against a specific value 
+\item [icode]test the ICMP code field against a specific value 
+\item [icmp\_id]test the ICMP ECHO ID field against a specific value 
+\item [icmp\_seq]test the ICMP ECHO sequence number against a specific
+value 
+\item [content]search for a pattern in the packet's payload 
+\item [content-list]search for a set of patterns in the packet's payload
+\item [offset]modifier for the content option, sets the offset to begin
+attempting a pattern match 
+\item [depth]modifier for the content option, sets the maximum search depth
+for a pattern match attempt
+\item [nocase]match the preceding content string with case insensitivity 
+\item [session]dumps the application layer information for a given session 
+\item [rpc]watch RPC services for specific application/procedure calls 
+\item [resp]active response (knock down connections, etc)
+\item [react]active response (block web sites) 
+\item [reference]external attack reference ids
+\item [sid]Snort rule id 
+\item [rev]rule revision number
+\item [classtype]rule classification identifier
+\item [priority]rule severity identifier
+\item [uricontent]search for a pattern in the URI portion of a packet 
+\item [tag]advanced logging actions for rules
+\item [ip\_proto]IP header's protocol value
+\item [sameip]determines if source ip equals the destination ip
+\item [stateless]valid regardless of stream state
+\item [regex]wildcard pattern matching
+\item [byte\_test]numerical evaluation
+\item [distance]forcing relative pattern matching to skip space
+\item [within]forcing relative pattern matching to be within a count
+\item [byte\_test]numerical pattern testing
+\item [byte\_jump]numerical pattern testing and offset adjustment
+\end{description}
+
+\subsection{Msg}
+
+The msg rule option tells the logging and alerting engine the message
+to print along with a packet dump or to an alert. It is a simple text
+string that utilizes the \textbackslash{} as an
+escape character to indicate a discrete character that might otherwise
+confuse Snort's rules parser (such as the semi-colon ;
+character).
+
+\subsubsection{Format}
+
+\begin{verbatim}
+msg: "<message text>";
+\end{verbatim}
+
+\subsection{Logto}
+
+The logto option tells Snort to log all packets that trigger this
+rule to a special output log file. This is especially handy for combining
+data from things like NMAP activity, HTTP CGI scans, etc. It should
+be noted that this option does not work when Snort is in binary logging
+mode.
+
+
+\subsubsection{Format}
+
+\begin{verbatim}
+logto:"filename";
+\end{verbatim}
+
+\subsection{TTL}
+
+This rule option is used to set a specific time-to-live value to test
+against. The test it performs is only successful on an exact match.
+This option keyword was intended for use in the detection of traceroute
+attempts.
+
+
+\subsubsection{Format}
+
+\begin{verbatim}
+ttl:<number>;
+\end{verbatim}
+
+\subsection{TOS}
+
+The tos keyword allows you to check the IP header
+TOS field for a specific value. The test it performs is only successful
+on an exact match.
+
+
+\subsubsection{Format}
+
+\begin{verbatim}
+tos: <number>;
+\end{verbatim}
+
+\subsection{ID}
+
+This option keyword is used to test for an exact match in the IP header
+fragment ID field. Some hacking tools (and other programs) set this
+field specifically for various purposes, for example the value 31337
+is very popular with some hackers. This can be turned against them
+by putting a simple rule in place to test for this and some other
+hacker numbers.
+
+
+\subsubsection{Format}
+
+\begin{verbatim}
+id: <number>;
+\end{verbatim}
+
+\subsection{Ipoption}
+
+If IP options are present in a packet, this option will search for
+a specific option in use, such as source routing. Valid arguments
+to this option are: 
+
+\begin{itemize}
+\item rr - Record route 
+\item eol - End of list 
+\item nop - No op 
+\item ts - Time Stamp 
+\item sec - IP security option 
+\item lsrr - Loose source routing 
+\item ssrr - Strict source routing 
+\item satid - Stream identifier
+\end{itemize}
+The most frequently watched for IP options are strict and loose source
+routing which aren't used in any widespread internet applications.
+Only a single option may be specified per rule.
+
+
+\subsubsection{Format:}
+
+\begin{verbatim}
+ipopts: option;
+\end{verbatim}
+
+\subsection{Fragbits}
+
+This rule inspects the fragment and reserved bits in the IP header.
+There are three bits that can be checked, the Reserved Bit (RB), More
+Fragments (MF) bit, and the Don't Fragment (DF) bit. These bits can
+be checked in a variety of combinations. Use the following values
+to indicate specific bits: {*} R - Reserved Bit {*} D - DF bit {*}
+M - MF bit
+
+You can also use modifiers to indicate logical match criteria for
+the specified bits: {*} + - ALL flag, match on specified bits plus
+any others {*} {*} - ANY flag, match if any of the specified bits
+are set {*} ! - NOT flag, match if the specified bits are not set
+
+
+\subsubsection{Format}
+
+\begin{verbatim}
+fragbits: <bitvalues>;
+\end{verbatim}
+%
+\begin{figure}[!hbpt]
+\begin{verbatim}
+alert tcp !$HOME_NET any -> $HOME_NET any (fragbits: R+; \
+      msg: "Rerserved bit set!";)
+\end{verbatim}
+\caption{Example of fragbits detection usage\label{frabits example}}
+\end{figure}
+
+
+
+\subsection{Dsize}
+
+The dsize option is used to test the packet payload size. It may be
+set to any value, plus use the greater than/less than signs to indicate
+ranges and limits. For example, if you know that a certain service
+has a buffer of a certain size, you can set this option to watch for
+attempted buffer overflows. It has the added advantage of being a
+much faster way to test for a buffer overflow than a payload content
+check.
+
+This can also be used to check a range of values. For example, dsize:
+400<>500 will return all the packets from 400 to 500 bytes in their
+payload section.,
+
+These checks always will return false on a stream rebuilt packet.
+
+
+\subsubsection{Format}
+
+\begin{verbatim}
+dsize: [<>]<number>[<><number>];
+\end{verbatim}
+Note: The > and < operators are optional!
+
+\subsection{Content\label{sub:Content}}
+
+The content keyword is one of the more important features of Snort.
+It allows the user to set rules that search for specific content in
+the packet payload and trigger response based on that data. Whenever
+a content option pattern match is performed, the Boyer-Moore pattern
+match function is called and the (rather computationally expensive)
+test is performed against the packet contents. If data exactly matching
+the argument data string is contained anywhere within the packet's
+payload, the test is successful and the remainder of the rule option
+tests are performed. Be aware that this test is case sensitive.
+
+The option data for the content keyword is somewhat complex; it can
+contain mixed text and binary data. The binary data is generally enclosed
+within the pipe (|) character and represented
+as bytecode. Bytecode represents binary data as hexadecimal numbers
+and is a good shorthand method for describing complex binary data.
+Figure \ref{mixed content example} contains an example of mixed text
+and binary data in a Snort rule. 
+
+Note that multiple content rules can be specified in one rule. This
+allows rules to be tailored for less false positives. 
+
+Also note that the following characters must be escaped inside a content
+rule:
+
+\begin{verbatim}
+: ; \ "
+\end{verbatim}
+If the rule is preceded by a \texttt{!}, the alert will be triggered
+on packets that do not contain this content. This is useful when writing
+rules that want to alert on packets that do not match a certain pattern
+
+
+\subsubsection{Format}
+
+\begin{verbatim}
+content: [!] "<content string>";
+\end{verbatim}
+%
+\begin{figure}[!hbpt]
+\begin{verbatim}
+alert tcp any any -> 192.168.1.0/24 143 (content:"|90C8 C0FF FFFF|/bin/sh"; \
+                                         msg:"IMAP buffer overflow!";)
+\end{verbatim}
+
+\caption{\label{mixed content example}Mixed Binary Bytecode and Text in a
+Content Rule Option }
+\end{figure}
+%
+\begin{figure}[!hbpt]
+\begin{verbatim}
+alert tcp any any -> 192.168.1.0/24 21 (content: !"GET"; depth: 3; nocase; \
+          dsize: >100; msg: "Long Non-Get FTP command!";)
+\end{verbatim}
+
+\caption{\label{content negation example}Negation Example}
+\end{figure}
+
+
+
+\subsection{Offset}
+
+The offset rule option is used as a modifier to rules using the content
+option keyword. This keyword modifies the starting search position
+for the pattern match function from the beginning of the packet payload.
+It is very useful for things like CGI scan detection rules where the
+content search string is never found in the first four bytes of the
+payload. Care should be taken against setting the offset value too
+tightly and potentially missing an attack! This
+rule option keyword cannot be used without also specifying a content
+rule option. See Figure \ref{combined rule with offset and depth}
+for an example of a combined content, offset, and depth search rule.
+
+
+\subsubsection{Format}
+
+\begin{verbatim}
+offset: <number>;
+\end{verbatim}
+
+\subsection{Depth}
+
+Depth is another content rule option modifier. This sets the maximum
+search depth for the content pattern match function to search from
+the beginning of its search region. It is useful for limiting the
+pattern match function from performing inefficient searches once the
+possible search region for a given set of content has been exceeded.
+(Which is to say, if you're searching for cgi-bin/phf
+in a web-bound packet, you probably don't need to waste time searching
+the payload beyond the first 20 bytes!) See Figure \ref{combined rule with offset and depth}
+for an example of a combined content, offset, and depth search rule.
+
+
+\subsubsection{Format}
+
+\begin{verbatim}
+depth: <number>;
+\end{verbatim}
+%
+\begin{figure}[!hbpt]
+\begin{verbatim}
+alert tcp any any -> 192.168.1.0/24 80 (content: "cgi-bin/phf"; \
+    offset: 3; depth: 22; msg: "CGI-PHF access";)
+\end{verbatim}
+
+\caption{\label{combined rule with offset and depth} Combined Content, Offset
+and Depth Rule}
+\end{figure}
+
+\subsection{Nocase}
+
+The nocase option is used to deactivate case sensitivity in a content
+rule. It is specified alone within a rule and any ASCII characters
+that are compared to the packet payload are treated as though they
+are either upper of lower case.
+
+
+\subsubsection{Format}
+
+\begin{verbatim}
+nocase;
+\end{verbatim}
+%
+\begin{figure}[!hbpt]
+\begin{verbatim}
+alert tcp any any -> 192.168.1.0/24 21 (content:"USER root"; \
+    nocase; msg: "FTP root user access attempt";)
+\end{verbatim}
+
+\caption{\label{content nocase mod example}Content rule with nocase modifier}
+\end{figure}
+
+
+
+\subsection{Flags}
+
+This rule tests the TCP flags for a match. There are actually 9 flags
+variables available in Snort: 
+
+\begin{description}
+\item [F]FIN (LSB in TCP Flags byte)
+\item [S]SYN 
+\item [R]RST 
+\item [P]PSH 
+\item [A]ACK 
+\item [U]URG 
+\item [2]Reserved bit 2 
+\item [1]Reserved bit 1 (MSB in TCP Flags byte)
+\item [0]No TCP Flags Set
+\end{description}
+There are also logical operators that can be used to specify matching
+criteria for the indicated flags: 
+
+\begin{description}
+\item [+]ALL flag, match on all specified flags plus any others
+\item [{*}]ANY flag, match on any of the specified flags
+\item [!]NOT flag, match if the specified flags aren't set in the packet
+\end{description}
+The reserved bits can be used to detect unusual behavior, such as
+IP stack fingerprinting attempts or other suspicious activity. Figure
+13 shows a SYN-FIN scan detection rule.
+
+To handle writing rules for session initiation packets such as ECN
+where a SYN packet is sent with the previously reserved bits 12 set,
+an option mask may be specified. A rule could check for a flags value
+of S,12 if one wishes to find syn packets regardless of the values
+of the reserved bits.
+
+
+\subsubsection{Format}
+
+\begin{verbatim}
+flags: <flag values>[,mask value];
+\end{verbatim}
+%
+\begin{figure}[!hbpt]
+\begin{verbatim}
+alert any any -> 192.168.1.0/24 any (flags: SF,12; msg: "Possible SYN FIN scan";)
+\end{verbatim}
+
+\caption{\label{sample tcp flag}Sample TCP Flags Specification}
+\end{figure}
+
+
+
+\subsection{Seq}
+
+This rule option refers to the TCP sequence number. Essentially, it
+detects if the packet has a static sequence number set, and is therefore
+pretty much unused. It was included for the sake of completeness.
+
+
+\subsubsection{Format}
+
+\begin{verbatim}
+seq: <number>;
+\end{verbatim}
+
+\subsection{Ack}
+
+The ack rule option keyword refers to the TCP header's acknowledge
+field. This rule has one practical purpose so far: detecting NMAP \cite{PhrackNMAParticle,nmaphomepage}
+TCP pings. A NMAP TCP ping sets this field to zero and sends a packet
+with the TCP ACK flag set to determine if a network host is active.
+The rule to detect this activity is shown in Figure \ref{TCP ACK usage}.
+
+
+\subsubsection{Format}
+
+\begin{verbatim}
+ack: <number>;
+\end{verbatim}
+%
+\begin{figure}[!hbpt]
+\begin{verbatim}
+alert any any -> 192.168.1.0/24 any (flags: A; ack: 0; msg: "NMAP TCP ping";)
+\end{verbatim}
+
+\caption{\label{TCP ACK usage} TCP ACK Field Usage}
+\end{figure}
+
+
+\subsection{Window}
+
+This rule option refers to the TCP window size.  This option checks
+for a a static window size.  This allows the TCP window size option to
+be checked for particular values incase a backdoor or something like
+it uses a hardcoded window size value.
+
+\subsubsection{Format}
+
+\begin{verbatim}
+window:[!]<number>;
+\end{verbatim}
+
+\subsection{Itype}
+
+This rule tests the value of the ICMP type field. It is set using
+the numeric value of this field. For a list of the available values,
+look in the decode.h file included with Snort or in any ICMP reference.
+It should be noted that the values can be set out of range to detect
+invalid ICMP type values that are sometimes used in denial of service
+and flooding attacks.
+
+
+\subsubsection{Format}
+
+\begin{verbatim}
+itype: <number>;
+\end{verbatim}
+
+\subsection{Icode}
+
+The icode rule option keyword is pretty much identical to the itype
+rule, just set a numeric value in here and Snort will detect any traffic
+using that ICMP code value. Out of range values can also be set to
+detect suspicious traffic.
+
+
+\subsubsection{Format}
+
+\begin{verbatim}
+icode: <number>;
+\end{verbatim}
+
+\subsection{Session}
+
+The session keyword is brand new as of version 1.3.1.1 and is used
+to extract the user data from TCP sessions. It is extremely useful
+for seeing what users are typing in telnet, rlogin, ftp, or even web
+sessions. There are two available argument keywords for the session
+rule option, printable or all. The printable keyword only prints out
+data that the user would normally see or be able to type. The all
+keyword substitutes non-printable characters with their hexadecimal
+equivalents. This function can slow Snort down considerably, so it
+shouldn't be used in heavy load situations, and is probably best suited
+for post-processing binary (tcpdump format) log files. See Figure
+\ref{session example} for a good example of a telnet session logging
+rule.
+
+
+\subsubsection{Format}
+
+\begin{verbatim}
+session: [printable|all];
+\end{verbatim}
+%
+\begin{figure}[!hbpt]
+\begin{verbatim}
+log tcp any any <> 192.168.1.0/24 23 (session: printable;)
+\end{verbatim}
+
+\caption{\label{session example}Logging Printable Telnet Session Data}
+\end{figure}
+
+
+
+\subsection{Icmp\_id}
+
+The icmp\_id option examines an ICMP ECHO packet's ICMP ID number
+for a specific value. This is useful because some {[}84{]}covert channel
+programs use static ICMP fields when they communicate. This particular
+plugin was developed to enable the stacheldraht detection rules written
+by {[}85{]}Max Vision, but it is certainly useful for detection of
+a number of potential attacks.
+
+
+\subsubsection{Format}
+
+\begin{verbatim}
+icmp_id: <number>;
+\end{verbatim}
+
+\subsection{Icmp\_seq}
+
+The icmp\_id option examines an ICMP ECHO packet's ICMP sequence field
+for a specific value. This is useful because some {[}86{]}covert channel
+programs use static ICMP fields when they communicate. This particular
+plugin was developed to enable the stacheldraht detection rules written
+by {[}87{]}Max Vision, but it is certainly useful for detection of
+a number of potential attacks. (And yes, I know the info for this
+field is almost identical to the icmp\_id description, it's practically
+the same damn thing!)
+
+
+\subsubsection{Format}
+
+\begin{verbatim}
+icmp_seq: <number>;
+\end{verbatim}
+
+\subsection{Rpc}
+
+This option looks at RPC requests and automatically decodes the application,
+procedure, and program version, indicating success when all three
+variables are matched. The format of the option call is application,
+procedure, version. Wildcards are valid for both the procedure
+and version numbers and are indicated with a {*}.
+
+
+\subsubsection{Format:}
+
+\begin{verbatim}
+rpc: <number, [number|*], [number|*]>;
+\end{verbatim}
+%
+\begin{figure}[!hbpt]
+\begin{verbatim}
+alert tcp any any -> 192.168.1.0/24 111 (rpc: 100000,*,3;\
+      msg:"RPC getport (TCP)";)
+
+alert udp any any -> 192.168.1.0/24 111 (rpc: 100000,*,3;\
+      msg:"RPC getport (UDP)";)
+
+alert udp any any -> 192.168.1.0/24 111 (rpc: 100083,*,*; msg:"RPC ttdb";)
+
+alert udp any any -> 192.168.1.0/24 111 (rpc: 100232,10,*;
+      msg:"RPC sadmin";)
+\end{verbatim}
+
+\caption{\label{RPC Call examples}Various RPC Call Alerts}
+\end{figure}
+
+
+
+\subsection{Resp}
+
+The resp keyword implements flexible response (FlexResp) to traffic
+that matches a Snort rule. The FlexResp code allows Snort to actively
+close offending connections. The following arguments are valid for
+this module: 
+
+rst\_snd - send TCP-RST packets to the sending socket 
+
+rst\_rcv - send TCP-RST packets to the receiving socket 
+
+rst\_all - send TCP\_RST packets in both directions 
+
+icmp\_net - send a ICMP\_NET\_UNREACH to the sender 
+
+icmp\_host - send a ICMP\_HOST\_UNREACH to the sender 
+
+icmp\_port - send a ICMP\_PORT\_UNREACH to the sender 
+
+icmp\_all - send all above ICMP packets to the sender
+
+These options can be combined to send multiple responses to the target
+host. Multiple arguments are separated by a comma.
+
+
+\subsubsection{Format}
+
+\begin{verbatim}
+resp: <resp_modifier[, resp_modifier...];
+\end{verbatim}
+
+\subsubsection{Warnings}
+
+Be very careful with Flexible Response. It is quite easy to get snort
+into an infinite loop by defining a rule such as 
+
+\begin{verbatim}
+alert tcp any any -> 192.168.1.1/24 any (msg: "aiee!";  resp: rst_all;)
+\end{verbatim}
+It is easy to be fooled into interfering with normal network traffic
+as well. 
+
+%
+\begin{figure}[!hbpt]
+\begin{verbatim}
+alert tcp any any -> 192.168.1.0/24 1524 (flags: S;  \
+   resp: rst_all; msg: "Root shell backdoor attempt";)
+
+alert udp any any -> 192.168.1.0/24 31 (resp: icmp_port,icmp_host; \
+   msg: "Hacker's Paradise access attempt";)
+\end{verbatim}
+
+\caption{\label{flexresp examples} FlexResp Usage Examples}
+\end{figure}
+
+
+
+\subsection{Content-list}
+
+The content-list keyword allows multiple content strings to be specified
+in the place of a single content option. The patterns to be searched
+for must each be on a single line of content-list file as shown in
+Figure \ref{content-list example}, but they are treated otherwise
+identically to content strings specified as an argument to a standard
+content directive. This option is the basis for the react keyword.
+
+%
+\begin{figure}[!hbpt]
+\begin{verbatim}
+# adult sites 
+"porn"
+"porn"
+"adults"
+"hard core"
+"www.pornsite.com"
+\end{verbatim}
+\caption{\label{content-list example}Content-list adults
+file example}
+\end{figure}
+
+
+
+\subsubsection{Format}
+
+\begin{verbatim}
+content-list: <file_name>;
+\end{verbatim}
+
+\subsection{React}
+
+Be warned that causing a network traffic generation loop is very easy
+to do with this functionality.
+
+The react keyword based on flexible response (Flex Resp) implements
+flexible reaction to traffic that matches a Snort rule. The basic
+reaction is blocking interesting sites users want to access: New York
+Times, slashdot, or something really important - napster and porn
+sites. The Flex Resp code allows Snort to actively close offending
+connections and/or send a visible notice to the browser (warn modifier
+available soon). The notice may include your own comment. The following
+arguments (basic modifiers) are valid for this option:
+
+\begin{itemize}
+\item block - close connection and send the visible notice 
+\item warn - send the visible, warning notice (will be available soon) 
+\end{itemize}
+The basic argument may be combined with the following arguments (additional
+modifiers): 
+
+\begin{itemize}
+\item msg - include the msg option text into the blocking visible notice 
+\item proxy: <port\_nr> - use the proxy port to send the visible notice
+(will be available soon)
+\end{itemize}
+Multiple additional arguments are separated by a comma. The react
+keyword should be placed as the last one in the option list.
+
+
+\subsubsection{Format}
+
+\begin{verbatim}
+react: <react_basic_modifier[, react_additional_modifier]>;
+\end{verbatim}
+%
+\begin{figure}[!hbpt]
+\begin{verbatim}
+alert tcp any any <> 192.168.1.0/24 80 (content: "bad.htm"; \
+    msg: "Not for children!"; react: block, msg;) 
+\end{verbatim}
+\caption{\label{react examples}React Usage Example}
+\end{figure}
+
+
+
+\subsection{Reference }
+
+The reference keyword allows rules to include references to external
+attack identification systems. The plugin currently supports several
+specific systems as well as unique urls. This plugin is to be used
+by output plugins to provide a link to additional information about
+the alert produced.
+
+Make sure to also take a look at http://www.snort.org/snort-db/ \url{http://www.snort.org/snort-db/}
+for a system that is indexing descriptions of alerts based off of
+the sid (See Section \ref{sid label}).%
+\begin{table}[!hbpt]
+
+\caption{Supported Systems \label{references systems}}
+
+\begin{center}\begin{tabular}{|c|c|}
+\hline 
+System&
+URL Prefix\\
+\hline
+\hline 
+Bugtraq&
+http://www.securityfocus.com/bid/\\
+\hline 
+CVE&
+http://cve.mitre.org/cgi-bin/cvename.cgi?name=\\
+\hline 
+Arachnids&
+(currently down) http://www.whitehats.com/info/IDS\\
+\hline 
+McAfee&
+http://vil.nai.com/vil/dispVirus.asp?virus\_k=\\
+\hline 
+url&
+http://\\
+\hline
+\end{tabular}\end{center}
+\end{table}
+
+
+
+\subsubsection{Format}
+
+\begin{verbatim}
+reference: <id system>,<id>; [reference: <id system>,<id>;]
+\end{verbatim}
+
+%
+\begin{figure}[!hbpt]
+\begin{verbatim}
+alert tcp any any -> any 7070 (msg: "IDS411/dos-realaudio"; \
+   flags: AP; content: "|fff4 fffd 06|"; reference: arachNIDS,IDS411;)
+
+alert tcp any any -> any 21 (msg: "IDS287/ftp-wuftp260-venglin-linux"; \
+   flags: AP; content: "|31c031db 31c9b046 cd80 31c031db|"; \
+   reference: arachNIDS,IDS287; reference: bugtraq,1387; \
+   reference: cve,CAN-2000-1574; )
+
+\end{verbatim}
+
+\caption{Reference Usage Examples\label{example reference rule}}
+\end{figure}
+
+\subsection{Sid\label{sid label}}
+
+The sid keyword is used to identify unique Snort rules. This information
+allows output plugins to identify rules easily. See Figure \ref{sid usage example}for
+a usage example. Sid ranges are assigned as follows:
+
+\begin{itemize}
+\item <100 Reserved for future use
+\item 100-1,000,000 Rules included with the Snort distribution
+\item >1,000,000 Used for local rules
+\end{itemize}
+The file sid-msg.map contains a mapping of msg tags to Snort rule
+ids. This will be used by post-processing output to map an id to an
+alert msg.
+
+
+\subsubsection{Format}
+
+\begin{verbatim}
+sid: <snort rules id>;
+\end{verbatim}
+
+%
+\begin{figure}[!hbpt]
+\begin{verbatim}
+alert tcp $EXTERNAL_NET any -> $HTTP_SERVERS 80 \
+        (msg:"WEB-IIS File permission canonicalization"; \
+         uricontent:"/scripts/../.."; \
+         flags: A+; nocase; sid:983; rev:1;)
+\end{verbatim}
+
+\caption{\label{sid usage example}Sid Usage Example}
+\end{figure}
+
+\subsection{Rev}
+
+The rev keyword is used to identify rule revisions. Revisions, along
+with snort rule ids, allow signatures and descriptions to be refined
+and replaced with updated information. For a usage example, see Figure
+\ref{sid usage example}.
+
+
+\subsubsection{Format}
+
+\begin{verbatim}
+rev: <revision integer>
+\end{verbatim}
+
+\subsection{Classtype}
+
+The classtype keyword categorizes alerts to be attack classes. By
+using the and prioritized. The user can specify what priority each
+type of rule classification has. Rules that have a classification
+will have a default priority set. 
+
+\subsubsection{Format}
+
+\begin{verbatim}
+classtype: <class name>;
+\end{verbatim}
+Rule classifications are defined in the \texttt{classification.config}
+file. The config file uses the following syntax:
+
+\begin{verbatim}
+config classification:  <class name>,<class description>,<default priority>
+\end{verbatim}
+The standard classifications included with Snort are listed in Tables
+\ref{Snort Default Classifications}, . The standard classifications
+are ordered with 3 default priorities currently. A priority 1 is the
+most severe priority level of the default rule set and 4 is the least
+severe.
+
+%
+\begin{table}[!hbpt]
+
+\caption{High Priority Classifications - Priority 1\label{Snort Default Classifications}}
+
+\begin{center}\begin{tabular}{|c|c|}
+\hline 
+Classtype&
+Description\\
+\hline
+\hline 
+attempted-admin&
+Attempted Administrator Privilege Gain\\
+\hline 
+attempted-user&
+Attempted User Privilege Gain\\
+\hline 
+shellcode-detect&
+Executable code was detected\\
+\hline 
+successful-admin&
+Successful Administrator Privilege Gain\\
+\hline 
+successful-user&
+Successful User Privilege Gain\\
+\hline 
+trojan-activity&
+A Network Trojan was detected\\
+\hline 
+unsuccessful-user&
+Unsuccessful User Privilege Gain\\
+\hline 
+web-application-attack&
+Web Application Attack\\
+\hline
+\end{tabular}\end{center}
+\end{table}
+
+
+%
+\begin{table}[!hbpt]
+
+\caption{Medium Priority Classifications - Priority 2\label{Snort Medium Classifications}}
+
+\begin{tabular}{|c|c|}
+\hline 
+Classtype&
+Description\\
+\hline
+\hline 
+attempted-dos&
+Attempted Denial of Service\\
+\hline 
+attempted-recon&
+Attempted Information Leak\\
+\hline 
+bad-unknown&
+Potentially Bad Traffic\\
+\hline 
+denial-of-service&
+Detection of a Denial of Service Attack\\
+\hline 
+misc-attack&
+Misc Attack\\
+\hline 
+non-standard-protocol&
+Detection of a non-standard protocol or event\\
+\hline 
+rpc-portmap-decode&
+Decode of an RPC Query\\
+\hline 
+successful-dos&
+Denial of Service\\
+\hline 
+successful-recon-largescale&
+Large Scale Information Leak\\
+\hline 
+successful-recon-limited&
+Information Leak\\
+\hline 
+suspicious-filename-detect&
+A suspicious filename was detected\\
+\hline 
+suspicious-login&
+An attempted login using a suspicious username was detected\\
+\hline 
+system-call-detect&
+A system call was detected\\
+\hline 
+unusual-client-port-connection&
+A client was using an unusual port\\
+\hline 
+web-application-activity&
+access to a potentially vulnerable web application\\
+\hline
+\end{tabular}
+\end{table}
+%
+\begin{table}[!hbpt]
+
+\caption{Low Priority Classifications - Priority 3 \label{Snort Low Classifications}}
+
+\begin{center}\begin{tabular}{|c|c|}
+\hline 
+Classification&
+Description\\
+\hline
+\hline 
+icmp-event&
+Generic ICMP event\\
+\hline 
+misc-activity&
+Misc activity\\
+\hline 
+network-scan&
+Detection of a Network Scan\\
+\hline 
+not-suspicious&
+Not Suspicious Traffic\\
+\hline 
+protocol-command-decode&
+Generic Protocol Command Decode\\
+\hline 
+string-detect&
+A suspicious string was detected\\
+\hline 
+unknown&
+Unknown Traffic\\
+\hline
+\end{tabular}\end{center}
+\end{table}
+
+
+%
+\begin{figure}[!hbpt]
+\begin{verbatim}
+alert tcp any any -> any 80 (msg:"EXPLOIT ntpdx overflow"; \ 
+    dsize: >128; classtype:attempted-admin; priority:10 );
+
+alert tcp any any -> any 25 (msg:"SMTP expn root"; flags:A+; \
+   content:"expn root"; nocase; classtype:attempted-recon;)
+\end{verbatim}
+\caption{Example Classtype Rules\label{example classification rules}}
+\end{figure}
+
+\subsection{Priority}
+
+The priority tag assigns a severity level to rules. A classtype rule
+assigns a default priority that may be overridden with a priority
+rule. For an example in conjunction with a classification rule refer
+to Figure \ref{example classification rules}. For use by itself,
+see Figure \ref{example priority rule}
+
+
+\subsubsection{Format}
+
+\begin{verbatim}
+priority: <priority integer>;
+\end{verbatim}
+%
+\begin{figure}[!hbpt]
+\begin{verbatim}
+alert TCP any any -> any 80 (msg: "WEB-MISC phf attempt"; flags:A+; \
+      content: "/cgi-bin/phf"; priority:10;)
+\end{verbatim}
+
+\caption{Example Priority Rule\label{example priority rule}}
+\end{figure}
+
+
+
+\subsection{Uricontent}
+
+The uricontent rule allows searches to be matched against only the
+\textsc{uri} portion of a request. This allows rules to search only
+the request portion of an attack without false alerts from server
+data files. For a description of the parameters to this function,
+see the content rule options in Section \ref{sub:Content}. 
+
+This option works in conjunction with the HTTP decoder specified in
+Section \ref{sub:HTTP-Decode}.
+
+
+\subsubsection{Format}
+
+\begin{verbatim}
+uricontent:[!]<content string>;
+\end{verbatim}
+
+\subsection{Tag \label{tag section}}
+
+The tag keyword allow rules to log more than just the single packet
+that triggered the rule. Once a rule is triggered, additional traffic
+involving the source host is ``tagged''. Tagged traffic is logged
+to allow analysis of response codes and post-attack traffic. See Figure
+\ref{tag keyword example} for usage examples.
+
+
+\subsubsection{Format}
+
+\begin{verbatim}
+tag: <type>, <count>, <metric>, [direction]
+\end{verbatim}
+
+\begin{description}{}
+  \item [type]~
+     \begin{description}{}
+     \item [session]log packets in the session that set off the rule 
+     \item [host]log packets from the host that caused the tag to activate (uses {[}direction{]} modifier)
+     \end{description}
+  \item [count]Count is specified as a number of units. Units are specified in the <metric> field.
+  \item [metric]~
+  \begin{description}{}
+      \item [packets]tag the host/session for <count> packets 
+      \item [seconds]tag the host/session for <count> seconds
+   \end{description}
+\end{description}
+%
+\begin{figure}[!hbpt]
+\begin{verbatim}
+alert tcp !$HOME_NET any -> $HOME_NET 143 (flags: A+; \
+      content: "|e8 c0ff ffff|/bin/sh";  tag: host, 300, packets, src; \
+      msg: "IMAP Buffer overflow, tagging!";)
+
+alert tcp !$HOME_NET any -> $HOME_NET 23 (flags: S; \
+     tag: session, 10, seconds; msg: "incoming telnet session";)
+\end{verbatim}
+
+\caption{Tag Keyword Examples\label{tag keyword example}}
+\end{figure}
+
+
+
+\subsection{IP proto}
+
+The ip\_proto keyword allows checks against the IP protocol header.
+For a list of protocols that may be specified by name, see /etc/protocols.
+Note the use of the ip protocol specification in the rule.
+
+
+\subsubsection{Format}
+
+\begin{verbatim}
+ip_proto:[!] <name or number>;
+\end{verbatim}
+%
+\begin{figure}[!hbpt]
+\begin{verbatim}
+alert ip !$HOME_NET any -> $HOME_NET any \
+         (msg: "IGMP traffic detected";  ip_proto: igmp;)
+\end{verbatim}
+
+\caption{IP Proto Example\label{ip protocol example}}
+\end{figure}
+
+\subsection{Same IP}
+
+The sameip keyword allows rules to check if the source ip is equal
+to the destination ip. 
+
+
+\subsubsection{Format}
+
+\begin{verbatim}
+sameip;
+\end{verbatim}
+%
+\begin{figure}[!hbpt]
+\begin{verbatim}
+alert ip $HOME_NET any -> $HOME_NET any (msg: "SRC IP == DST IP"; sameip;)
+\end{verbatim}
+
+\caption{Same IP Usage Example\label{sameip usage example}}
+\end{figure}
+
+\subsection{Regex}
+
+This module is currently in development as should not be used in production
+rulesets.  As such, it will trigger an error condition if alerts are set using it.
+
+\subsection{Flow\label{flow section}}
+
+The flow rule option is used in conjunction with TCP stream reassembly
+(see Section \ref{stream 4 section}). It allows rules to only apply
+to certain directions of the traffic flow. 
+
+This allows rules to only apply to clients or servers. This allows
+packets related to \$HOME\_NET clients viewing web pages to be distinguished
+from servers running the \$HOME\_NET.
+
+The established keyword will replace the \texttt{flags: A+} used in
+many places to show established TCP connections.
+
+\subsubsection*{Options}
+
+\begin{description}
+\item [to\_client]trigger on server responses from A to B
+\item [to\_server]trigger on client requests from A to B
+\item [from\_client]trigger on client requests from A to B
+\item [from\_server]trigger on server responses from A to B
+\item [established]trigger only on established TCP connections
+\item [stateless]trigger regardless of the state of the stream processor
+( useful for packets that are designed to cause machines to crash
+)
+\item [no\_stream]do not trigger on rebuilt stream
+packets ( useful for dsize and stream4 )
+\item [only\_stream]only trigger on rebuilt stream
+packets
+\end{description}
+
+\subsubsection{Format}
+
+\begin{verbatim}
+flow:[to_client|to_server|from_client| \
+  from_server|established|stateless|no_stream|only_stream]}
+\end{verbatim}
+%
+\begin{figure}[!hbpt]
+\begin{verbatim}
+alert tcp !$HOME_NET any -> $HOME_NET 21 (flow: from_client; \
+       content: "CWD incoming"; nocase; \
+       msg: "cd incoming detected"; )
+
+alert tcp !$HOME_NET 0 -> $HOME_NET 0 \
+      (msg: "Port 0 TCP traffic"; flow: stateless;)
+\end{verbatim}
+
+\caption{Flow usage examples\label{flow usage examples}}
+\end{figure}
+
+
+
+\subsection{Fragoffset \label{fragoffset section}}
+
+The fragoffset keyword allows one to compare the IP fragment offset
+field against a decimal value. To catch all the first framents of
+an IP session, you could use the fragbits keyword and look for the
+More fragments option in conjnection with a fragoffset of 0.
+
+
+\subsubsection{Format}
+
+\begin{verbatim}
+fragoffset:[<|>]<number>
+\end{verbatim}
+
+%
+\begin{figure}[!hbpt]
+\begin{verbatim}
+alert ip any any -> any any \
+      (msg: "First Fragment"; fragbits: M; fragoffset: 0;)
+\end{verbatim}
+
+\caption{Fragoffset usage example \label{fragoffset usage example}}
+\end{figure}
+
+\subsection{Rawbytes \label{sub:Rawbytes}}
+
+The rawbytes keyword allows rules that look at telnet decoded data
+to process unnormalized data. This allows telnet negotiation codes
+to be matched independently of the preprocessor. This acts as a modifier
+to the previous content \ref{sub:Content}option. 
+
+\subsubsection{Format}
+
+\begin{verbatim}
+rawbytes;
+\end{verbatim}
+%
+\begin{figure}[!hbpt]
+\begin{verbatim}
+alert tcp any any -> any any (msg: "Telnet NOP"; content: "|FF F1|"; rawbytes;)
+\end{verbatim}
+\caption{rawbytes usage example \label{rawbytes usage example}}
+\end{figure}
+
+
+\subsection{distance\label{sub:Distance}}
+
+The distance keyword is a content modifier that makes sure that
+atleast N bytes are between pattern matches using the Content ( See
+Section \ref{sub:Content} ).  It's designed to be used in conjunction
+with the within (Section \ref{sub:Within}) rule option.
+
+The rule listed in Figure \ref{fig:Distance} maps to a regular
+expression of \"ABCDE.\{1\}EFGH\".
+
+\subsubsection{Format}
+
+\begin{verbatim}
+distance: <byte count>;
+\end{verbatim}
+
+\begin{figure}[!hbpt]
+\begin{verbatim}
+alert tcp any any -> any any (content: "2 Patterns"; \
+          content: "ABCDE"; content: "EFGH"; distance: 1;)
+\end{verbatim}
+\caption{distance usage example \label{fig:Distance}}
+\end{figure}
+
+
+
+\subsection{Within\label{sub:Within}}
+
+The within keyword is a content modifier that makes sure that
+at most N bytes are between pattern matches using the Content ( See
+Section \ref{sub:Content} ).  It's designed to be used in conjunction
+with the distance (Section \ref{sub:Distance}) rule option.
+
+The rule listed in Figure \ref{fig:Within} contrains the search to not
+go past 10 bytes past the ABCDE match. 
+
+\subsubsection{Format}
+
+\begin{verbatim}
+within: <byte count>;
+\end{verbatim}
+
+\begin{figure}[!hbpt]
+\begin{verbatim}
+alert tcp any any -> any any (content: "2 Patterns"; \
+          content: "ABCDE"; content: "EFGH"; within: 10;)
+\end{verbatim}
+\caption{within usage example \label{fig:Within}}
+\end{figure}
+
+\subsection{Byte\_Test\label{sub:Byte_Test}}
+
+Test a byte field against a specific value (with operator).  Capable
+ of testing binary values or converting represenative byte strings to
+their binary equivalent and testing them.
+
+\subsubsection{Format}
+
+\begin{verbatim}
+byte_test: <bytes_to_convert>, <operator>, <value>, <offset> \
+        [, [relative],[big],[little],[string],[hex],[dec],[oct]]
+\end{verbatim}
+
+\begin{description}{}
+\item [bytes\_to\_convert]number of bytes to pick up from the packet
+\item [operator]operation to perform to test the value (<,>,=,!)
+\item [value]value to test the converted value against
+\item [offset]number of bytes into the payload to start processing
+\item [relative]use an offset relative to last pattern match
+\item [big]process data as big endian (default)
+\item [little]process data as little endian
+\item [string]data is stored in string format in packet
+\item [hex]converted string data is represented in hexidecimal
+\item [dec]converted string data is represented in decimal
+\item [oct]converted string data is represented in octal
+\end{description}
+
+\begin{figure}[!hbpt]
+\begin{verbatim}
+alert udp $EXTERNAL_NET any -> $HOME_NET any \
+       (msg:"AMD procedure 7 plog overflow "; \
+       content: "|00 04 93 F3|"; \
+       content: "|00 00 00 07|"; distance: 4; within: 4; \
+       byte_test: 4,>, 1000, 20, relative;)
+
+alert tcp $EXTERNAL_NET any -> $HOME_NET any \
+     (msg:"AMD procedure 7 plog overflow "; \
+     content: "|00 04 93 F3|"; \
+     content: "|00 00 00 07|"; distance: 4; within: 4; \
+     byte_test: 4, >,1000, 20, relative;)
+
+alert udp any any -> any 1234 \
+     (byte_test: 4, =, 1234, 0, string, dec; \
+     msg: "got 1234!";)
+
+alert udp any any -> any 1235 \
+     (byte_test: 3, =, 123, 0, string, dec; \
+     msg: "got 123!";)
+
+alert udp any any -> any 1236 \
+     (byte_test: 2, =, 12, 0, string, dec; \
+     msg: "got 12!";)
+
+alert udp any any -> any 1237 \
+     (byte_test: 10, =, 1234567890, 0, string, dec; \
+     msg: "got 1234567890!";)
+
+alert udp any any -> any 1238 \
+     (byte_test: 8, =, 0xdeadbeef, 0, string, hex; \
+     msg: "got DEADBEEF!";)
+\end{verbatim}
+\caption{Byte Test Usage Example \label{fig:Byte_Test}}
+\end{figure}
+
+\subsection{Byte\_Jump\label{sub:Byte_Jump}}
+
+The Byte Jump option is used to grab some number of bytes, convert
+them to their numeric representation, jump the doe\_ptr up that many
+bytes (for further pattern matching/byte\_testing).  This will allow
+relative pattern matches to take into account numerical values found
+in network data.
+
+\subsubsection{Format}
+
+\begin{verbatim}
+byte_jump: <bytes_to_convert>, <offset> \
+        [, [relative],[big],[little],[string],[hex],[dec],[oct],[align]]
+\end{verbatim}
+
+\begin{description}{}
+\item [bytes\_to\_convert]number of bytes to pick up from the packet
+\item [offset]number of bytes into the payload to start processing
+\item [relative]use an offset relative to last pattern match
+\item [big]process data as big endian (default)
+\item [little]process data as little endian
+\item [string]data is stored in string format in packet
+\item [hex]converted string data is represented in hexidecimal
+\item [dec]converted string data is represented in decimal
+\item [oct]converted string data is represented in octal
+\item [align]round the number of converted bytes up to the next 32-bit boundry
+\end{description}
+
+\begin{figure}[!hbpt]
+\begin{verbatim}
+alert udp any any -> any 32770:34000 (content: "|00 01 86 B8|"; \
+              content: "|00 00 00 01|"; distance: 4; within: 4; \
+              byte_jump: 4, 12, relative, align; \
+              byte_test: 4, >, 900, 20, relative; \
+              msg: "statd format string buffer overflow";)
+\end{verbatim}
+\caption{Byte Jump Usage Example \label{fig:Byte_Jump}}
+\end{figure}
+
+
+
+
+
+
+\section{Preprocessors}
+
+Preprocessors were introduced in version 1.5 of Snort. They allow
+the functionality of Snort to be extended by allowing users and programmers
+to drop modular plugins into Snort fairly easily.
+Preprocessor code is run before the detection engine is called, but
+after the packet has been decoded. The packet can be modified or analyzed
+in an out of band manner through this mechanism.
+
+Preprocessors are loaded and configured using the preprocessor keyword.
+The format of the preprocessor directive in the Snort rules file is:
+
+\begin{verbatim}
+preprocessor <name>: <options>
+\end{verbatim}
+%
+\begin{figure}[!hbpt]
+\begin{verbatim}
+preprocessor minfrag: 128
+\end{verbatim}
+
+\caption{\label{preprocessor example}Preprocessor Directive Format Example}
+\end{figure}
+
+\subsection{HTTP Decode \label{sub:HTTP-Decode}}
+
+HTTP Decode is used to process HTTP URI strings and convert their
+data to non-obfuscated ASCII strings. For example, HTTP defines a
+hex encoding method for characters such that the string \%20
+is interpreted as a single space (eg:  ). Webservers
+are designed to handle the myriad of clients available as well as
+being written to support many different standards. Microsoft webservers
+handle additional types of encodings as well as some specific bugs.
+
+%
+\begin{table}[!hbpt]
+
+\caption{Http decode options}
+
+\begin{center}\begin{tabular}{|c|c|c|}
+\hline 
+Option&
+Purpose&
+Webserver\\
+\hline
+\hline 
+unicode&
+Multibyte encoding standard&
+IIS (all versions 3+)\\
+\hline 
+iis\_alt\_unicode&
+\%u\#\#\# encodings&
+IIS\\
+\hline 
+double\_encode&
+IIS encoding bugs&
+IIS 3,4,5 versions prior to MS01-44\\
+\hline 
+iis\_flip\_slash&
+interpret \textbackslash{} as /&
+IIS\\
+\hline 
+full\_whitespace&
+interpret tabs as spaces&
+Apache\\
+\hline
+\end{tabular}\end{center}
+\end{table}
+
+
+
+\subsubsection{Format}
+
+\begin{verbatim}
+http_decode:<port list> [unicode] [iis_alt_unicode]\
+              double_encode] [iis_flip_slash] [full_whitespace]
+\end{verbatim}
+%
+\begin{figure}[!hbpt]
+\begin{verbatim}
+preprocessor http_decode: 80 8080 unicode iis_flip_slash iis_alt_unicode
+\end{verbatim}
+
+\caption{\label{http decode directive}HTTP Decode Directive Format Example}
+\end{figure}
+
+
+
+\subsection{Portscan Detector}
+
+The Snort Portscan Preprocessor is developed by Patrick Mullen.
+
+
+\subsubsection{What the Snort Portscan Preprocessor does}
+
+\begin{itemize}
+\item Log the start and end of portscans from a single source IP to the
+standard logging facility.
+\item If a log file is specified, logs the destination IPs and ports scanned
+as well as the type of scan.
+\end{itemize}
+A portscan is defined as TCP connection attempts to more than P ports
+in T seconds or UDP packets sent to more than P ports in T seconds.
+Ports can be spread across any number of destination IP addresses,
+and may all be the same port if spread across multiple IPs. This version
+does single->single and single->many portscans. The next full release
+will do distributed portscans (multiple->single or multiple->multiple).
+A portscan is also defined as a single stealth scan
+packet, such as NULL, FIN, SYNFIN, XMAS, etc. This means that from
+scan-lib in the standard distribution of snort you should comment
+out the section for stealth scan packets. The benefit is with the
+portscan module these alerts would only show once per scan, rather
+than once for each packet. If you use the external logging feature
+you can look at the technique and type in the log file.
+
+The arguments to this module are: 
+
+\begin{itemize}
+\item network to monitor The network/CIDR block to monitor for portscans 
+\item number of ports number of ports accessed in the detection period 
+\item detection period number of seconds to count that the port access threshold
+is considered for 
+\item logdir/filename the directory/filename to place alerts in. Alerts
+are also written to the standard alert file
+\end{itemize}
+
+\subsubsection{Format}
+
+\begin{verbatim}
+portscan: <monitor network> <number of ports> <detection period> <file path>
+\end{verbatim}
+%
+\begin{figure}[!hbpt]
+\begin{verbatim}
+preprocessor portscan: 192.168.1.0/24 5 7 /var/log/portscan.log
+\end{verbatim}
+
+\caption{\label{portscan processor config}Portscan Preprocessor Configuration
+Example}
+\end{figure}
+
+
+
+\subsection{Portscan Ignorehosts}
+
+Another module from Patrick Mullen that modifies the portscan detection
+system's operation. If you have servers which tend to trip off the
+portscan detector (such as NTP, NFS, and DNS servers), you can tell
+portscan to ignore TCP SYN and UDP portscans from certain hosts. The
+arguments to this module are a list of IPs/CIDR blocks to be ignored.
+
+
+\subsubsection{Format}
+
+\begin{verbatim}
+portscan-ignorehosts: <host list>
+\end{verbatim}
+%
+\begin{figure}[!hbpt]
+\begin{verbatim}
+preprocessor portscan-ignorehosts: 192.168.1.5/32 192.168.3.0/24
+\end{verbatim}
+
+\caption{\label{portscan ignore hosts example}Portscan Ignorehosts Module
+Configuration Example}
+\end{figure}
+
+
+
+\subsection{Frag2\label{frag2 section}}
+
+Frag2, introduced in Snort 1.8, is a new \textsc{ip} defragmentation
+preprocessor. Frag2 is designed to replace the defrag preprocessor.
+This defragmenter is designed to memory efficient and use the same
+memory management routines that are in use in other parts of Snort. 
+
+Frag2 has configurable memory usage and fragment timeout options.
+Given no arguments, frag2 uses the default memory limit of 4194304
+bytes (4\textsc{mb}) and a timeout period of 60 seconds. The timeout
+period is used to determine a length of time that a unassembled fragment
+should be discarded.
+
+In Snort 1.8.7, several options were added to help catch the use of
+evasion techniques such as fragroute. 
+
+
+\subsubsection{Format}
+
+\begin{verbatim}
+preprocessor frag2: [memcap <xxx>], [timeout <xx>], [min_ttl <xx>], \
+                    [detect_state_problems], [ttl_limit <xx>] 
+\end{verbatim}
+\begin{list}{}
+\item [timeout~<seconds>]amount of time to keep an inactive stream in
+the state table, sessions that are flushed will automatically be picked
+up again if more activity is seen, default is 30 seconds
+\item [memcap~<bytes>]number of bytes to set the memory cap at, if this
+limit is exceeded frag2 will aggressively prune inactive reassemblers,
+default is 4MB
+\item [detect\_state\_problems]turns on alerts for events such as overlapping
+fragments
+\item [min\_ttl]sets the minimum ttl that frag2 will accept
+\item [ttl\_limit]sets the delta value that will set off an evasion alert.
+(Initial Fragment TTL +/- TTL Limit) 
+\end{list}
+%
+\begin{figure}[!hbpt]
+\begin{verbatim}
+preprocessor frag2: memcap 16777216, timeout 30
+\end{verbatim}
+
+\caption{Frag2 preprocessor configuration \label{frag2 example}}
+\end{figure}
+
+\subsection{Stream4\label{stream 4 section}}
+
+The stream4 module provides TCP stream reassembly and stateful analysis
+capabilities to Snort. Robust stream reassembly capabilities allow
+Snort to ignore ''stateless'' attacks such as stick and snot produce.
+Stream4 also gives large scale users the ability to track more than
+256 simultaneous TCP streams. Stream4 should be able to scale to handle
+32,768 simultaneous TCP connections in its default configuration.
+
+Stream4 contains two configurable modules, the stream4 preprocessor
+and the associated stream4 reassemble plugin. The stream4\_reassemble
+options are listed below. 
+
+
+\subsubsection{Stream4 Format}
+
+\begin{verbatim}
+preprocessor stream4: [noinspect], [keepstats], [timeout <seconds>], \
+            [memcap <bytes>], [detect_scans], [detect_state_problems], \
+            [disable_evasion_alerts], [ttl_limit <count>]
+\end{verbatim}
+\begin{list}{}
+\item [noinspect]disable stateful inspection
+\item [keepstats]record session summary information in <logdir>/session.log
+\item [timeout~<seconds>]amount of time to keep an inactive stream in
+the state table, sessions that are flushed will automatically be picked
+up again if more activity is seen, default is 30 seconds
+\item [memcap~<bytes>]number of bytes to set the memory cap at, if this
+limit is exceeded stream4 will aggressively prune inactive sessions,
+default is 8MB
+\item [detect\_scans]turns on alerts for portscan events
+\item [detect\_state\_problems]turns on alerts for stream events of note,
+such as evasive RST packets, data on the SYN packet, and out of window
+sequence numbers
+\item [disable\_evasion\_alerts]turns off alerts for events such as TCP
+overlap
+\item [ttl\_limit]sets the delta value that will set off 
+\end{list}
+
+\subsubsection{Stream4\_Reassemble Format}
+
+\begin{verbatim}
+preprocessor stream4_reassemble: [clientonly], [serveronly],\
+                                 [noalerts], [ports <portlist>]
+\end{verbatim}
+\begin{list}{}
+\item [clientonly]provide reassembly for the client side of a connection
+only
+\item [serveronly]provide reassembly for the server side of a connection
+only
+\item [noalerts]don't alert on events that may be insertion or evasion
+attacks
+\item [ports]<portlist> - a whitespace separated lit of ports to perform
+reassembly for, all provides reassembly for all
+ports, default provides reassembly for ports 21
+23 25 53 80 110 111 143 and 513
+\end{list}
+
+\subsubsection{Notes}
+
+Just setting the stream4 and stream4\_reassemble directives without
+arguments in the snort.conf file will set them up in their default
+configurations shown in Table \ref{stream4 defaults} and Table \ref{stream4 reassemble defaults}.
+
+Stream4 introduces a new command line switch: -z.
+On TCP traffic, if the -z switch is specified, Snort will only alert
+on streams that have been established via a three way handshake or
+streams where cooperative bidirectional activity has been observed
+(i.e. where some traffic went one way and something other than a RST
+or FIN was seen going back to the originator). With -z
+turned on, Snort completely ignores TCP-based stick/snot attacks.
+
+%
+\begin{table}[!hbpt]
+
+\caption{Stream4 defaults\label{stream4 defaults}}
+
+\begin{center}\begin{tabular}{|c|c|}
+\hline 
+Option&
+Default\\
+\hline
+\hline 
+Session Timeout&
+30 seconds\\
+\hline 
+Session Memory Cap&
+8388608 bytes\\
+\hline 
+Stateful Inspection&
+ACTIVE\\
+\hline 
+Stream Stats&
+INACTIVE\\
+\hline 
+State Problem Alerts&
+INACTIVE\\
+\hline 
+Portscan Alerts&
+INACTIVE\\
+\hline
+\end{tabular}\end{center}
+\end{table}
+
+
+%
+\begin{table}[!hbpt]
+
+\caption{Stream4\_reassemble Defaults\label{stream4 reassemble defaults}}
+
+\begin{center}\begin{tabular}{|c|c|}
+\hline 
+Option&
+Default\\
+\hline
+\hline 
+Reassemble Client&
+ACTIVE\\
+\hline 
+Reassemble Server&
+INACTIVE\\
+\hline 
+Reassemble Ports&
+21 23 25 53 80 143 110 111 513 1433\\
+\hline 
+Reassembly Alerts&
+ACTIVE\\
+\hline
+\end{tabular}\end{center}
+\end{table}
+
+
+
+\subsection{Conversation\label{sub:Conversation}}
+
+The Conversation preprocessor allows Snort to get basic conversation
+status on protocols rather than just with TCP as done in \emph{spp\_stream4}.
+In the future, this will allow rules to be written that work on byte
+counts and first talker status. 
+
+It currently uses the same memory defense mechanisms as stream4 so
+it will be able to preserve itself during DOS attacks.
+
+It can also generate an alert message if it recieves packets with
+ip protocols that are not allowed on your network. To do this, set
+allowed\_ip\_protocols to the list of protocol numbers that you allow,
+and when it recieves a packet that is not allowed, it will alert and
+log the packet.
+
+
+\paragraph{Format}
+
+\begin{verbatim}
+preprocessor conversation: [allowed_ip_protocols <protonumbers|all>], \
+                           [timeout <sec>], [alert_odd_protocols], \
+                           [max_conversations <number>]
+
+\end{verbatim}
+
+\begin{table}[!hbpt]
+
+\caption{Conversation Defaults\label{conversation defaults}}
+
+\begin{center}\begin{tabular}{|c|c|}
+\hline 
+Option&
+Default\\
+\hline
+\hline 
+allowed\_ip\_protocols&
+all\\
+\hline 
+timeout&
+60\\
+\hline 
+alert\_odd\_protocols&
+disabled\\
+\hline 
+max\_conversations&
+65335\\
+\hline
+\end{tabular}\end{center}
+\end{table}
+
+\subsection{Portscan2\label{sub:Portscan2}}
+
+This module allows portscans to be detected. This module is requires
+the Conversation preprocessor \ref{sub:Conversation}in order to know
+when a conversation is new. 
+
+This is intended to pick up quick scans such as a rapid nmap scan. 
+
+
+\subsubsection{Format}
+
+\begin{verbatim}
+preprocessor portscan2:  [scanners_max <num>], [targets_max <num>], \
+                         [target_limit <num>], [port_limit <num>], \
+                         [timeout <sec>]
+\end{verbatim}
+\begin{list}{}
+\item [scaners\_max]number of hosts scanning a network to support at once
+\item [targets\_max]number of nodes to allocate to represent hosts
+\item [target\_limit]number of hosts a scanner must talk to before a scan
+is triggered
+\item [port\_limit]number of ports a scanner must talk to before a scan
+is triggered
+\item [timeout]number of second before a scanner's activity is forgotten
+\end{list}
+%
+\begin{table}[!hbpt]
+
+\caption{Portscan2 Defaults\label{portscan2 defaults}}
+
+\begin{center}\begin{tabular}{|c|c|}
+\hline 
+Option&
+Default\\
+\hline
+\hline 
+scanners\_max&
+1000\\
+\hline 
+targets\_max&
+1000\\
+\hline 
+target\_limit&
+5\\
+\hline 
+port\_limit&
+20\\
+\hline 
+timeout&
+60\\
+\hline
+\end{tabular}\end{center}
+\end{table}
+
+\subsection{Telnet Decode\label{sub:Telnet-Decode}}
+
+The telnet\_decode preprocessor allows snort to normalize telnet control
+protocol characters from the session data. In Snort 1.9.0 and above,
+it accepts a list of ports to run on as arguments. Also in 1.9.0,
+it normalizes into a separate data buffer from the packet itself so
+that the raw data may be logged or examined with the rawbytes content
+modifier\ref{sub:Rawbytes}.
+
+It defaults to running on ports 21, 23, 25, and 119.
+
+\subsubsection{Format}
+
+\begin{verbatim}
+preprocessor telnet_decode: <ports> 
+\end{verbatim}
+
+\subsection{RPC Decode\label{sub:RPC-Decoder}}
+
+The rpc\_decode preprocessor normalizes RPC multiple fragmented
+records into a single unfragmented record.  It does this by
+normalizing the packet into the the packet buffer.  If stream4 is
+enabled, it will only process client side traffic.  It defaults to
+running on ports 111 and 32771.
+
+\subsubsection{Format}
+
+\begin{verbatim}
+preprocessor rpc_decode: <ports> [ alert_fragments ] \
+   [no_alert_multiple_requests] [no_alert_large_fragments] \
+   [no_alert_incomplete]
+\end{verbatim}
+
+
+\subsection{Perf Monitor\label{sub:PerfMonitor}}
+
+This module is used to instrument various aspects of snort for
+performance statistics.  It's output format and argument format are
+subject to change without notice.  
+
+\subsection{Http Flow\label{sub:HttpFlow}}
+
+This module is used to allow snort to ignore HTTP Server resposnes
+after the HTTP headers.
+
+%
+\begin{table}[!hbpt]
+
+\caption{RPC Decoder Options\label{rpc options}}
+
+\begin{center}\begin{tabular}{|c|c|}
+\hline 
+Option&
+Purpose\\
+\hline
+\hline 
+alert\_fragments&
+Alert on any fragmented RPC record\\
+\hline 
+no\_alert\_multiple\_requests&
+Don't Alert when there are multiple records in one packet\\
+\hline 
+no\_alert\_large\_fragments&
+Don't Alert when the sum of fragmented records exceeds one packet\\
+\hline 
+no\_alert\_incomplete&
+Don't Alert when a single fragment record exceeds the size of one
+packet\\
+\hline
+\end{tabular}\end{center}
+\end{table}
+
+\section{Output Modules}
+
+Output modules are new as of version 1.6. They allow Snort to be much
+more flexible in the formatting and presentation of output to its
+users. The output modules are run when the alert or logging subsystems
+of Snort are called, after the preprocessors and detection engine.
+The format of the directives in the rules file is very similar to
+that of the preprocessors.
+
+Multiple output plugins may be specified in the Snort configuration
+file. When multiple plugins of the same type (log, alert) are specified,
+they are stacked and called in sequence when an
+event occurs. As with the standard logging and alerting systems, output
+plugins send their data to /var/log/snort by default or to a user
+directed directory (using the -l command line
+switch).
+
+Output modules are loaded at runtime by specifying the output keyword
+in the rules file:
+
+\begin{verbatim}
+output <name>: <options>
+\end{verbatim}
+%
+\begin{figure}[!hbpt]
+\begin{verbatim}
+output alert_syslog: LOG_AUTH LOG_ALERT
+\end{verbatim}
+
+\caption{\label{output config example}Output Module Configuration Example}
+\end{figure}
+
+\subsection{Alert\_syslog \label{alert syslog lable}}
+
+This module sends alerts to the syslog facility (much like the -s
+command line switch). This module also allows the user to specify
+the logging facility and priority within the Snort rules file, giving
+users greater flexibility in logging alerts.
+
+\subsubsection{Available keywords }
+
+
+\paragraph{Options}
+
+\begin{itemize}
+\item LOG\_CONS 
+\item LOG\_NDELAY 
+\item LOG\_PERROR
+\item LOG\_PID
+\end{itemize}
+
+\paragraph{Facilities }
+
+\begin{itemize}
+\item LOG\_AUTH 
+\item LOG\_AUTHPRIV 
+\item LOG\_DAEMON 
+\item LOG\_LOCAL0 
+\item LOG\_LOCAL1 
+\item LOG\_LOCAL2 
+\item LOG\_LOCAL3 
+\item LOG\_LOCAL4 
+\item LOG\_LOCAL5 
+\item LOG\_LOCAL6 
+\item LOG\_LOCAL7 
+\item LOG\_USER
+\end{itemize}
+
+\paragraph{Priorities }
+
+\begin{itemize}
+\item LOG\_EMERG 
+\item LOG\_ALERT 
+\item LOG\_CRIT 
+\item LOG\_ERR 
+\item LOG\_WARNING 
+\item LOG\_NOTICE 
+\item LOG\_INFO 
+\item LOG\_DEBUG
+\end{itemize}
+
+\subsubsection{Format}
+
+\begin{verbatim}
+alert_syslog: <facility> <priority> <options>
+\end{verbatim}
+
+\subsection{Alert\_fast}
+
+This will print Snort alerts in a quick one line format to a specified
+output file. It is a faster alerting method than full alerts because
+it doesn't need to print all of the packet headers to the output file
+
+
+\subsubsection{Format}
+
+\begin{verbatim}
+alert_fast: <output filename>
+\end{verbatim}
+%
+\begin{figure}[!hbpt]
+\begin{verbatim}
+output alert_fast: alert.fast
+\end{verbatim}
+
+\caption{\label{fast alert configuration}Fast alert configuration}
+\end{figure}
+
+
+
+\subsection{Alert\_full}
+
+Print Snort alert messages with full packet headers. The alerts will
+be written in the default logging directory (/var/log/snort) or in
+the logging directory specified at the command line.
+
+Inside the logging directory, a directory per IP will be created.
+These files will be decoded packet dumps of the packets that triggered
+the alerts. The creation of these files slows snort down considerably.
+This output method is discouraged for all but the lightest traffic
+situations.
+
+
+\subsubsection{Format}
+
+\begin{verbatim}
+alert_full: <output filename>
+\end{verbatim}
+%
+\begin{figure}[!hbpt]
+\begin{verbatim}
+output alert_full: alert.full
+\end{verbatim}
+
+\caption{\label{full alert configuration}Full alert configuration}
+\end{figure}
+
+
+
+\subsection{Alert\_smb}
+
+This plugin sends WinPopup alert messages to the NETBIOS named machines
+indicated within the file specified as an argument to this output
+plugin. It should be noted that use of this plugin is not encouraged
+as it executes an external executable binary (smbclient) at the same
+privilege level as Snort, commonly root. The format of the workstation
+file is a list of the NETBIOS names of the hosts that wish to receive
+alerts, one per line in the file.
+
+
+\subsubsection{Format}
+
+\begin{verbatim}
+alert_smb: <alert workstation filename>
+\end{verbatim}
+%
+\begin{figure}[!hbpt]
+\begin{verbatim}
+output alert_smb: workstation.list
+\end{verbatim}
+
+\caption{\label{smb alert configuration} SMB alert configuration}
+\end{figure}
+
+
+
+\subsection{Alert\_unixsock}
+
+Sets up a UNIX domain socket and sends alert reports to it. External
+programs/processes can listen in on this socket and receive Snort
+alert and packet data in real time. This is currently an experimental
+interface.
+
+
+\subsubsection{Format}
+
+\begin{verbatim}
+alert_unixsock
+\end{verbatim}
+%
+\begin{figure}[!hbpt]
+\begin{verbatim}
+output alert_unixsock
+\end{verbatim}
+
+\caption{\label{unixsock configuration}UnixSock alert configuration}
+\end{figure}
+
+
+
+\subsection{Log\_tcpdump}
+
+The log\_tcpdump module logs packets to a tcpdump-formatted file.
+This is useful for performing post process analysis on collected
+traffic with the vast number of tools that are available for examining
+tcpdump formatted files. This module only takes a single argument, the
+name of the output file. Note that the file name will have the unix
+timestamp in seconds appended the file name. This is so data from
+separate snort runs can be kept distinct.
+
+
+\subsubsection{Format}
+
+\begin{verbatim}
+log_tcpdump: <output filename>
+\end{verbatim}
+%
+\begin{figure}[!hbpt]
+\begin{verbatim}
+output log_tcpdump: snort.log
+\end{verbatim}
+
+\caption{\label{tcpdump output configuration}Tcpdump Output Module Configuration
+Example}
+\end{figure}
+
+\subsection{Database}
+
+This module from Jed Pickel sends Snort data to a variety of SQL databases.
+More information on installing and configuring this module can be
+found on the {[}91{]}Incident.org web page. The arguments to this
+plugin are the name of the database to be logged to and a parameter
+list. Parameters are specified with the format parameter = argument.
+See Figure \ref{database output config} for example usage.
+
+
+\subsubsection{Format}
+
+\begin{verbatim}
+database: <log | alert>, <database type>, <parameter list>
+\end{verbatim}
+The following parameters are available:
+
+\begin{description}{}
+\item [host]Host to connect to. If a non-zero-length string is specified, TCP/IP communication is used. Without a host name, it will connect using a local Unix domain socket.
+\item [port]Port number to connect to at the server host, or socket filename extension for Unix-domain connections. 
+\item [dbname]Database name user Database username for authentication
+\item [password]Password used if the database demands password authentication
+\item [sensor\_name]Specify your own name for this snort sensor. If you do not specify a name one will be generated automatically
+\item [encoding] Because the packet payload and option data is binary, there is no one simple and portable way to store it in a database. BLOBS are not used because they are not portable across databases. So I leave the encoding option to you. You can choose from the following options. Each has its own advantages and disadvantages:
+
+   \begin{description}{}
+       \item [hex](default) Represent binary data as a hex string. 
+
+       \begin{description}{}
+             \item [storage~requirements]- 2x the size of the binary
+             \item [searchability]- very good 
+             \item [human~readability]- not readable unless you are a true geek, requires post processing
+       \end{description}
+       \item [base64]Represent binary data as a base64 string. 
+
+      \begin{description}{}
+            \item [storage~requirements]- \~1.3x the size of the binary 
+            \item [searchability]- impossible without post processing 
+            \item [human~readability]- not readable requires post processing
+      \end{description}
+
+      \item [ascii]Represent binary data as an ascii string. This is
+      the only option where you will actually loose data. Non ascii
+      data is represented as a .. If you choose this option then data
+      for ip and tcp options will still be represented as hex because
+      it does not make any sense for that data to be ascii.
+
+\begin{description}{}
+\item [storage~requirements]- Slightly larger than the binary because
+some characters are escaped (\&,<,>)
+\item [searchability]- very good for searching for a text string impossible
+if you want to search for binary 
+\item [human~readability]- very good
+\end{description}
+\end{description}
+\item [detail]How much detailed data do you want to store? The options
+are:
+
+\begin{description}{}
+\item [full](default) log all details of a packet that caused an alert
+(including ip/tcp options and the payload)
+\item [fast]log only a minimum amount of data. You severely limit the potential
+of some analysis applications if you choose this option, but this
+is still the best choice for some applications. The following fields
+are logged - (timestamp, signature, source ip, destination ip, source
+port, destination port, tcp flags, and protocol)
+\end{description}
+\end{description}
+Furthermore, there is a logging method and database type that must
+be defined. There are two logging types available, log and alert.
+Setting the type to log attaches the database logging functionality
+to the log facility within the program. If you set the type to log,
+the plugin will be called on the log output chain. Setting the type
+to alert attaches the plugin to the alert output chain within the
+program.
+
+There are four database types available in the current version of
+the plugin. These are MySQL, PostgreSQL, Oracle, and unixODBC-compliant
+databases. Set the type to match the database you are using.
+
+%
+\begin{figure}[!hbpt]
+\begin{verbatim}
+output database: log, mysql, dbname=snort user=snort host=localhost password=xyz
+\end{verbatim}
+
+\caption{\label{database output config}Database output plugin configuration}
+\end{figure}
+
+
+
+\subsection{CSV}
+
+The CSV output plugin allows alert data to be written in a format
+easily importable to a database. The plugin requires 2 arguments,
+a full pathname to a file and the output formatting option. 
+
+The list of formatting options is below. If the formatting option
+is default, the output is in the order the formatting option is listed.
+
+\begin{itemize}
+\item timestamp
+\item msg
+\item proto
+\item src
+\item srcport
+\item dst
+\item dstport
+\item ethsrc
+\item ethdst
+\item ethlen
+\item tcpflags
+\item tcpseq
+\item tcpack
+\item tcplen
+\item tcpwindow
+\item ttl
+\item tos
+\item id
+\item dgmlen
+\item iplen
+\item icmptype
+\item icmpcode
+\item icmpid
+\item icmpseq
+\end{itemize}
+
+\subsubsection{Format}
+
+\begin{verbatim}
+output alert_CSV: <filename> <format>
+
+
+\end{verbatim}
+%
+\begin{figure}[!hbpt]
+\begin{verbatim}
+output alert_CSV: /var/log/alert.csv default
+
+output alert_CSV: /var/log/alert.csv timestamp, msg
+\end{verbatim}
+
+\caption{CSV Output Configuration\label{csv output configuration}}
+\end{figure}
+
+\subsection{Unified}
+
+The unified output plugin is designed to be the fastest possible method
+of logging Snort events. It logs events into an alert file and a packet
+log file. The alert file contains the high-level details of an event
+(ips, protocol, port, message id). The log file contains the detailed
+packet information ( a packet dump with the associated event id ).
+
+Both portions of the files are written in a binary format described
+in spo\_unified.h. Barnyard, when available, will incorporate the
+current output plugins into a new architecture so that logging. The
+Unified-output format will soon become the standard method of logging
+Snort data for sensors that have high amounts of activity. Snort will
+focus only only on collecting data in realtime while Barnyard will
+allow complex logging methods that would otherwise diminish sensor
+effectiveness. 
+
+Note that the time in unix seconds will be appened to each file as
+it's written out.
+
+\subsubsection{Format}
+
+\begin{verbatim}
+output alert_unified: <file name> 
+
+output log_unified: <file name>
+\end{verbatim}
+%
+\begin{figure}[!hbpt]
+\begin{verbatim}
+output alert_unified: snort.alert 
+
+output log_unified: snort.log
+\end{verbatim}
+
+\caption{Unified Configuration Example\label{unified example}}
+\end{figure}
+
+\subsection{Log Null}
+
+Sometimes it is useful to be able to create rules that will alert
+to certain types of traffic but will not cause packet log entries.
+In Snort 1.8.2, the log\_null plugin was introduced. This is equivalent
+to using the -N command line option but it is able to work within
+a ruletype.
+
+
+\subsubsection{Format}
+
+\begin{verbatim}
+output log_null
+\end{verbatim}
+%
+\begin{figure}[!hbpt]
+\begin{verbatim}
+output log_null  # like using snort -N
+
+ruletype info {
+    type alert
+    output alert_fast: info.alert
+    output log_null
+}
+
+
+\end{verbatim}
+
+\caption{Log Null Usage Example\label{log null usage example}}
+\end{figure}
+
+
+\begin{verbatim}
+
+\end{verbatim}
+
+\section{Writing Good Rules}
+
+There are some general concepts to keep in mind when developing Snort
+rules to maximize efficiency and speed.
+
+Good rules have contents.  The 2.0 detection engine changes the way
+snort works slightly by having the first phase be a setwise pattern
+match.  The longer a content option is, the more ``exact'' the match.
+If rules don't have a content option, they will slow the entire system
+down.
+
+When writing rules, try to write rules that target the vulnerability
+(such as calling this procedure with an offset of 1025 or more )
+rather than the exploit specifics ( match this shell code here ). 
+
+Content Rules are Case Sensitive (unless you use the nocase
+option)
+
+Don't forget that content rules are case sensitive and that many programs
+typically use uppercase letters to indicate commands. FTP is a good
+example of this. Consider the following two rules:
+
+\begin{verbatim}
+alert tcp any any -> 192.168.1.0/24 21 (content: "user root"; \
+      msg: "FTP root login";)
+
+alert tcp any any -> 192.168.1.0/24 21 (content: "USER root";\
+      msg: "FTP root login";)
+
+\end{verbatim}
+The second of those two rules will catch most every automated root
+login attempt, but none that use lower case characters for user.
+Internet daemons are often written to be liberal in what they accept
+as input. When writing rules, understanding what the protocol accepts
+will help minimize missed attacks.
+
+
+\chapter{Snort Development}
+
+Currently, this chapter is here as a place holder. It will someday
+contain references on how to create new detection plugins and
+preprocessors.  End users don't really need to be reading this
+section. This is intended to help developers get a basic understanding
+of whats going on quickly.
+
+If you are going to be helping out with snort development, please
+use the \textsc{head} branch of CVS. We've had problems in the past
+of people submitting patches only to the stable branch ( since they
+are likely writing this stuff for their own IDS purposes ). Bugfixes
+are what goes into \textsc{stable}. Features go into \textsc{head}.
+
+\section{Submitting Patches}
+Patches to snort should be sent to the
+\verb!snort-devel@lists.sourceforge.net! mailing list and CC'd to
+cmg@snort.org with a subject of Patch: <subject>.
+
+If the patch is less than 20K in size, please do not gzip it. Patches
+should done with the command \verb!diff -Nu snort-orig snort-new!.
+
+\section{Snort Dataflow}
+First, traffic is acquired from the network link via libpcap. Packets
+are passed through a series of decoder routines that first fill out
+the Packet structure for link level protocols then are further decoded
+for things like TCP and UDP ports.
+
+Packets are then sent through the registered set of preprocessors.
+Each preprocessor checks to see if this packet is something it should
+look at.
+
+Packets are then sent through the detection engine. The detection
+engine checks each packet against the various options listed in the
+snort rules files. Each of the keyword options is a plugin. This allows
+this to be easily extensible.
+
+
+\subsection{Preprocessors}
+
+For example, a tcp analysis preprocessor could simply return if the
+packet does not have a TCP header. It can do this by checking 
+
+\begin{verbatim}
+if (p->tcph==NULL)
+   return;
+\end{verbatim}
+Similarly, there are a lot of packet\_flags available that can be
+used to mark a packet as ``reassembled'' or logged. Check out src/decode.h
+for the list of PKT\_{*} constants.
+
+
+\subsection{Detection Plugins}
+Basically, look at an existing output plugin and copy it to a new item
+and change a few things. Later, we'll document what these few things are.
+
+\subsection{Output Plugins}
+Generally, new output plugins should go into the barnyard project
+rather than the snort project. We are currently cleaning house on the
+available output options.
+
+\appendix
+
+\begin{thebibliography}{99}
+\bibitem{PhrackNMAParticle}http://packetstorm.securify.com/mag/phrack/phrack49/P49-06
+\bibitem{nmaphomepage}http://www.nmap.org
+\bibitem{CIDRnotation}http://public.pacbell.net/dedicated/cidr.html
+\bibitem{whitehatsurl}http://www.whitehats.com
+\bibitem{snortdb}http://www.incident.org/snortdb
+\end{thebibliography}
+
+\end{document}

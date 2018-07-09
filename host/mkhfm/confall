@@ -1,0 +1,5 @@
+output /home/jared_wu/moxalinux-4.4.2/images/firmware.hfm
+apid 0x8000026a
+modelname IA262LX
+input /home/jared_wu/moxalinux-4.4.2/images/zImage kernel 2.0.0.0 1 0x60060000 0x60300000 0x002a0000 0xe0400000
+input /home/jared_wu/moxalinux-4.4.2/images/jffs2disk root-file-system 2.0.0.0 2 0x60300000 0x61000000 0xd00000 0x00000000

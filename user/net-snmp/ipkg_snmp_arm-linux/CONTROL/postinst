@@ -1,0 +1,20 @@
+#!/bin/sh
+
+#echo "$0, $1"  >> /var/postinst
+
+case "$1" in
+  update)
+    ;;
+  install)
+    ;;
+  configure)
+	umount /
+	/etc/init.d/snmpd start
+    ;;
+  remove)
+    ;;
+  *)
+    ;;
+esac
+
+exit 0

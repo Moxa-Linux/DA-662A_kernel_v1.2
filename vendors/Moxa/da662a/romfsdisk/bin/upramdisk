@@ -1,0 +1,12 @@
+#!/bin/sh
+mke2fs /dev/ram1 &> /dev/null
+if  ! [ -d /var/ramdisk ]; then
+	mkdir /var/ramdisk
+fi
+mount -t ext2 /dev/ram1 /mnt/ramdisk &> /dev/null
+str=`mount | grep ram1`
+if [ "$str" == "" ]; then
+	rm -fr /var/ramdisk
+else
+	rm -fr /mnt/ramdisk/* &> /dev/null
+fi

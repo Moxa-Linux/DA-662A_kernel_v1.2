@@ -1,0 +1,73 @@
+--
+Rule:
+alert udp $EXTERNAL_NET any -> $HOME_NET 31335 (msg:"DDOS
+Trin00\:DaemontoMaster(messagedetected)";
+content:"l44";reference:arachnids,186; classtype:attempted-dos;
+sid:231; rev:1;) 
+
+--
+Sid:
+231
+
+--
+Summary:
+A packet containing a potential Trin00 command was detected.
+
+--
+Impact:
+Possible system compromise or Denial of Service.
+
+--
+Detailed Information:
+Trin00 is a Distributed Denial of Service tool. Once the Trin00 
+client has been installed on a compromised machine and a master is
+ready and listening, the master can send any number of commands to its clients.
+These commands must contain the string 'l44'. Once a machine becomes part 
+of a trin00 network, a Denial of Service (DoS) is typically initiated 
+against one or more victim machines.
+
+--
+Attack Scenarios:
+As part of a large scale attack against a machine or a network, an
+attacker will compromise a large number of machines which will form the
+army that the trin00 master daemon will command.  The master daemon
+typically instructs the clients to send considerable amounts of packets to
+a set of victim hosts.  If the traffic is sufficient, the victim
+machines will become resource deprived.
+
+--
+Ease of Attack:
+Medium.  Use of this tool requires a compromised system from which to
+to run (unless you choose to just run it on your own machine).  Once a
+machine has been compromised, all that is required to become part of
+the trin00 network are proper permissions and a network connection.
+
+--
+False Positives:
+Rare.  The current version of trin00 ships with a configuration
+sending commands over udp to port 31335.  Communication via udp
+to such a high port is fairly uncommon.  That, coupled with the 'l44' 
+check, make this rule fairly foolproof.
+
+--
+False Negatives:
+Rare unless newer versions change port/protocol/communication
+mechanism.
+
+--
+Corrective Action:
+Disconnect your machine(s) from the network immediately.  Attempt to
+determine if your machine was being used as part of a trin00 network.
+This may be difficult, given that the system has likely been
+compromised and had a root kit installed.   
+
+--
+Contributors:
+Warchild <warchild@spoofed.org>	Initial Research
+Josh Gray Edits
+
+-- 
+Additional References:
+http://staff.washington.edu/dittrich/misc/trinoo.analysis.txt
+http://staff.washington.edu/dittrich/misc/ddos/
+http://www.sans.org/newlook/resources/IDFAQ/trinoo.htm

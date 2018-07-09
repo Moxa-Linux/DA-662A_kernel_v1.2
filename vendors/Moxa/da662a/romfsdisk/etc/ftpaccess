@@ -1,0 +1,73 @@
+# This file controls the behavior of the wu-ftpd
+# ftp server.
+#
+# If you're looking for a graphical frontend to
+# editing it, try kwuftpd from the kdeadmin
+# package.
+
+# Don't allow system accounts to log in over ftp
+#deny-uid %-99 %65534-
+#deny-gid %-99 %65534-
+#allow-uid ftp
+#allow-gid ftp
+
+# Chroot all users to their home directory by default
+# (comment this out if you don't want to chroot most of your users)
+#guestuser *
+# If you wish to allow user1 and user2 to access other
+# directories, use the line below:
+# realuser user1,user2
+realuser root
+
+
+# The ftpchroot group doesn't exist by default, this
+# entry is just supplied as an example.
+# To chroot a user, modify the line below or create
+# the ftpchroot group and add the user to it.
+#
+# You will need to setup the required applications
+# and libraries in the root directory (set using
+# guest-root).
+#
+# Look at the anonftp package for the files you'll need.
+guestgroup ftpchroot
+
+# User classes...
+class   all   real,guest,anonymous  *
+
+# Set this to your email address
+email root@localhost
+
+# Allow 5 mistyped passwords
+loginfails 5
+
+# Notify the users of README files at login and when
+# changing to a different directory
+readme  README*    login
+readme  README*    cwd=*
+
+# Messages displayed to the user
+#message /welcome.msg            login
+#message .message                cwd=*
+
+# Allow on-the-fly compression and tarring
+compress        yes             all
+tar             yes             all
+
+# Prevent anonymous users (and partially guest users)
+# from executing dangerous commands
+chmod		no		guest,anonymous
+delete		no		anonymous
+overwrite	no		anonymous
+rename		no		anonymous
+
+# Turn on logging to /var/log/xferlog
+log transfers anonymous,guest,real inbound,outbound
+
+# If /etc/shutmsg exists, don't allow logins
+# see ftpshut man page
+#shutdown /etc/shutmsg
+
+# Ask users to use their email address as anonymous
+# password
+passwd-check rfc822 warn

@@ -1,0 +1,437 @@
+diff -crB ike-org/source/libidb/CMakeLists.txt ike-static/source/libidb/CMakeLists.txt
+*** ike-org/source/libidb/CMakeLists.txt	2013-03-19 17:16:49.124030197 +0800
+--- ike-static/source/libidb/CMakeLists.txt	2013-03-19 17:16:55.311532098 +0800
+***************
+*** 45,50 ****
+  endif( APPLE )
+  
+  install(
+! 	TARGETS ss_idb
+  	LIBRARY DESTINATION ${PATH_LIB}
+! 	FRAMEWORK DESTINATION "/Library/Frameworks" )
+--- 45,50 ----
+  endif( APPLE )
+  
+  install(
+! 	FILES ss_idb
+  	LIBRARY DESTINATION ${PATH_LIB}
+! 	)
+diff -crB ike-org/source/libike/CMakeLists.txt ike-static/source/libike/CMakeLists.txt
+*** ike-org/source/libike/CMakeLists.txt	2013-03-19 17:16:49.107069879 +0800
+--- ike-static/source/libike/CMakeLists.txt	2013-03-19 17:16:55.295030414 +0800
+***************
+*** 18,24 ****
+          ${IKE_SOURCE_DIR}/source/libip )
+  
+  add_library(
+! 	ss_ike SHARED
+  	client.cpp
+  	config.cpp
+  	manager.cpp
+--- 18,24 ----
+          ${IKE_SOURCE_DIR}/source/libip )
+  
+  add_library(
+! 	ss_ike STATIC
+  	client.cpp
+  	config.cpp
+  	manager.cpp
+***************
+*** 53,59 ****
+  endif( APPLE )
+  
+  install(
+! 	TARGETS ss_ike
+  	LIBRARY DESTINATION ${PATH_LIB}
+! 	FRAMEWORK DESTINATION "/Library/Frameworks" )
+  
+--- 53,59 ----
+  endif( APPLE )
+  
+  install(
+! 	FILES ss_ike
+  	LIBRARY DESTINATION ${PATH_LIB}
+! 	)
+  
+diff -crB ike-org/source/libip/CMakeLists.txt ike-static/source/libip/CMakeLists.txt
+*** ike-org/source/libip/CMakeLists.txt	2013-03-19 17:16:49.107069879 +0800
+--- ike-static/source/libip/CMakeLists.txt	2013-03-19 17:16:55.295030414 +0800
+***************
+*** 14,20 ****
+  	${IKE_SOURCE_DIR}/source/libith )
+  
+  add_library(
+! 	ss_ip SHARED
+  	libip.frag.cpp
+  	libip.packet.cpp
+  	libip.packet.dns.cpp
+--- 14,20 ----
+  	${IKE_SOURCE_DIR}/source/libith )
+  
+  add_library(
+! 	ss_ip STATIC
+  	libip.frag.cpp
+  	libip.packet.cpp
+  	libip.packet.dns.cpp
+***************
+*** 51,56 ****
+  endif( APPLE )
+  
+  install(
+! 	TARGETS ss_ip
+  	LIBRARY DESTINATION ${PATH_LIB}
+! 	FRAMEWORK DESTINATION "/Library/Frameworks" )
+--- 51,56 ----
+  endif( APPLE )
+  
+  install(
+! 	FILES ss_ip
+  	LIBRARY DESTINATION ${PATH_LIB}
+! 	 )
+diff -crB ike-org/source/libip/libip.h ike-static/source/libip/libip.h
+*** ike-org/source/libip/libip.h	2013-03-19 17:16:49.107069879 +0800
+--- ike-static/source/libip/libip.h	2013-03-19 17:16:55.295030414 +0800
+***************
+*** 213,219 ****
+  	uint8_t		mac_src[ 6 ];
+  	uint16_t	prot;
+  
+! }ETH_HEADER;
+  
+  typedef struct _ARP_HEADER
+  {
+--- 213,219 ----
+  	uint8_t		mac_src[ 6 ];
+  	uint16_t	prot;
+  
+! } ETH_HEADER;
+  
+  typedef struct _ARP_HEADER
+  {
+***************
+*** 223,229 ****
+  	uint8_t		addr_len_proto;
+  	uint16_t	opcode;
+  
+! }ARP_HEADER;
+  
+  typedef struct ARP_PAYLOAD_V4
+  {
+--- 223,229 ----
+  	uint8_t		addr_len_proto;
+  	uint16_t	opcode;
+  
+! } ARP_HEADER;
+  
+  typedef struct ARP_PAYLOAD_V4
+  {
+***************
+*** 232,238 ****
+  	uint8_t		dst_addr_media[ 6 ];
+  	uint32_t	dst_addr_proto;
+  
+! }ARP_PAYLOAD_V4;
+  
+  typedef struct _IP_HEADER
+  {
+--- 232,238 ----
+  	uint8_t		dst_addr_media[ 6 ];
+  	uint32_t	dst_addr_proto;
+  
+! } ARP_PAYLOAD_V4;
+  
+  typedef struct _IP_HEADER
+  {
+***************
+*** 249,255 ****
+  	uint32_t	ip_dst;		// 32 bits : destination ip address
+  //	uint32_t	options;	// 32 bits : ip options
+  
+! }IP_HEADER;
+  
+  typedef struct _UDP_HEADER
+  {
+--- 249,255 ----
+  	uint32_t	ip_dst;		// 32 bits : destination ip address
+  //	uint32_t	options;	// 32 bits : ip options
+  
+! } IP_HEADER;
+  
+  typedef struct _UDP_HEADER
+  {
+***************
+*** 258,271 ****
+  	uint16_t	size;		// 16 bits : size of udp datagram
+  	uint16_t	checksum;	// 16 bits : udp checksum
+  
+! }UDP_HEADER;
+  
+  typedef struct _ESP_HEADER
+  {
+  	uint32_t	spi;		// 32 bits : security parameter index
+  	uint32_t	seq;		// 32 bits : sequence number
+  
+! }ESP_HEADER;
+  
+  typedef struct _AH_HEADER
+  {
+--- 258,271 ----
+  	uint16_t	size;		// 16 bits : size of udp datagram
+  	uint16_t	checksum;	// 16 bits : udp checksum
+  
+! } UDP_HEADER;
+  
+  typedef struct _ESP_HEADER
+  {
+  	uint32_t	spi;		// 32 bits : security parameter index
+  	uint32_t	seq;		// 32 bits : sequence number
+  
+! } ESP_HEADER;
+  
+  typedef struct _AH_HEADER
+  {
+***************
+*** 275,281 ****
+  	uint32_t	spi;		// 32 bits : security parameter index
+  	uint32_t	seq;		// 32 bits : sequence number
+  
+! }AH_HEADER;
+  
+  typedef struct _IPCOMP_HEADER
+  {
+--- 275,281 ----
+  	uint32_t	spi;		// 32 bits : security parameter index
+  	uint32_t	seq;		// 32 bits : sequence number
+  
+! } AH_HEADER;
+  
+  typedef struct _IPCOMP_HEADER
+  {
+***************
+*** 283,289 ****
+  	uint8_t		flags;		//  8 bits : option flags
+  	uint16_t	cpi;		// 16 bits : compression parameter index
+  
+! }IPCOMP_HEADER;
+  
+  typedef struct _DNS_HEADER
+  {
+--- 283,289 ----
+  	uint8_t		flags;		//  8 bits : option flags
+  	uint16_t	cpi;		// 16 bits : compression parameter index
+  
+! } IPCOMP_HEADER;
+  
+  typedef struct _DNS_HEADER
+  {
+***************
+*** 294,300 ****
+  	uint16_t	ath_rr;		// 16 bits : total authority RRs
+  	uint16_t	add_rr;		// 16 bits : total additional RRs
+  
+! }DNS_HEADER;
+  
+  typedef struct _DHCP_HEADER
+  {
+--- 294,300 ----
+  	uint16_t	ath_rr;		// 16 bits : total authority RRs
+  	uint16_t	add_rr;		// 16 bits : total additional RRs
+  
+! } DNS_HEADER;
+  
+  typedef struct _DHCP_HEADER
+  {
+***************
+*** 316,322 ****
+  
+  	// options
+  
+! }DHCP_HEADER;
+  
+  #pragma pack()
+  
+--- 316,322 ----
+  
+  	// options
+  
+! } DHCP_HEADER;
+  
+  #pragma pack()
+  
+***************
+*** 335,348 ****
+  	uint32_t	sigfigs;	// accuracy of timestamps
+  	uint32_t	snaplen;	// max length saved portion of each pkt
+  	uint32_t	linktype;	// data link type (LINKTYPE_*)
+! };
+  
+  struct pcap_pkthdr {
+  	uint32_t	ts_sec;		// time stamp seconds
+  	uint32_t	ts_usec;	// time stamp microseconds
+  	uint32_t	caplen;		// length of portion present
+  	uint32_t	len;		// length this packet (off wire)
+! };
+  
+  //
+  // packet classes
+--- 335,348 ----
+  	uint32_t	sigfigs;	// accuracy of timestamps
+  	uint32_t	snaplen;	// max length saved portion of each pkt
+  	uint32_t	linktype;	// data link type (LINKTYPE_*)
+! } ;
+  
+  struct pcap_pkthdr {
+  	uint32_t	ts_sec;		// time stamp seconds
+  	uint32_t	ts_usec;	// time stamp microseconds
+  	uint32_t	caplen;		// length of portion present
+  	uint32_t	len;		// length this packet (off wire)
+! } ;
+  
+  //
+  // packet classes
+diff -crB ike-org/source/libith/CMakeLists.txt ike-static/source/libith/CMakeLists.txt
+*** ike-org/source/libith/CMakeLists.txt	2013-03-19 17:16:49.103032502 +0800
+--- ike-static/source/libith/CMakeLists.txt	2013-03-19 17:16:55.291031515 +0800
+***************
+*** 11,17 ****
+          ${IKE_SOURCE_DIR}/source )
+  
+  add_library(
+! 	ss_ith SHARED
+  	libith.cpp )
+  
+  # Linux realtime library
+--- 11,17 ----
+          ${IKE_SOURCE_DIR}/source )
+  
+  add_library(
+! 	ss_ith STATIC
+  	libith.cpp )
+  
+  # Linux realtime library
+***************
+*** 46,51 ****
+  endif( APPLE )
+  
+  install(
+!         TARGETS ss_ith
+          LIBRARY DESTINATION ${PATH_LIB}
+! 		FRAMEWORK DESTINATION "/Library/Frameworks" )
+--- 46,51 ----
+  endif( APPLE )
+  
+  install(
+!         FILES ss_ith
+          LIBRARY DESTINATION ${PATH_LIB}
+! 	)
+diff -crB ike-org/source/libith/libith.h ike-static/source/libith/libith.h
+*** ike-org/source/libith/libith.h	2013-03-19 17:16:49.103032502 +0800
+--- ike-static/source/libith/libith.h	2013-03-19 17:16:55.291031515 +0800
+***************
+*** 206,212 ****
+  
+  	virtual	bool func() = 0;
+  
+! }ITH_EVENT;
+  
+  typedef struct _ITH_ENRTY
+  {
+--- 206,212 ----
+  
+  	virtual	bool func() = 0;
+  
+! } ITH_EVENT;
+  
+  typedef struct _ITH_ENRTY
+  {
+***************
+*** 215,221 ****
+  
+  	ITH_TIMEVAL	sched;
+  
+! }ITH_ENTRY;
+  
+  typedef class DLX _ITH_TIMER
+  {
+--- 215,221 ----
+  
+  	ITH_TIMEVAL	sched;
+  
+! } ITH_ENTRY;
+  
+  typedef class DLX _ITH_TIMER
+  {
+diff -crB ike-org/source/liblog/CMakeLists.txt ike-static/source/liblog/CMakeLists.txt
+*** ike-org/source/liblog/CMakeLists.txt	2013-03-19 17:16:49.124030197 +0800
+--- ike-static/source/liblog/CMakeLists.txt	2013-03-19 17:16:55.311532098 +0800
+***************
+*** 12,18 ****
+          ${IKE_SOURCE_DIR}/source/libith )
+  
+  add_library(
+! 	ss_log SHARED
+  	liblog.cpp )
+  
+  target_link_libraries(
+--- 12,18 ----
+          ${IKE_SOURCE_DIR}/source/libith )
+  
+  add_library(
+! 	ss_log STATIC
+  	liblog.cpp )
+  
+  target_link_libraries(
+***************
+*** 41,47 ****
+  endif( APPLE )
+  
+  install(
+! 	TARGETS ss_log
+  	LIBRARY DESTINATION ${PATH_LIB}
+! 	FRAMEWORK DESTINATION "/Library/Frameworks" )
+  
+--- 41,47 ----
+  endif( APPLE )
+  
+  install(
+! 	FILES ss_log
+  	LIBRARY DESTINATION ${PATH_LIB}
+! 	)
+  
+diff -crB ike-org/source/libpfk/CMakeLists.txt ike-static/source/libpfk/CMakeLists.txt
+*** ike-org/source/libpfk/CMakeLists.txt	2013-03-19 17:16:49.103032502 +0800
+--- ike-static/source/libpfk/CMakeLists.txt	2013-03-19 17:16:55.291031515 +0800
+***************
+*** 15,21 ****
+  	${INC_KERNEL_DIR} )
+  
+  add_library(
+! 	ss_pfk SHARED
+  	libpfk.cpp )
+  
+  target_link_libraries(
+--- 15,21 ----
+  	${INC_KERNEL_DIR} )
+  
+  add_library(
+! 	ss_pfk STATIC
+  	libpfk.cpp )
+  
+  target_link_libraries(
+***************
+*** 44,50 ****
+  endif( APPLE )
+  
+  install(
+! 	TARGETS ss_pfk
+  	LIBRARY DESTINATION ${PATH_LIB}
+! 	FRAMEWORK DESTINATION "/Library/Frameworks" )
+  
+--- 44,50 ----
+  endif( APPLE )
+  
+  install(
+! 	FILES ss_pfk
+  	LIBRARY DESTINATION ${PATH_LIB}
+! 	)
+  

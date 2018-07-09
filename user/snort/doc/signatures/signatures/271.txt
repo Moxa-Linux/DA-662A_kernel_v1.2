@@ -1,0 +1,68 @@
+Rule:  
+alert udp any 19 <> $HOME_NET 7 (msg:"DOS UDP Bomb";
+classtype:attempted-dos; sid:271; rev:1;) 
+
+--
+Sid:
+271
+
+--
+Summary:
+A remote host attempted to "bomb" your machine or network by
+generating traffic between your udp echo port and their udp chargen
+port.
+
+--
+Impact:
+Potential Denial-of-service situation for your host, hosts between you
+and the attacker, and more.
+
+--
+Detailed Information:
+Traffic was detected between the udp echo port on a host on your
+network and the udp chargen (character generator) service.  Because of
+the connectionless nature of udp, a single packet from the udp chargen
+service to a listening udp echo service will result in mass quantities
+of traffic back and forth between the two services.
+
+--
+Attack Scenarios:
+An attacker will find a host that still provides the udp chargen service
+and generate traffic between it and the udp echo service on your
+machine.  If proper ingress/egress filtering is not in place, this
+traffic can be trivially spoofed provided the attacker has elevated
+privledges on the attacking/initiating machine (the source port being
+< 1024).
+
+--
+Ease of Attack:
+Trivial for the slightly-skilled attacker -- a few lines in their
+language of choice (perl, c) and a UDP chargen+echo bomb is ready to
+roll.  Additionally, a functional chargen service must be available
+for this DOS to occur.  
+
+--
+False Positives:
+None.
+
+--
+False Negatives:
+Unknown.
+
+--
+Corrective Action:
+Disable the chargen service unless it is absolutely needed, and apply
+ingress and egress filtering so you do not get bit by this little
+trick. Additionally, disable the udp echo service.  It may also be
+worthwhile to attempt to determine the probability that this attack
+was initiated by a third party (spoofed), but given the fact that this
+is udp traffic, your chances are not very good.
+
+--
+Contributors:
+Jon Hart <warchild@spoofed.org>
+
+-- 
+Additional References:
+
+

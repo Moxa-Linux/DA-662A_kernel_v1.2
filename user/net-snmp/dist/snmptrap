@@ -1,0 +1,58 @@
+#!/bin/sh
+#
+# snmptrap	This shell script takes care of starting and stopping
+#	the net-snmp SNMPTRAP daemon
+#
+# description: snmptrapd is net-snmp SNMPTRAP daemon.
+
+RETVAL=0
+
+name="snmptrapd"
+prog="/usr/sbin/snmptrapd"
+mibs="/etc/snmp/mibs"
+conf="/etc/snmp/snmptrapd.conf"
+args="-On -C -c ${conf}"
+rundir="/var/lock/subsys"
+
+
+start() {
+	# Set MIB directory
+	export MIBDIRS=${mibs}
+
+	# Start daemons.
+	echo -n "Starting ${name}: "
+	start-stop-daemon -S -b -x ${prog} -- ${args}
+	RETVAL=$?
+	[[ ${RETVAL} -eq 0 ]] && mkdir -p ${rundir} && touch ${rundir}/${name} && echo "done."
+}
+
+stop() {
+	# Stop daemons.
+	echo -n $"Shutting down ${name}: "
+	start-stop-daemon -K -n ${name}
+	RETVAL=$?
+	[[ ${RETVAL} -eq 0 ]] && rm -f ${rundir}/${name} && echo "done."
+}
+
+
+[ -x ${prog} ] || exit 0
+
+# See how we were called.
+case "$1" in
+	start)
+		start
+	;;
+	stop)
+		stop
+	;;
+	restart|reload)
+		stop
+		sleep 1
+		start
+	;;
+	*)
+		echo $"Usage: $0 {start|stop|restart|reload}"
+		exit 1
+esac
+
+exit ${RETVAL}

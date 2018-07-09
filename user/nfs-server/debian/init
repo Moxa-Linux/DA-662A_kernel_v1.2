@@ -1,0 +1,54 @@
+#!/bin/sh -e
+#
+#             
+# chkconfig: 2345 25 25
+#
+PATH=/bin:/usr/bin:/sbin:/usr/sbin
+# nfs-user-server	Startup script for the NFS servers.
+#
+#		Modified for nfs-user-server
+#		by Herbert Xu <herbert@debian.org>
+#		Written by Miquel van Smoorenburg <miquels@cistron.nl>.
+#		Modified for Debian GNU/Linux
+#		by Ian Murdock <imurdock@gnu.ai.mit.edu>.
+#
+# Version:	$Id: init,v 1.10 2000/04/07 09:00:15 herbert Exp $
+
+DESC="NFS servers"
+
+test -x /usr/sbin/rpc.nfsd -a -f /etc/exports || exit 0
+
+case "$1" in
+start)
+	printf "Starting $DESC:"
+	start-stop-daemon --start --oknodo --quiet --exec /usr/sbin/rpc.nfsd
+	printf " nfsd"
+	start-stop-daemon --start --oknodo --quiet --exec /usr/sbin/rpc.mountd
+	printf " mountd"
+	printf ".\n"
+	;;
+stop)
+	printf "Stopping $DESC:"
+	start-stop-daemon --stop --oknodo --quiet --exec /usr/sbin/rpc.mountd
+	printf " mountd"
+	start-stop-daemon --stop --oknodo --quiet --exec /usr/sbin/rpc.nfsd
+	printf " nfsd"
+	printf ".\n"
+	;;
+reload | force-reload)
+	printf "Reloading $DESC configuration files.\n"
+	start-stop-daemon --stop --signal 1 --quiet --exec /usr/sbin/rpc.mountd
+	start-stop-daemon --stop --signal 1 --quiet --exec /usr/sbin/rpc.nfsd
+	;;
+restart)
+	$0 stop
+	sleep 1
+	$0 start
+	;;
+*)
+	printf "Usage: $0 {start|stop|restart|reload|force-reload}\n" >&2
+	exit 1
+	;;
+esac
+
+exit 0

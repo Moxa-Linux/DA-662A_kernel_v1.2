@@ -1,0 +1,52 @@
+Rule:  
+alert tcp $EXTERNAL_NET any -> $HTTP_SERVERS $HTTP_PORTS (msg:"WEB-ATTACKS /etc/shadow access"; flow:to_server,established; content:"/etc/shadow";nocase; sid:1372; classtype:web-application-activity; rev:4;)
+--
+
+Sid:
+1372
+
+--
+
+Summary:
+An attacker may have attempted to load the /etc/shadow password file through
+a web server.
+
+--
+Impact:
+An attacker may have gotten the /etc/shadow password file.  This is unlikely
+to succeed with modern web servers, however.
+
+--
+Detailed Information:
+An older method of cracking web servers is to retrieve the /etc/passwd
+or /etc/shadow file and then running that file through a password cracker
+to obtain logins and passwords to the system.
+
+--
+Attack Scenarios:
+Attacker sends a hand-crafted URL, usually using a directory traversal
+attempt, to get the shadow password file.  If the attack is successful,
+the attacker will mostly likely run the shadow file through a password
+cracker.
+
+--
+Ease of Attack:
+This attack is highly unlikely to work against any modern web server.
+
+--
+False Positives:
+
+--
+False Negatives:
+
+--
+Corrective Action:
+Examine the captured packet to determine whether the request was malicious
+or not.  Determine whether the targetted web server was vulnerable to this
+kind of attack.
+
+--
+Contributors:
+
+--
+References:

@@ -1,0 +1,59 @@
+Rule:  
+alert tcp $EXTERNAL_NET any -> $HTTP_SERVERS 80 (msg:"WEB-MISC webhits.exe access";flags: A+; uricontent:"/scripts/samples/search/webhits.exe"; nocase; classtype:web-application-activity; sid:1073; rev:2;)
+--
+
+Sid:
+1073
+
+--
+
+Summary:
+Someone may have made an unauthorized attempt to read web application
+source code.
+
+--
+Impact:
+An attacker may have been able to read the source code to a web application.
+Sometimes web application source code contains highly sensitive information,
+such as database passwords and information concerning backend setups.  This
+could be a prelude to further attacks.
+
+--
+Detailed Information:
+The webhits.exe sample program that comes with Microsoft Index Server in IIS
+contains a vulnerability that allows the reading of web application source
+code.
+
+--
+Attack Scenarios:
+Attacker sends a simple URL like the following and then chooses what
+file they want to view:
+http://servername/scripts/samples/search/webhits.exe
+
+--
+Ease of Attack:
+Very simple handcrafted URL.
+
+--
+False Positives:
+Webhits may be used in legitimate search queries.
+
+--
+False Negatives:
+
+--
+Corrective Action:
+Examine the packet verify that a web request of webhits.exe was being done.
+Determine whether the targetted web server may have been vulnerable
+(e.g., running IIS with Index Server).  If the targetted web server contained
+the webhits.exe sample script, consider launching an investigation for
+signs of compromise.  The existence of sample scripts such as webhits.exe
+may indicate larger security problems with the web server's configuration.
+
+--
+Contributors:
+
+--
+Additional References:
+URL:  http://www.win2000mag.com/Articles/Index.cfm?ArticleID=475&pg=2
+URL:  http://secinf.net/info/www/cgi-bugs.htm

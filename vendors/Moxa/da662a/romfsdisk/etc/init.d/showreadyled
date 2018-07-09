@@ -1,0 +1,31 @@
+#!/bin/sh
+#
+# start/stop to let ready led on or off
+#
+PATH=/bin:/usr/bin:/sbin:/usr/sbin
+
+case "$1" in
+    start)
+        if [ -f /bin/readyled ]; then
+		/bin/readyled 1
+        fi
+
+	if [  -f /bin/lcmshowinfo ]; then
+		start-stop-daemon --quiet --start --background --exec /bin/lcmshowinfo
+	fi
+	;;
+    stop)
+	if [ -f /bin/readyled ]; then
+		/bin/readyled 0
+	fi
+	
+	start-stop-daemon --quiet --stop --exec /bin/lcmshowinfo
+
+	;;
+    *)
+	echo "Usage: /etc/init.d/showreadyled {start|stop}"
+	exit 1
+	;;
+esac
+
+exit 0

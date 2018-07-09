@@ -1,0 +1,13 @@
+diff -crB net-snmp-5.7.1/agent/mibgroup/ucd-snmp/pass.h net-snmp-5.7.1.new/agent/mibgroup/ucd-snmp/pass.h
+*** net-snmp-5.7.1/agent/mibgroup/ucd-snmp/pass.h	2011-09-28 12:53:47.000000000 +0800
+--- net-snmp-5.7.1.new/agent/mibgroup/ucd-snmp/pass.h	2011-12-21 01:59:48.000000000 +0800
+***************
+*** 7,12 ****
+--- 7,13 ----
+  void            init_pass(void);
+  
+  config_require(util_funcs)
++ config_require(utilities/execute)
+  config_add_mib(NET-SNMP-PASS-MIB)
+  
+  extern FindVarMethod var_extensible_pass;

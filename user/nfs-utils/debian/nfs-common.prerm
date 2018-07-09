@@ -1,0 +1,7 @@
+#!/bin/sh
+
+#DEBHELPER#
+
+[ -x /etc/init.d/nfs-common ] && /etc/init.d/nfs-common stop
+
+exit 0

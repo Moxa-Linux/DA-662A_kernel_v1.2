@@ -1,0 +1,57 @@
+Rule:  
+alert tcp $EXTERNAL_NET any -> $HTTP_SERVERS 80 (msg:"WEB-MISC SGI InfoSearch fname access"; flags: A+; uricontent:"/infosrch.cgi?"; content:"fname="; nocase;reference:bugtraq,1031; reference:arachnids,290; reference:cve,CVE-2000-0207; classtype:attempted-recon; sid:1196; rev:2;)
+
+--
+
+Sid:
+1196
+
+--
+
+Summary:
+Possible remote execution attack detected against sgi IRIX infosrch.cgi
+web application.
+
+--
+Impact:
+An attacker may have abused the infosrch.cgi web application that ships
+with IRIX 6.5 to remotely execute arbitrary commands as the webserver user.
+
+--
+Detailed Information:
+sgi IRIX 6.5 through 6.5.7 ships with a web application called InfoSearch
+that is vulnerable to a remote execution attack.
+
+--
+Attack Scenarios:
+An attacker uses an existing, publically known exploit script, or
+sends a simple, handcrafted URL to the webserver such as:
+http://target/cgi-bin/infosrch.cgi?cmd=getdoc&db=man&fname=|/bin/id
+
+--
+Ease of Attack:
+Automated exploit scripts are publically known.  Alternatively,
+handcrafting a malicious URL is easy.
+
+--
+False Positives:
+The InfoSearch web application may legitimately be used to browse system
+documentation.
+
+--
+False Negatives:
+
+--
+Corrective Action:
+Examine the packet to determine whether malicious code was contained in
+the fname HTTP GET variable, such as unix shell commands.  If it looks
+like it may have been malicious code, determine whether the targetted
+web server was running a vulnerable version of IRIX.
+
+--
+Contributors:
+
+--
+Additional References:
+CVE:  CVE-2000-0207
+Bugtraq:  BID 1031

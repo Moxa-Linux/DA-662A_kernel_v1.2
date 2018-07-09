@@ -1,0 +1,9 @@
+Package: alsa-utils
+Version: 1.0.23
+Architecture: xscale
+Maintainer: Jared_wu <Jared_Wu@moxa.com>
+Section: base
+Priority: optional
+Description: An utility for the playback/capture of .wav,.voc,.au files
+Source: http://alsa.opensrc.org/index.php/Alsa-utils
+Depends: 

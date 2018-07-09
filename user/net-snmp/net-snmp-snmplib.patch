@@ -1,0 +1,79 @@
+diff -rc build_arm-linux/snmplib//asn1.c /home/work/develope/c/net-snmp/source/net-snmp-5.7.1/snmplib//asn1.c
+*** build_arm-linux/snmplib//asn1.c	Wed Sep 28 12:53:47 2011
+--- /home/work/develope/c/net-snmp/source/net-snmp-5.7.1/snmplib//asn1.c	Fri Aug 10 14:12:23 2012
+***************
+*** 834,840 ****
+  
+      memmove(str, bufp, asn_length);
+      if (*strlength > asn_length)
+!         str[asn_length] = 0;
+      *strlength = asn_length;
+      *datalength -= asn_length + (bufp - data);
+  
+--- 834,840 ----
+  
+      memmove(str, bufp, asn_length);
+      if (*strlength > asn_length)
+!         str[asn_length] = '\0'; //simon
+      *strlength = asn_length;
+      *datalength -= asn_length + (bufp - data);
+  
+diff -rc build_arm-linux/snmplib//snmp_api.c /home/work/develope/c/net-snmp/source/net-snmp-5.7.1/snmplib//snmp_api.c
+*** build_arm-linux/snmplib//snmp_api.c	Wed Sep 28 12:53:47 2011
+--- /home/work/develope/c/net-snmp/source/net-snmp-5.7.1/snmplib//snmp_api.c	Fri Aug 10 14:41:20 2012
+***************
+*** 4573,4580 ****
+          case ASN_NSAP:
+              if (vp->val_len < sizeof(vp->buf)) {
+                  vp->val.string = (u_char *) vp->buf;
+              } else {
+!                 vp->val.string = (u_char *) malloc(vp->val_len);
+              }
+              if (vp->val.string == NULL) {
+                  return -1;
+--- 4573,4581 ----
+          case ASN_NSAP:
+              if (vp->val_len < sizeof(vp->buf)) {
+                  vp->val.string = (u_char *) vp->buf;
++ 				vp->val_len = sizeof(vp->buf); //simon
+              } else {
+!                 vp->val.string = (u_char *) malloc(++(vp->val_len)); //simon
+              }
+              if (vp->val.string == NULL) {
+                  return -1;
+diff -rc build_arm-linux/snmplib//snmp_client.c /home/work/develope/c/net-snmp/source/net-snmp-5.7.1/snmplib//snmp_client.c
+*** build_arm-linux/snmplib//snmp_client.c	Wed Sep 28 12:53:47 2011
+--- /home/work/develope/c/net-snmp/source/net-snmp-5.7.1/snmplib//snmp_client.c	Fri Aug 10 14:45:35 2012
+***************
+*** 262,275 ****
+       */
+      if (var->val.string) {
+          if (var->val.string != &var->buf[0]) {
+!             if (var->val_len <= sizeof(var->buf))
+                  newvar->val.string = newvar->buf;
+              else {
+!                 newvar->val.string = (u_char *) malloc(var->val_len);
+                  if (!newvar->val.string)
+                      return 1;
+              }
+              memmove(newvar->val.string, var->val.string, var->val_len);
+          } else {                /* fix the pointer to new local store */
+              newvar->val.string = newvar->buf;
+              /*
+--- 262,276 ----
+       */
+      if (var->val.string) {
+          if (var->val.string != &var->buf[0]) {
+!             if (var->val_len < sizeof(var->buf)) //simon
+                  newvar->val.string = newvar->buf;
+              else {
+!                 newvar->val.string = (u_char *) malloc(var->val_len + 1); //simon
+                  if (!newvar->val.string)
+                      return 1;
+              }
+              memmove(newvar->val.string, var->val.string, var->val_len);
++ 			newvar->val.string[var->val_len] = '\0'; //simon
+          } else {                /* fix the pointer to new local store */
+              newvar->val.string = newvar->buf;
+              /*
+

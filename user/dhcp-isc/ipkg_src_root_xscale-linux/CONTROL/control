@@ -1,0 +1,9 @@
+Package: dhcp-isc
+Version: 2
+Architecture: xscale
+Maintainer: Aeluin Chen <aeluin_chen@moxa.com>
+Section: base
+Priority: optional
+Description: ISC DHCP Distribution (Version 2 patchlevel 5), which was released in June of 1999. Version 2 contains many changes that improve its correctness, as well as new features that enhance configurability.
+Source: http://www.isc.org/software/dhcp
+Depends:

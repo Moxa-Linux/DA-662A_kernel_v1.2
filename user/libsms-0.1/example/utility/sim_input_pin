@@ -1,0 +1,42 @@
+#!/bin/sh
+LPATH=/bin
+GPRS_PIN_CONFIG_FILE=/etc/chatscripts/cpin
+password=
+save=
+
+print_usage()
+{
+	echo "Usage: $0 [-h] | [-p pin_code -s]   ; PIN code authentication";
+	echo ""
+	echo "e.g.: $0            ; display this message"
+	echo "    : $0 -h         ; display help message"
+	echo "    : $0 -p 1234    ; input PIN code 1234 for SIM card authentication"
+	echo "    : $0 -p 1234 -s ; input PIN code and save it for automatic authentication at system start-up."
+}
+save_password()
+{
+	echo "Saving password:$password to system...";
+	echo $password > ${GPRS_PIN_CONFIG_FILE}
+}
+while getopts p:sh options
+do
+	case $options in
+	s) save=1;;
+	p) password="$OPTARG";;
+	h) print_usage;
+	   exit 0;;
+	?) print_usage;
+	   exit 2;;
+	esac
+done
+
+if [ "$password" != "" ]; then
+       	${LPATH}/egprscmd -a $password
+       	status=$? ;
+	if [ "$save" == "1" ]; then
+		save_password ;
+	fi
+	exit $status ;
+else
+	print_usage;
+fi

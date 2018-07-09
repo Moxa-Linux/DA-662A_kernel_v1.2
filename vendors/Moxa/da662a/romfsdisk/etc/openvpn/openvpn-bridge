@@ -1,0 +1,156 @@
+#!/bin/sh
+
+iface=eth1		# define the internal interface 
+maxtap=`expr 1`		# define the number of tap devices
+
+IPADDR=
+NETMASK=
+BROADCAST=
+
+ifcfg_vpn()
+{
+	ifcfg_f="/etc/sysconfig/network-scripts/ifcfg-$iface"
+	# systems support this script file 
+	if [ -f $ifcfg_f ]; then
+		sh $ifcfg_f
+	else
+	while read f1 f2 f3 f4 r3
+	do
+		if [ "$f1" = "iface" -a "$f2" = "$iface" -a "$f3" = "inet" -a "$f4" = "static" ]; then
+			i=`expr 0`	
+			while :
+			do
+				if [ $i -gt 5 ]; then
+					break
+				fi	
+				i=`expr $i + 1`
+				read f1 f2
+				case "$f1" in
+					address ) IPADDR=$f2
+						;;
+				 	netmask ) NETMASK=$f2
+						;;
+					broadcast ) BROADCAST=$f2
+						;;
+				esac
+			done	
+		     	break
+		fi
+	done < /etc/network/interfaces
+	fi
+}
+
+# get ip address of the specified interface
+mname=
+module_up()
+{
+	oIFS=$IFS
+	IFS='
+	'
+	FOUND="no"
+	for LINE in `lsmod`
+	do
+		TOK=`echo $LINE | cut -d' ' -f1`
+		if [ "$TOK" = "$mname" ]; then
+			FOUND="yes";
+			break;
+		fi
+	done
+	IFS=$oIFS
+	
+	if [ "$FOUND" = "no" ]; then
+		modprobe $mname 
+	fi
+}
+
+start()
+{
+	ifcfg_vpn
+	if [ ! \( -d "/dev/net" \) ]; then
+		mkdir /dev/net
+	fi
+	
+	if [ ! \( -r "/dev/net/tun" \) ]; then
+		# create a device file if there is not 
+		mknod /dev/net/tun c 10 200
+	fi	
+
+	# load modules "tun" and "bridge" 
+	mname=tun
+	module_up
+	mname=bridge
+	module_up
+	# create a ethernet bridge to which ports (tap devices and internal interface) connect. 
+	brctl addbr br0
+	brctl addif br0 $iface
+	# the bridge receives data from any port and forwards it to other ports. 
+	
+	i=`expr 0`
+	while :
+	do
+		# generate a tap0 interface on tun  
+		openvpn --mktun --dev tap${i}
+
+		# connect tap device to the bridge
+		brctl addif br0 tap${i}
+		
+		# null ip address of tap device
+		ifconfig tap${i} 0.0.0.0 promisc up
+		
+		i=`expr $i + 1`
+		if [ $i -ge $maxtap ]; then
+			break
+		fi
+	done
+	
+	# null ip address of internal interface
+	ifconfig $iface 0.0.0.0 promisc up
+	
+	# enable bridge ip
+	ifconfig br0 $IPADDR netmask $NETMASK broadcast $BROADCAST
+	
+	ipf=/proc/sys/net/ipv4/ip_forward
+	# enable IP forwarding
+	echo 1 > $ipf
+	echo "ip forwarding enabled to"
+	cat $ipf
+}
+
+stop() {
+	echo "shutdown openvpn bridge."
+	ifcfg_vpn
+	i=`expr 0`
+	while :
+	do
+		# disconnect tap device from the bridge
+		brctl delif br0 tap${i}
+		openvpn --rmtun --dev tap${i}
+		
+		i=`expr $i + 1`
+		if [ $i -ge $maxtap ]; then
+			break
+		fi
+	done
+	ifconfig br0 down
+	brctl delif br0 $iface
+	brctl delbr br0
+	killall -TERM openvpn
+	ifconfig $iface $IPADDR netmask $NETMASK broadcast $BROADCAST
+}
+
+case "$1" in
+	start)
+		start
+		;;
+	stop)
+		stop
+		;;
+	restart)
+		stop
+		start
+		;;
+	*)
+		echo "Usage: $0 [start|stop|restart]"
+		exit 1
+esac
+exit 0

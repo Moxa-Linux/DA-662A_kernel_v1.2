@@ -1,0 +1,28 @@
+diff -urN libtirpc-0.2.3/src/key_call.c libtirpc-0.2.3-add_key/src/key_call.c
+--- libtirpc-0.2.3/src/key_call.c	2013-02-13 23:13:59.000000000 +0800
++++ libtirpc-0.2.3-add_key/src/key_call.c	2013-07-24 10:06:07.000000000 +0800
+@@ -302,7 +302,7 @@
+ 	struct timeval wait_time;
+ 	struct utsname u;
+ 	int fd;
+-	extern thread_key_t key_call_key;
++	thread_key_t key_call_key;
+ 	extern mutex_t tsd_lock;
+ 
+ #define	TOTAL_TIMEOUT	30	/* total timeout talking to keyserver */
+diff -urN libtirpc-0.2.3/src/Makefile.am libtirpc-0.2.3-add_key/src/Makefile.am
+--- libtirpc-0.2.3/src/Makefile.am	2013-07-24 10:07:02.000000000 +0800
++++ libtirpc-0.2.3-add_key/src/Makefile.am	2013-07-24 10:05:28.000000000 +0800
+@@ -62,7 +62,8 @@
+     libtirpc_la_CFLAGS = -DHAVE_RPCSEC_GSS $(GSSGLUE_CFLAGS)
+ endif
+ 
+-## libtirpc_a_SOURCES += key_call.c key_prot_xdr.c getpublickey.c
+-## libtirpc_a_SOURCES += netname.c netnamer.c rpcdname.c \
+-## libtirpc_a_SOURCES += rtime.c \
+-## auth_time.c auth_des.c authdes_prot.c 
++libtirpc_la_SOURCES += key_call.c key_prot_xdr.c getpublickey.c
++libtirpc_la_SOURCES += netname.c netnamer.c rpcdname.c 
++## libtirpc_la_SOURCES += rtime.c
++## libtirpc_la_SOURCES += auth_des.c authdes_prot.c \
++## 						crypt_client.c des_crypt.c

@@ -1,0 +1,67 @@
+# This is a template for submitting snort signature descriptions to
+# the snort.org website
+#
+# Ensure that your descriptions are your own
+# and not the work of others.  References in the rules themselves
+# should be used for linking to other's work.
+#
+# If you are unsure of some part of a rule, use that as a commentary
+# and someone else perhaps will be able to fix it.
+#
+# $Id: 1888.txt,v 1.1 2002/09/17 13:46:18 cazz Exp $
+#
+#
+
+Rule:
+alert tcp $EXTERNAL_NET any -> $HOME_NET 21 (msg: "LOCAL OUTSIDE possible
+ws_ftp attack"; content: "site cpwd"; nocase; classtype: attempted-user;
+rev: 1; )
+
+
+--
+Sid:
+
+--
+Summary:
+Executing  site cpwd with an specially crafted argument can cause a buffer
+overflow in WS_FTP that would allow arbitrary code to be run on the ftp
+server.
+--
+Impact:
+Medium, an attempted machine attack may be in progress
+--
+Detailed Information:
+The 'site cpwd' command seems to be unique to ws_ftp. This command is used
+to allow users to change there passwords while using an ftp session. It is
+possible to execute 'site cpwd' with an specially crafted argument can cause
+a buffer overflow in WS_FTP. This would allow arbitrary code to be run on
+the ftp server. This requires that the user be logged into the ftp server
+before executing the 'site cpwd' command.
+--
+Attack Scenarios:
+If a company is running an ftp server that is using a version earlier that
+WS_FTP 3.12 then after the user is authenticated this command can be
+executed to perform a buffer overflow.
+--
+Ease of Attack:
+Medium need to be logged in first to be able to execute the site cpwd
+command.
+--
+False Positives:
+'site cpwd' is a valid command on ws_ftp and users may be allowed to change
+their passwords.
+--
+False Negatives:
+
+--
+Corrective Action:
+Install patch at
+http://www.ipswitch.com/Support/WS_FTP-Server/patch-upgrades.html or disable
+the change password functionality on the ws_ftp server.
+--
+Contributors:
+Ian Macdonald
+--
+Additional References:
+www.atstake.com/research/advisories/2002/a080802-1.txt
+http://www.ipswitch.com/Support/WS_FTP-Server/patch-upgrades.html

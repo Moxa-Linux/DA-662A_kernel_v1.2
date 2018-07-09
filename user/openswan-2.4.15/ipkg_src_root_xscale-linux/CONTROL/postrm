@@ -1,0 +1,20 @@
+#!/bin/sh
+
+#echo "$0, $1"  >> /var/postrm
+
+case "$1" in
+  update)
+    ;;
+  install)
+    ;;
+  configure)
+    ;;
+  remove)
+    #echo "Nothing to do"
+    umount /
+    ;;
+  *)
+    ;;
+esac
+
+exit 0

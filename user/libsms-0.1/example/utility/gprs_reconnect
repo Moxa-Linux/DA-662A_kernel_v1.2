@@ -1,0 +1,77 @@
+#!/bin/sh
+LPATH=/bin
+DAEMON_RUN_FILE=/etc/init.d/showreadyled
+LPATH=/bin:/usr/bin:/sbin:/usr/sbin
+time_interval=
+replace_config()
+{
+	file="\n
+	#!/bin/sh\n
+	#\n
+	# start/stop to let ready led on or off\n
+	# caution: this file has been replace by\n
+	# gprs_reconnect command\n
+	#\n
+	PATH=/bin:/usr/bin:/sbin:/usr/sbin\n
+	case \"\$1\" in\n
+	\tstart)\n
+	\tif [ -f /bin/mxmptest ]; then\n
+	\t\t/bin/mxmptest\n
+	\t\tsync\n
+	\tfi\n
+	\tif [ -f /bin/readyled ]; then\n
+	\t\t/bin/readyled 1\n
+	\tfi\n
+	\tif [ -f /bin/egprsagent ]; then\n
+	\t\t/bin/egprsagent $time_interval &\n
+	\tfi\n
+	\tif [ -f /bin/reportip ]; then\n
+	\t\t/bin/reportip &\n
+	\tfi\n
+	\tif [ -f /bin/moxaburn ]; then\n
+	\t\t/bin/moxaburn &\n
+	\tfi\n
+	\tif [ -f /bin/ATSAGENT ]; then\n
+	\t\t/bin/ATSAGENT &\n
+	\tfi\n
+	\t;;\n
+	\tesac\n
+\n
+	\texit 0\n"
+	echo -e $file > ${DAEMON_RUN_FILE}
+
+
+
+
+}
+save_reconnect_configuration()
+{
+	#save config into init.d
+	#replace_config;
+	#killall current egprsagent
+	killall -9 egprsagent
+	#restart egprsagent with argument
+	/bin/egprsagent $time_interval &
+	
+}
+print_usage()
+{
+	echo "Usage: $0 [-h] [-t second(s)] ; reconnect again while the GPRS was disconnected.";
+	echo ""
+        echo "e.g.: $0 ; the default time interval is 60 seconds" ;
+        echo "    : $0 [-t 120] ; reconnect with 120 seconds time interval verifying";
+}
+
+time_interval=60
+
+while getopts t:h options
+do
+	case $options in
+	t) time_interval="$OPTARG";;
+	h) print_usage;
+	   exit 0;;
+	?) print_usage;
+	   exit 2;;
+	esac
+done
+save_reconnect_configuration ;

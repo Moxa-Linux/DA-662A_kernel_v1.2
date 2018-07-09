@@ -1,0 +1,38 @@
+#!/bin/sh
+
+SCRIPT="$0"
+case "${SCRIPT}" in
+/*)
+	;;
+*)
+	if [ -f "${SCRIPT}" ]
+	then
+		SCRIPT="`pwd`/${SCRIPT}"
+	else
+		SCRIPT="`which ${SCRIPT}`"
+	fi
+	;;
+esac
+
+if [ ! -f "${SCRIPT}" ]
+then
+	echo "Cannot find the location of the install script ($SCRIPT) ?"
+	exit 1
+fi
+
+clear
+echo #################################################################
+echo	Welcome to MOXA PNAME firmware V1.0 auto installer.
+echo ##################################################################
+
+if [[ ! "`kversion`" =~ PNAME* ]]; then
+	echo "Firmware not for this machine."
+	exit 1
+else
+	echo "Extracting..."
+fi           
+
+tail -n +39 ${SCRIPT}> /dev/shm/PNAME-FIRMWARE
+
+exit 0
+__ARCHIVE_FOLLOWS__

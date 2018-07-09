@@ -1,0 +1,23 @@
+#!/bin/sh
+
+#echo "$0, $1"  >> /var/postinst
+
+case "$1" in
+  update)
+    ;;
+  install)
+    ;;
+  configure)
+    #cat /proc/mounts |grep "/dev/root / jffs2 rw" > /dev/null
+    #if [ "$?" -eq "0" ]; then
+    #  umount /;
+    #fi
+    /etc/init.d/apache restart
+    ;;
+  remove)
+    ;;
+  *)
+    ;;
+esac
+
+exit 0

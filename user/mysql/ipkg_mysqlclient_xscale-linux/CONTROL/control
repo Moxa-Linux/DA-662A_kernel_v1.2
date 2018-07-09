@@ -1,0 +1,9 @@
+Package: mysqlclient5
+Version: 5.1.23
+Architecture: xscale
+Maintainer: Jared_wu <Jared_Wu@moxa.com>
+Section: base
+Priority: optional
+Description: This package provides mysql client (mysql v5.1.23)
+Source: http://mirror.provenscaling.com/mysql/community/source/5.1/mysql-5.1.23-rc.tar.gz
+Depends:

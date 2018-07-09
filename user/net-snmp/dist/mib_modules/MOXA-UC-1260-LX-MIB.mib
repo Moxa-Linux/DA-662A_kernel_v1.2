@@ -1,0 +1,136 @@
+-- *****************************************************************
+-- Moxa SYS Industrial Computer UC-1260-LX MIB
+--
+-- Copyright (c) 2013 by Moxa Inc.
+-- All rights reserved.
+-- *****************************************************************
+
+-- Design notes:
+--
+-- The design of this mib use as parts moxa system platform, 
+-- including RISC/X86/X86_64 as well.
+-- 
+-- In that light, most sub-sections of this mib have four common
+-- numerical oid consistencies:
+--
+--	2013Y-08M-28D	Creation date by Simon.Wang@moxa.com
+--
+-- These conventions enable managers to easy examine portions of the
+-- mib by setting the ID to the sub-section they are interested in
+-- monitoring, and then scanning.
+
+MOXA-UC-1260-LX-MIB DEFINITIONS ::= BEGIN
+
+IMPORTS
+	enterprises, MODULE-IDENTITY, OBJECT-TYPE, NOTIFICATION-TYPE,
+	Counter32, Gauge32, Counter64, Integer32, TimeTicks, mib-2, IpAddress
+	    FROM SNMPv2-SMI
+	DateAndTime, TEXTUAL-CONVENTION, DisplayString, PhysAddress, TruthValue,
+	RowStatus, TimeStamp, AutonomousType, TestAndIncr
+	    FROM SNMPv2-TC
+	MODULE-COMPLIANCE, OBJECT-GROUP, NOTIFICATION-GROUP
+	    FROM SNMPv2-CONF
+	snmpTraps
+	    FROM SNMPv2-MIB
+	InetAddress, InetAddressType, InetAddressPrefixLength, InetVersion, InetZoneIndex
+	    FROM INET-ADDRESS-MIB
+	InterfaceIndex
+	    FROM IF-MIB
+	SnmpAdminString
+	    FROM SNMP-FRAMEWORK-MIB;
+
+
+-- Moxa Group
+moxa MODULE-IDENTITY
+	LAST-UPDATED "201308280000Z"
+	ORGANIZATION "Moxa Techonology , Software Research Department"
+	CONTACT-INFO "This mib is being maintained by the Moxa System Software R&D who handle
+	              UC-1260-LX product line.
+
+	              postal: Fl.4, No.135, Lane 235, Baoquao Rd., Xindian Dist.,
+	                      New Taipei City, Taiwan, R.O.C.
+
+	              Phone:  (02)8919-1230
+
+	              email:  support@moxa.com"
+
+    DESCRIPTION  "MIB script for UC-1260-LX product of Embedded Communication & Computing .Dep."
+    REVISION     "201308280000Z"
+    DESCRIPTION  "This file defines the private Moxa product MIB."
+    ::= { enterprises 8691 }
+
+
+-- Current Moxa Inc. and main entries:
+inc                 OBJECT IDENTIFIER ::= { moxa 404 }
+autoConfiguration   OBJECT IDENTIFIER ::= { inc 1 }
+serverManager       OBJECT IDENTIFIER ::= { autoConfiguration 1 }
+serverTrap          OBJECT IDENTIFIER ::= { autoConfiguration 2 }
+
+
+-- --------------------------------
+-- Server Manager
+-- --------------------------------
+
+manufacturerName OBJECT-TYPE
+    SYNTAX DisplayString
+    ACCESS read-only
+    STATUS mandatory
+    DESCRIPTION
+	    "Manufacturer Name"
+    ::= { serverManager 1 }
+
+version OBJECT-TYPE
+    SYNTAX DisplayString
+    ACCESS read-only
+    STATUS  mandatory
+    DESCRIPTION
+	    "Version"
+    ::= { serverManager 2 }
+
+modelNumber OBJECT-TYPE
+    SYNTAX	DisplayString
+    ACCESS	read-only
+    STATUS  mandatory
+    DESCRIPTION
+	    "Model Number"
+    ::= { serverManager 5 }
+
+-- --------------------------------
+-- Server Trap
+-- --------------------------------
+
+serverTrapPrefix OBJECT IDENTIFIER
+    ::= { autoConfiguration 0 }
+
+varServerException OBJECT-TYPE
+	SYNTAX	DisplayString
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"FLI server exceptions."
+	::= { serverTrap 1 }
+
+serverException NOTIFICATION-TYPE
+	OBJECTS	{ varServerException }
+	STATUS	current	
+	DESCRIPTION
+		"FLI server exceptions."
+	::= { serverTrapPrefix 1 }
+
+varTopologyMappingException OBJECT-TYPE
+	SYNTAX	DisplayString
+	ACCESS	read-only
+	STATUS	mandatory
+	DESCRIPTION
+		"Network topology mapping exceptions."
+	::= { serverTrap 2 }
+
+topologyMappingException NOTIFICATION-TYPE
+	OBJECTS	{ varTopologyMappingException }
+	STATUS	current	
+	DESCRIPTION
+		"Network topology mapping exceptions."
+	::= { serverTrapPrefix 2 }
+
+
+END

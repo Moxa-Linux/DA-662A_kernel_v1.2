@@ -1,0 +1,13 @@
+diff -crB ike/source/ikec/main.cpp ike_new/source/ikec/main.cpp
+*** ike/source/ikec/main.cpp	2011-02-01 16:21:25.000000000 +0800
+--- ike_new/source/ikec/main.cpp	2013-06-25 11:52:50.195255382 +0800
+***************
+*** 113,118 ****
+--- 113,119 ----
+  				ikec.show_stats();
+  				break;
+  		}
++ 		sleep(1);	// Victor, 06-25-2013, the read_key() function is non-blocking. To fix the CPU busy looping issue, we sleep here every second.
+  	}
+  
+  	return 0;

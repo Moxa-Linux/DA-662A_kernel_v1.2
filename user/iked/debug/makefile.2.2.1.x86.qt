@@ -1,0 +1,146 @@
+# History:
+# Date		Author			Comment
+# 03-12-2013	Jared Wu.		Build iked for DCU-8620-LX
+#
+# compile: 
+#	make user/iked_only
+
+#TARGET_IP=192.168.30.202
+TARGET_IP:=
+#IKED_VER=2.2.0
+IKED_VER=2.2.1
+
+CC=gcc
+CXX=g++
+AR=ar
+STRIP=strip
+ROOTDIR=/media/ramdisk/ngc
+LINUXDIR=linux-2.6.38.8
+TC_LIBDIR:=
+TC_INSTALL_PREFIX:=
+CONFIGURE_TARGET=i686-linux
+
+all: build_$(CONFIGURE_TARGET)-linux/source/ikec/ikec
+	### Upload the static-linked binaries to target for testing
+	#scp build_$(CONFIGURE_TARGET)-linux/source/ikec/ikec \
+	#build_$(CONFIGURE_TARGET)-linux/source/iked/iked \
+	#$(TARGET_IP):/usr/sbin/
+	### Upload the shared-linked binaries to target for testing
+	$(STRIP) build_$(CONFIGURE_TARGET)-linux/source/libike/libss_ike.so.$(IKED_VER) \
+	build_$(CONFIGURE_TARGET)-linux/source/libidb/libss_idb.so.$(IKED_VER) \
+	build_$(CONFIGURE_TARGET)-linux/source/libith/libss_ith.so.$(IKED_VER) \
+	build_$(CONFIGURE_TARGET)-linux/source/libip/libss_ip.so.$(IKED_VER) \
+	build_$(CONFIGURE_TARGET)-linux/source/liblog/libss_log.so.$(IKED_VER) \
+	build_$(CONFIGURE_TARGET)-linux/source/libpfk/libss_pfk.so.$(IKED_VER) \
+	build_$(CONFIGURE_TARGET)-linux/source/ikec/ikec \
+	build_$(CONFIGURE_TARGET)-linux/source/iked/iked
+	cp -a build_$(CONFIGURE_TARGET)-linux/source/ikec/ikec /usr/local/bin/
+	cp -a build_$(CONFIGURE_TARGET)-linux/source/iked/iked /usr/local/sbin/
+	cp -a build_$(CONFIGURE_TARGET)-linux/source/libike/libss_ike.so.$(IKED_VER) \
+	build_$(CONFIGURE_TARGET)-linux/source/libidb/libss_idb.so.$(IKED_VER) \
+	build_$(CONFIGURE_TARGET)-linux/source/libith/libss_ith.so.$(IKED_VER) \
+	build_$(CONFIGURE_TARGET)-linux/source/libip/libss_ip.so.$(IKED_VER) \
+	build_$(CONFIGURE_TARGET)-linux/source/liblog/libss_log.so.$(IKED_VER) \
+	build_$(CONFIGURE_TARGET)-linux/source/libpfk/libss_pfk.so.$(IKED_VER) \
+	/usr/local/lib/
+
+
+build_$(CONFIGURE_TARGET)-linux/source/ikec/ikec: build_$(CONFIGURE_TARGET)-linux/configured
+	$(MAKE) -C build_$(CONFIGURE_TARGET)-linux
+
+build_$(CONFIGURE_TARGET)-linux/configured:
+	rm -rf build_$(CONFIGURE_TARGET)-linux
+	#tar xjvf ike-$(IKED_VER)-rc-2.tbz2
+	#tar xjvf ike-$(IKED_VER)-release.tbz2
+	tar xjvf ike-$(IKED_VER)-rc-1.tbz2
+	mv ike build_$(CONFIGURE_TARGET)-linux
+	(cd build_$(CONFIGURE_TARGET)-linux; \
+	cmake \
+	-DDEBUG=YES \
+	-DQTGUI=YES \
+	-DNATT=YES \
+	-DETCDIR="/etc" \
+	-DCMAKE_INSTALL_PREFIX="$(TC_INSTALL_PREFIX)" \
+	-DCMAKE_FIND_ROOT_PATH="$(TC_INSTALL_PREFIX)" \
+	-DCMAKE_C_COMPILER="$(CC)" \
+	-DCMAKE_CXX_COMPILER="$(CXX)" \
+	-DCMAKE_AR:FILEPATH="$(AR)" \
+	-DCMAKE_C_FLAGS="-isystem $(ROOTDIR)/$(LINUXDIR)/include -I$(TC_INSTALL_PREFIX)/include" \
+	-DCMAKE_CXX_FLAGS="-isystem $(ROOTDIR)/$(LINUXDIR)/include -I$(TC_INSTALL_PREFIX)/include -Wcast-align -Wpadded -Wpacked" \
+	-DCMAKE_SHARED_LINKER_FLAGS="-lncurses" \
+	-DETCDIR="/etc" \
+	-DCMAKE_INCLUDE_PATH="$(ROOTDIR)/$(LINUXDIR)/include" \
+	-DCMAKE_CXX_INCLUDE_PATH="$(ROOTDIR)/$(LINUXDIR)/include" \
+	-DPATH_INC_EDIT="/usr/include" \
+	-DPATH_LIB_EDIT="/usr/lib" \
+	-DPATH_BIN_FLEX="/usr/bin/flex" \
+	)
+	touch build_$(CONFIGURE_TARGET)-linux/configured
+
+#	-DCMAKE_INCLUDE_PATH="$(ROOTDIR)/$(LINUXDIR)/include:$(TC_INSTALL_PREFIX)/include" \
+#	-fpack-struct 
+#	patch -p1 < ../patches/static_link_packed.diff; \
+
+clean distclean:
+	rm -rf build_$(CONFIGURE_TARGET)-linux \
+	ipkg_$(CONFIGURE_TARGET)-linux/usr/sbin/ikec \
+	ipkg_$(CONFIGURE_TARGET)-linux/usr/sbin/iked \
+	ipkg_$(CONFIGURE_TARGET)-linux/lib/libss_ike.so* \
+	ipkg_$(CONFIGURE_TARGET)-linux/lib/libss_idb.so* \
+	ipkg_$(CONFIGURE_TARGET)-linux/lib/libss_ith.so* \
+	ipkg_$(CONFIGURE_TARGET)-linux/lib/libss_ip.so* \
+	ipkg_$(CONFIGURE_TARGET)-linux/lib/libss_log.so* \
+	ipkg_$(CONFIGURE_TARGET)-linux/lib/libss_pfk.so*
+
+romfs:
+	#$(ROMFSINST) ipkg_$(CONFIGURE_TARGET)-linux/etc/init.d/iked /etc/init.d/
+	#$(ROMFSINST) ipkg_$(CONFIGURE_TARGET)-linux/etc/iked.conf /etc/
+	$(STRIP) build_$(CONFIGURE_TARGET)-linux/source/libike/libss_ike.so.$(IKED_VER) \
+	build_$(CONFIGURE_TARGET)-linux/source/libidb/libss_idb.so.$(IKED_VER) \
+	build_$(CONFIGURE_TARGET)-linux/source/libith/libss_ith.so.$(IKED_VER) \
+	build_$(CONFIGURE_TARGET)-linux/source/libip/libss_ip.so.$(IKED_VER) \
+	build_$(CONFIGURE_TARGET)-linux/source/liblog/libss_log.so.$(IKED_VER) \
+	build_$(CONFIGURE_TARGET)-linux/source/libpfk/libss_pfk.so.$(IKED_VER) \
+	build_$(CONFIGURE_TARGET)-linux/source/ikec/ikec \
+	build_$(CONFIGURE_TARGET)-linux/source/iked/iked
+	$(ROMFSINST) build_$(CONFIGURE_TARGET)-linux/source/ikec/ikec /usr/sbin
+	$(ROMFSINST) build_$(CONFIGURE_TARGET)-linux/source/iked/iked /usr/sbin
+	$(ROMFSINST) build_$(CONFIGURE_TARGET)-linux/source/libike/libss_ike.so.$(IKED_VER) /lib
+	$(ROMFSINST) -s /lib/libss_ike.so.$(IKED_VER) /lib/libss_ike.so.2
+	$(ROMFSINST) build_$(CONFIGURE_TARGET)-linux/source/libidb/libss_idb.so.$(IKED_VER) /lib
+	$(ROMFSINST) -s /lib/libss_idb.so.$(IKED_VER) /lib/libss_idb.so.2
+	$(ROMFSINST) build_$(CONFIGURE_TARGET)-linux/source/libith/libss_ith.so.$(IKED_VER) /lib
+	$(ROMFSINST) -s /lib/libss_ith.so.$(IKED_VER) /lib/libss_ith.so.2
+	$(ROMFSINST) build_$(CONFIGURE_TARGET)-linux/source/libip/libss_ip.so.$(IKED_VER) /lib
+	$(ROMFSINST) -s /lib/libss_ip.so.$(IKED_VER) /lib/libss_ip.so.2
+	$(ROMFSINST) build_$(CONFIGURE_TARGET)-linux/source/liblog/libss_log.so.$(IKED_VER) /lib
+	$(ROMFSINST) -s /lib/libss_log.so.$(IKED_VER) /lib/libss_log.so.2
+	$(ROMFSINST) build_$(CONFIGURE_TARGET)-linux/source/libpfk/libss_pfk.so.$(IKED_VER) /lib
+	$(ROMFSINST) -s /lib/libss_pfk.so.$(IKED_VER) /lib/libss_pfk.so.2
+
+
+package: build_$(CONFIGURE_TARGET)-linux/source/ikec/ikec
+	# Make the ipkg package
+	mkdir -p ipkg_$(CONFIGURE_TARGET)-linux/usr/sbin \
+	ipkg_$(CONFIGURE_TARGET)-linux/lib
+	cp -a build_$(CONFIGURE_TARGET)-linux/source/ikec/ikec ipkg_$(CONFIGURE_TARGET)-linux/usr/sbin/
+	cp -a build_$(CONFIGURE_TARGET)-linux/source/iked/iked ipkg_$(CONFIGURE_TARGET)-linux/usr/sbin/
+	cp -a build_$(CONFIGURE_TARGET)-linux/source/libike/libss_ike.so.$(IKED_VER) ipkg_$(CONFIGURE_TARGET)-linux/lib
+	(cd ipkg_$(CONFIGURE_TARGET)-linux/lib; ln -sf libss_ike.so.$(IKED_VER) libss_ike.so.2 )
+	cp -a build_$(CONFIGURE_TARGET)-linux/source/libidb/libss_idb.so.$(IKED_VER) ipkg_$(CONFIGURE_TARGET)-linux/lib
+	(cd ipkg_$(CONFIGURE_TARGET)-linux/lib; ln -sf libss_idb.so.$(IKED_VER) libss_idb.so.2)
+	cp -a build_$(CONFIGURE_TARGET)-linux/source/libith/libss_ith.so.$(IKED_VER) ipkg_$(CONFIGURE_TARGET)-linux/lib
+	(cd ipkg_$(CONFIGURE_TARGET)-linux/lib; ln -sf libss_ith.so.$(IKED_VER) libss_ith.so.2)
+	cp -a build_$(CONFIGURE_TARGET)-linux/source/libip/libss_ip.so.$(IKED_VER) ipkg_$(CONFIGURE_TARGET)-linux/lib
+	(cd ipkg_$(CONFIGURE_TARGET)-linux/lib; ln -sf libss_ip.so.$(IKED_VER) libss_ip.so.2)
+	cp -a build_$(CONFIGURE_TARGET)-linux/source/liblog/libss_log.so.$(IKED_VER) ipkg_$(CONFIGURE_TARGET)-linux/lib
+	(cd ipkg_$(CONFIGURE_TARGET)-linux/lib; ln -sf libss_log.so.$(IKED_VER) libss_log.so.2)
+	cp -a build_$(CONFIGURE_TARGET)-linux/source/libpfk/libss_pfk.so.$(IKED_VER) ipkg_$(CONFIGURE_TARGET)-linux/lib
+	(cd ipkg_$(CONFIGURE_TARGET)-linux/lib; ln -sf libss_pfk.so.$(IKED_VER) libss_pfk.so.2)
+	$(STRIP) -s ipkg_$(CONFIGURE_TARGET)-linux/usr/sbin/ikec \
+	ipkg_$(CONFIGURE_TARGET)-linux/usr/sbin/iked \
+	ipkg_$(CONFIGURE_TARGET)-linux/lib/*
+	mkdir -p $(IPKGDIR)/ipkg_$(CONFIGURE_TARGET)-linux
+	$(IPKGBUILD) ipkg_$(CONFIGURE_TARGET)-linux $(IPKGDIR)/ipkg_$(CONFIGURE_TARGET)-linux
+
+

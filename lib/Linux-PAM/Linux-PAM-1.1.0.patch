@@ -1,0 +1,197 @@
+diff -crB Linux-PAM-1.1.0/configure Linux-PAM-1.1.0.new/configure
+*** Linux-PAM-1.1.0/configure	2009-06-19 22:04:52.000000000 +0800
+--- Linux-PAM-1.1.0.new/configure	2011-12-07 14:58:34.000000000 +0800
+***************
+*** 850,855 ****
+--- 850,858 ----
+  libc_cv_fpie
+  HAVE_VERSIONING_FALSE
+  HAVE_VERSIONING_TRUE
++ BUILD_LDFLAGS
++ BUILD_CFLAGS
++ CC_FOR_BUILD
+  pam_cv_ld_as_needed
+  OTOOL64
+  OTOOL
+***************
+*** 13267,13272 ****
+--- 13270,13347 ----
+    done
+  fi
+  
++ if test "x${CC_FOR_BUILD+set}" != "xset" ; then
++   if test "x$cross_compiling" = "xyes" ; then
++     for ac_prog in gcc cc
++ do
++   # Extract the first word of "$ac_prog", so it can be a program name with args.
++ set dummy $ac_prog; ac_word=$2
++ { $as_echo "$as_me:$LINENO: checking for $ac_word" >&5
++ $as_echo_n "checking for $ac_word... " >&6; }
++ if test "${ac_cv_prog_CC_FOR_BUILD+set}" = set; then
++   $as_echo_n "(cached) " >&6
++ else
++   if test -n "$CC_FOR_BUILD"; then
++   ac_cv_prog_CC_FOR_BUILD="$CC_FOR_BUILD" # Let the user override the test.
++ else
++ as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
++ for as_dir in $PATH
++ do
++   IFS=$as_save_IFS
++   test -z "$as_dir" && as_dir=.
++   for ac_exec_ext in '' $ac_executable_extensions; do
++   if { test -f "$as_dir/$ac_word$ac_exec_ext" && $as_test_x "$as_dir/$ac_word$ac_exec_ext"; }; then
++     ac_cv_prog_CC_FOR_BUILD="$ac_prog"
++     $as_echo "$as_me:$LINENO: found $as_dir/$ac_word$ac_exec_ext" >&5
++     break 2
++   fi
++ done
++ done
++ IFS=$as_save_IFS
++ 
++ fi
++ fi
++ CC_FOR_BUILD=$ac_cv_prog_CC_FOR_BUILD
++ if test -n "$CC_FOR_BUILD"; then
++   { $as_echo "$as_me:$LINENO: result: $CC_FOR_BUILD" >&5
++ $as_echo "$CC_FOR_BUILD" >&6; }
++ else
++   { $as_echo "$as_me:$LINENO: result: no" >&5
++ $as_echo "no" >&6; }
++ fi
++ 
++ 
++   test -n "$CC_FOR_BUILD" && break
++ done
++ 
++   else
++     CC_FOR_BUILD=${CC}
++   fi
++ fi
++ { $as_echo "$as_me:$LINENO: checking for CC_FOR_BUILD" >&5
++ $as_echo_n "checking for CC_FOR_BUILD... " >&6; }
++ { $as_echo "$as_me:$LINENO: result: $CC_FOR_BUILD" >&5
++ $as_echo "$CC_FOR_BUILD" >&6; }
++ 
++ 
++ if test "x${BUILD_CFLAGS+set}" != "xset" ; then
++   if test "x$cross_compiling" = "xyes" ; then
++     BUILD_CFLAGS=
++   else
++     BUILD_CFLAGS=${CFLAGS}
++   fi
++ fi
++ 
++ 
++ if test "x${BUILD_LDFLAGS+set}" != "xset" ; then
++   if test "x$cross_compiling" = "xyes" ; then
++     BUILD_LDFLAGS=
++   else
++     BUILD_LDFLAGS=${LDFLAGS}
++   fi
++ fi
++ 
++ 
+  
+  { $as_echo "$as_me:$LINENO: checking for __attribute__" >&5
+  $as_echo_n "checking for __attribute__... " >&6; }
+diff -crB Linux-PAM-1.1.0/configure.in Linux-PAM-1.1.0.new/configure.in
+*** Linux-PAM-1.1.0/configure.in	2009-06-19 22:03:00.000000000 +0800
+--- Linux-PAM-1.1.0.new/configure.in	2011-12-07 14:59:15.000000000 +0800
+***************
+*** 128,133 ****
+--- 128,162 ----
+    done
+  fi
+  
++ if test "x${CC_FOR_BUILD+set}" != "xset" ; then
++   if test "x$cross_compiling" = "xyes" ; then
++     AC_CHECK_PROGS(CC_FOR_BUILD, gcc cc)
++   else
++     CC_FOR_BUILD=${CC}
++   fi
++ fi
++ AC_MSG_CHECKING([for CC_FOR_BUILD])
++ AC_MSG_RESULT([$CC_FOR_BUILD])
++ AC_SUBST(CC_FOR_BUILD)
++ 
++ if test "x${BUILD_CFLAGS+set}" != "xset" ; then
++   if test "x$cross_compiling" = "xyes" ; then
++     BUILD_CFLAGS=
++   else
++     BUILD_CFLAGS=${CFLAGS}
++   fi
++ fi
++ AC_SUBST(BUILD_CFLAGS)
++ 
++ if test "x${BUILD_LDFLAGS+set}" != "xset" ; then
++   if test "x$cross_compiling" = "xyes" ; then
++     BUILD_LDFLAGS=
++   else
++     BUILD_LDFLAGS=${LDFLAGS}
++   fi
++ fi
++ AC_SUBST(BUILD_LDFLAGS)
++ 
+  AC_C___ATTRIBUTE__
+  
+  dnl
+diff -crB Linux-PAM-1.1.0/doc/specs/Makefile.am Linux-PAM-1.1.0.new/doc/specs/Makefile.am
+*** Linux-PAM-1.1.0/doc/specs/Makefile.am	2006-11-28 20:50:27.000000000 +0800
+--- Linux-PAM-1.1.0.new/doc/specs/Makefile.am	2011-12-07 15:00:17.000000000 +0800
+***************
+*** 11,16 ****
+--- 11,20 ----
+  
+  AM_YFLAGS = -d
+  
++ CC = @CC_FOR_BUILD@
++ CFLAGS = @BUILD_CFLAGS@
++ LDFLAGS = @BUILD_LDFLAGS@
++ 
+  BUILT_SOURCES = parse_y.h
+  
+  noinst_PROGRAMS = padout
+diff -crB Linux-PAM-1.1.0/doc/specs/Makefile.in Linux-PAM-1.1.0.new/doc/specs/Makefile.in
+*** Linux-PAM-1.1.0/doc/specs/Makefile.in	2009-06-19 22:04:55.000000000 +0800
+--- Linux-PAM-1.1.0.new/doc/specs/Makefile.in	2011-12-07 15:01:16.000000000 +0800
+***************
+*** 104,112 ****
+  AUTOMAKE = @AUTOMAKE@
+  AWK = @AWK@
+  BROWSER = @BROWSER@
+! CC = @CC@
+  CCDEPMODE = @CCDEPMODE@
+! CFLAGS = @CFLAGS@
+  CPP = @CPP@
+  CPPFLAGS = @CPPFLAGS@
+  CYGPATH_W = @CYGPATH_W@
+--- 104,115 ----
+  AUTOMAKE = @AUTOMAKE@
+  AWK = @AWK@
+  BROWSER = @BROWSER@
+! BUILD_CFLAGS = @BUILD_CFLAGS@
+! BUILD_LDFLAGS = @BUILD_LDFLAGS@
+! CC = @CC_FOR_BUILD@
+  CCDEPMODE = @CCDEPMODE@
+! CC_FOR_BUILD = @CC_FOR_BUILD@
+! CFLAGS = @BUILD_CFLAGS@
+  CPP = @CPP@
+  CPPFLAGS = @CPPFLAGS@
+  CYGPATH_W = @CYGPATH_W@
+***************
+*** 134,140 ****
+  INTLLIBS = @INTLLIBS@
+  INTL_MACOSX_LIBS = @INTL_MACOSX_LIBS@
+  LD = @LD@
+! LDFLAGS = @LDFLAGS@
+  LEX = @LEX@
+  LEXLIB = @LEXLIB@
+  LEX_OUTPUT_ROOT = @LEX_OUTPUT_ROOT@
+--- 137,143 ----
+  INTLLIBS = @INTLLIBS@
+  INTL_MACOSX_LIBS = @INTL_MACOSX_LIBS@
+  LD = @LD@
+! LDFLAGS = @BUILD_LDFLAGS@
+  LEX = @LEX@
+  LEXLIB = @LEXLIB@
+  LEX_OUTPUT_ROOT = @LEX_OUTPUT_ROOT@

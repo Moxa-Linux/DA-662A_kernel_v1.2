@@ -1,0 +1,9 @@
+Package: strace
+Version: 4.5.20
+Architecture: arm
+Maintainer: Jared_wu <Jared_Wu@moxa.com>
+Section: base
+Priority: optional
+Description: strace is a system call tracer, i.e. a debugging tool which prints out a trace of all the system calls made by a another process/program.
+Source: http://sourceforge.net/projects/strace/
+Depends: 

@@ -1,0 +1,9 @@
+Package: vpnc
+Version: 0.5.3
+Architecture: xscale
+Maintainer: Jared_wu <Jared_Wu@moxa.com>
+Section: base
+Priority: optional
+Description: client for Cisco VPN3000 Concentrator, IOS and PIX.
+Source: http://www.unix-ag.uni-kl.de/~massar/vpnc/vpnc-0.5.3.tar.gz
+Depends: libgpg-error libgcrypt

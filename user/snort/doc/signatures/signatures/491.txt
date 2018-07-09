@@ -1,0 +1,59 @@
+# $Id: 491.txt,v 1.1 2002/10/14 00:52:17 cazz Exp $
+
+Rule:  
+alert tcp $HOME_NET 21 -> $EXTERNAL_NET any (msg:"FTP Bad login"; content:"530 Login "; nocase; flow:from_server,established; classtype:bad-unknown; sid:491; rev:5;)
+
+--
+Sid:
+491
+
+--
+Summary:
+
+A login to the source IP's FTP server failed.
+
+--
+Impact:
+
+An attempt to login to the FTP server has failed.
+
+--
+Detailed Information:
+
+This rule looks for an FTP server response for a failed login attempt.  
+An alert on this rule may be the result of an authorized user mistyping 
+their username or password.
+
+Multiple failed login attempts may be the sign of a brute force login 
+attempt. 
+
+--
+Attack Scenarios:
+
+--
+Ease of Attack:
+
+--
+False Positives:
+
+None known at this time.
+
+--
+False Negatives:
+
+Some FTP server responses may be different than the specified content
+in this rule.
+
+--
+Corrective Action:
+
+Verify that the login attempt was authorized.  Take appropriate steps
+if otherwise.
+
+--
+Contributors:
+
+Brian Caswell <bmc@snort.org>
+
+-- 
+Additional References:

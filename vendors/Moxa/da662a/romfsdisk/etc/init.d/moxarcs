@@ -1,0 +1,134 @@
+#!/bin/sh
+#
+# rcS		Call all S??* scripts in /etc/rcS.d in
+#		numerical/alphabetical order.
+#
+# Version:	@(#)/etc/init.d/rcS  2.76  19-Apr-1999  miquels@cistron.nl
+#
+
+PATH=/sbin:/bin:/usr/sbin:/usr/bin
+runlevel=S
+prevlevel=N
+umask 022
+export PATH runlevel prevlevel
+
+# mount some file system
+sync
+mkdir -p /dev/pts /dev/shm
+mount -t proc proc /proc
+mount -t sysfs none /sys
+gunzip -c /etc/usrvar.gz > /dev/ram0
+mount -t ext2 /dev/ram0 /var
+echo /sbin/mdev > /proc/sys/kernel/hotplug
+# We have support devtmpfs, it's unnecessary to populate /dev/* by mdev
+#/sbin/mdev -s
+ln -s /dev/sds_lcm /dev/lcm
+ln -s /dev/watchdog /dev/swtd
+
+# load needly drivers
+# These device drivers are common for all models.
+modprobe mxser
+modprobe usb-storage
+modprobe i2c-gpio
+modprobe rtc_isl1208
+
+# mount user disk
+mount -t jffs2 /dev/mtdblock3 /tmp
+if [ $? != '0' ]; then
+	echo "Userdisk partitions had been destroy, create it!!"
+	eraseall /dev/mtd3
+	mount -t jffs2 /dev/mtdblock3 /tmp
+fi
+chmod 777 /tmp
+
+#Create recover flag directory
+[ ! -d /tmp/.__recover ] && mkdir /tmp/.__recover
+
+#Recover /home
+mount -o bind /tmp/.__home /home > /dev/null
+if [ $? != '0'  ]; then
+	echo "Recovering home partition."
+	cp -a /home /tmp/.__home
+	#generate flag
+	sync
+	touch /tmp/.__recover/home_copy_ok
+	mount -o bind /tmp/.__home /home
+	[ -d /home/.__usr/local/bin ] || mkdir -p /home/.__usr/local/bin
+	[ -d /home/.__usr/local/sbin ] || mkdir -p /home/.__usr/local/sbin
+	[ -d /home/.__usr/local/lib ] || mkdir -p /home/.__usr/local/lib
+	[ -d /home/.__usr/local/libexec ] || mkdir -p /home/.__usr/local/libexec
+elif [ ! -f /tmp/.__recover/home_copy_ok ] ;then
+	echo "Recovering home partition ..."
+	umount /home
+	[ -d /tmp/.__home ] && rm -rf /tmp/.__home
+	cp -a /home /tmp/.__home
+	sync
+	#generate flag
+	touch /tmp/.__recover/home_copy_ok
+	mount -o bind /tmp/.__home /home
+fi
+
+#Recover /etc
+mount -o bind /tmp/.__etc /etc  > /dev/null
+if [ $? != '0' ]; then
+	echo "Recovering etc partition."
+	cp -a /etc /tmp/.__etc
+	rm -f /tmp/.__etc/init.d/moxarcs
+	rm -f /tmp/.__etc/usrvar.gz
+	rm -f /tmp/.__etc/dev.gz
+	sync
+	#generate flag
+	touch /tmp/.__recover/etc_copy_ok
+	mount -o bind /tmp/.__etc /etc
+elif [ ! -f /tmp/.__recover/etc_copy_ok ]; then
+	echo "Recovering etc partition..."
+	umount /etc
+	[ -d /tmp/.__etc ] && rm -rf /tmp/.__etc
+	cp -a /etc /tmp/.__etc
+	rm -f /tmp/.__etc/init.d/moxarcs
+	rm -f /tmp/.__etc/usrvar.gz
+	rm -f /tmp/.__etc/dev.gz
+	sync
+	#generate flag
+	touch /tmp/.__recover/etc_copy_ok
+	mount -o bind /tmp/.__etc /etc
+fi
+
+# Sync the system date from RTC after /etc bind
+ln -s /dev/rtc0 /dev/rtc
+hwclock --hctosys
+
+# check it is isolation model or not
+# if it is isolation model, it will be set all RS485 2 wires model after port 4 of serial port
+SWID=`cat /proc/driver/swid`
+ISO=`cat /proc/driver/isolation`
+SPORTS=4
+if [ x"${SWID}" = x"60046621" ]; then
+	EPORTS=16
+else
+	EPORTS=8
+fi
+if [ x"${EPORTS}" = x"8" ]; then
+# the PCI scanning sequence has some issue, we need to do this
+	mv /dev/ttyM8 /dev/ttyM0
+	mv /dev/ttyM9 /dev/ttyM1
+	mv /dev/ttyM10 /dev/ttyM2
+	mv /dev/ttyM11 /dev/ttyM3
+	mv /dev/ttyM12 /dev/ttyM4
+	mv /dev/ttyM13 /dev/ttyM5
+	mv /dev/ttyM14 /dev/ttyM6
+	mv /dev/ttyM15 /dev/ttyM7
+fi
+if [ x"${ISO}" = x"0" ]; then
+# this is a isolation model
+	while [ $SPORTS -lt $EPORTS ]
+	do
+		TTY="/dev/ttyM$SPORTS"
+		/bin/setinterface $TTY 1
+		let SPORTS=SPORTS+1
+	done
+fi
+
+# run user setting
+init q
+/etc/init.d/rcS

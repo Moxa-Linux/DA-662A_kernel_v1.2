@@ -1,0 +1,24 @@
+
+CC=arm-linux-gcc
+STRIP=arm-linux-strip
+EXEC=moxaburn-debug
+OBJS=moxaburn.o
+LDLIBS  += -lpthread -lmoxalib
+
+HW_ID=0x0264
+AP_ID=0x80000264
+CFLAGS += -DARCH_IA261 -DHOSON_ODM
+CFLAGS += -DFACTORY_MODE -DDEBUG
+CFLAGS += -DHW_ID='"$(HW_ID)"' -DAP_ID='"$(AP_ID)"'
+
+all: $(EXEC)
+
+$(EXEC): $(OBJS) 
+	$(CC) $(LDFLAGS) -o $@ $(OBJS) $(LDLIBS)
+	$(STRIP) -s $(EXEC)
+
+romfs:
+	$(ROMFSINST) /bin/$(EXEC)
+
+clean:
+	rm -fr $(EXEC) $(OBJS) *.o

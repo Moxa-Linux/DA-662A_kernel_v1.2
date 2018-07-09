@@ -1,0 +1,49 @@
+# arch/arm/mach-moxamacro/Kconfig
+#
+# Copyright 2011 Moxa Tech., Inc.
+# 	Vincent Wu.<vincent.wu@moxa.com>
+# 	http://www.moxa.com/
+#
+# Licensed under GPLv2
+
+# Configuration options for the MOXA Macro CPU
+
+menu "Moxa Macro Implementation Options"
+comment "Moxa Macro Platforms"
+
+config CPU_MOXAMACRO
+	bool
+	select ARCH_REQUIRE_GPIOLIB
+	help
+	  Enable MOXA Macro CPU support
+
+config MACH_MOXAMACRO
+	bool "MOXAMACRO"
+	select CPU_MOXAMACRO
+#select PCI
+	help
+	  Machine support for the MOXA Macro 
+endmenu
+
+config DECOMPRESS_UART_PORT
+	int "Kernel decompressing debug uart port"
+	default 0
+	help
+	  The debug uart port utilized when kernel decompressing.
+
+config PCIE
+	bool "PCIE support"
+	help
+	  MOXAMACRO Full-Function with PCIE
+
+config MOXAMACRO_REMAP
+	bool "MOXA MACRO Hardware Remap"
+	help
+	  If the boot loader remapped the RAM address to 0x0, say yes,
+	  and if it did not or unsure, say no.
+
+config MOXAMACRO_DDR2_SDRAM
+	bool "MOXA MACRO DDR2 SDRAM Version"
+	help
+	  If the main memory is DDR2 SDRAM at 0x80000000 (phy), say yes.
+	  If the main memory is SDR SDRAM at 0x60000000 (phy), say no.

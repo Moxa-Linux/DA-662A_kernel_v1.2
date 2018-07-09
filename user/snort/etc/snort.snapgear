@@ -1,0 +1,59 @@
+
+var HOME_NET any
+var EXTERNAL_NET any
+var DNS_SERVERS $HOME_NET
+var SMTP_SERVERS $HOME_NET
+var HTTP_SERVERS $HOME_NET
+var SQL_SERVERS $HOME_NET
+var TELNET_SERVERS $HOME_NET
+var HTTP_PORTS 80
+var SHELLCODE_PORTS !80
+var ORACLE_PORTS 1521
+var AIM_SERVERS [64.12.24.0/24,64.12.25.0/24,64.12.26.14/24,64.12.28.0/24,64.12.29.0/24,64.12.161.0/24,64.12.163.0/24,205.188.5.0/24,205.188.9.0/24]
+var RULE_PATH /etc/snort
+config detection: search-method lowmem
+preprocessor frag2
+preprocessor stream4: detect_scans, disable_evasion_alerts
+preprocessor stream4_reassemble
+preprocessor http_decode: 80 unicode iis_alt_unicode double_encode iis_flip_slash full_whitespace
+preprocessor rpc_decode: 111 32771
+preprocessor bo
+preprocessor telnet_decode
+include classification.config
+include reference.config
+include /etc/config/snort.rules
+include $RULE_PATH/bad-traffic.rules
+include $RULE_PATH/exploit.rules
+include $RULE_PATH/scan.rules
+include $RULE_PATH/finger.rules
+include $RULE_PATH/ftp.rules
+include $RULE_PATH/telnet.rules
+include $RULE_PATH/rpc.rules
+include $RULE_PATH/rservices.rules
+include $RULE_PATH/dos.rules
+include $RULE_PATH/ddos.rules
+include $RULE_PATH/dns.rules
+include $RULE_PATH/tftp.rules
+include $RULE_PATH/web-cgi.rules
+include $RULE_PATH/web-coldfusion.rules
+include $RULE_PATH/web-iis.rules
+include $RULE_PATH/web-frontpage.rules
+include $RULE_PATH/web-misc.rules
+include $RULE_PATH/web-client.rules
+include $RULE_PATH/web-php.rules
+include $RULE_PATH/sql.rules
+include $RULE_PATH/x11.rules
+include $RULE_PATH/icmp.rules
+include $RULE_PATH/netbios.rules
+include $RULE_PATH/misc.rules
+include $RULE_PATH/attack-responses.rules
+include $RULE_PATH/oracle.rules
+include $RULE_PATH/mysql.rules
+include $RULE_PATH/snmp.rules
+include $RULE_PATH/smtp.rules
+include $RULE_PATH/imap.rules
+include $RULE_PATH/pop2.rules
+include $RULE_PATH/pop3.rules
+include $RULE_PATH/nntp.rules
+include $RULE_PATH/other-ids.rules
+include $RULE_PATH/experimental.rules

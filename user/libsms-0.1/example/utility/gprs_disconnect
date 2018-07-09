@@ -1,0 +1,25 @@
+#!/bin/sh
+LPATH=/bin
+print_usage()
+{
+	echo "Usage: $0      ; disconnect the current GPRS connection";
+	echo ""
+        echo "    : $0 -r    ; disable reconnection setting";
+	exit 1 ;
+}
+dis_reconnect()
+{
+killall -2 egprsagent ;
+/bin/egprsagent &
+}
+while getopts h:r options
+do
+	case $options in
+	r) dis_reconnect;; 	
+	h) print_usage;
+	   exit 0;;
+	?) print_usage;
+	   exit 2;;
+	esac
+done
+${LPATH}/egprscmd -d

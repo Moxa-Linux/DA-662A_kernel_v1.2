@@ -1,0 +1,9 @@
+Package: mysql-server
+Version: 5.6.11
+Architecture: xscale
+Maintainer: Aeluin Chen <aeluin.chen@moxa.com>
+Section: base
+Priority: optional
+Description: Mysql v5.6.11 server.
+Source: http://downloads.mysql.com/archives/mysql-5.6/mysql-5.6.11.tar.gz
+Depends:

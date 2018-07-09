@@ -1,0 +1,59 @@
+# This is a template for submitting snort signature descriptions to
+# the snort.org website
+#
+# Ensure that your descriptions are your own
+# and not the work of others.  References in the rules themselves
+# should be used for linking to other's work. 
+#
+# If you are unsure of some part of a rule, use that as a commentary
+# and someone else perhaps will be able to fix it.
+# 
+# $Id: 882.txt,v 1.1 2002/06/02 18:51:53 cazz Exp $
+#
+# 
+
+Rule:  
+alert tcp $EXTERNAL_NET any -> $HTTP_SERVERS 80 (msg:"WEB-CGI calendar access";flow:to_server; flow: A+; uricontent:"/calendar"; nocase; classtype:attempted-recon; sid:882; rev:2;) 
+--
+Sid: 882
+
+--
+Summary: WEB-CGI CALENDAR ACCESS
+
+--
+Impact: 
+Potentially harmful execution of binaries through perl open()
+
+--
+Detailed Information: 
+An open source calendar perl script by Matt Kruse, Allows commands to be executed without input verification using the perl open() function. ie /cgi-bin/calendar_admin.pl place the string "|ping 127.0.0.1|" in the configuration file field, this executes the command "ping 127.0.0.1" 
+
+--
+Attack Scenarios: 
+An unauthenticated user can execute arbitrary programs on the server by accessing calendar_admin.pl and inputting commands such as "|mail /etc/passwd|" into the configuration file field.
+
+--
+Ease of Attack: 
+As easy as typing text in a browser
+
+--
+False Positives: 
+If your webserver has pages by the name of calendar* this signature will fire often.
+
+--
+False Negatives: 
+
+
+--
+Corrective Action: 
+Download a newer version of the cgi 
+
+--
+Contributors: 
+Aaron Navratil	Initial Research
+Josh Gray	Edits
+
+-- 
+Additional References:
+http://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2000-0432
+http://online.securityfocus.com/bid/1215

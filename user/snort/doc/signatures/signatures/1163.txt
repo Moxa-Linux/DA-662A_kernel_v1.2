@@ -1,0 +1,59 @@
+Rule:  
+alert tcp $EXTERNAL_NET any -> $HTTP_SERVERS 80 (msg:"WEB-MISC webdist.cgi access"; uricontent:"/webdist.cgi"; nocase; flags: A+; reference:bugtraq,374; reference:cve,CVE-1999-0039; classtype:attempted-recon; sid:1163; rev:2;)
+--
+
+Sid:
+1163
+
+--
+
+Summary:
+Someone may have attempted to execute arbitrary commands on an IRIX web server
+using a vulnerability in webdist.cgi
+
+--
+Impact:
+An attacker may have been able to execute any command on the web server
+that the web server user can run.
+
+--
+Detailed Information:
+IRIX versions 5.0 through 6.3 contain a CGI script by default
+(/var/www/cgi-bin/webdist.cgi) for remote administration purposes.
+This script, as originally released by SGI, contains a vulnerability
+that can allow an attacker to run any arbitrary command that
+the web server user has access to.
+
+--
+Attack Scenarios:
+Attacker sends a simple URL like the following:
+/cgi-bin/webdist.cgi?distloc=;cat%20/etc/passwd
+
+--
+Ease of Attack:
+Very simple handcrafted URL.
+
+--
+False Positives:
+webdist.cgi may be used for remote administration purposes by systems
+administrators.
+
+--
+False Negatives:
+
+--
+Corrective Action:
+View the captured packet to determine whether this was an attack or
+legitimate remote administration.  If it resembles an attack, and the
+target runs IRIX, consider launching an investigation.
+The existence of sample scripts such as webdist.cgi
+may indicate larger security problems with the web server's configuration.
+
+--
+Contributors:
+
+--
+Additional References:
+CVE:  CVE-1999-0039
+BUGTRAQ:  BID 374
+URL:  http://www.cert.org/advisories/CA-1997-12.html

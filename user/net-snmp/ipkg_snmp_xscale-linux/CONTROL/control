@@ -1,0 +1,9 @@
+Package: net-snmp
+Version: 5.7.1
+Architecture: xscale
+Maintainer: Aeluin Chen <aeluin_chen@moxa.com>
+Section: base
+Priority: optional
+Description: Net-SNMP is a suite of applications used to implement SNMP v1, SNMP v2c and SNMP v3 using both IPv4 and IPv6.
+Source: http://www.net-snmp.org/download.html
+Depends:

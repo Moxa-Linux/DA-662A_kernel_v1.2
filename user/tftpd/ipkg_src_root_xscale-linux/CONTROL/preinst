@@ -1,0 +1,22 @@
+#!/bin/sh
+
+#echo "$0, $1"  >> /var/preinst
+
+
+case "$1" in
+  update)
+    ;;
+  install)
+  	# remove the original snmpd to replace with net-snmp
+  	[ -n "`ps|grep in.tftpd|grep -v grep`" ] && killall in.tftpd
+	[ -e /usr/local/bin/in.tftpd ] && rm -rf /usr/local/bin/in.tftpd
+    ;;
+  configure)
+    ;;
+  remove)
+    ;;
+  *)
+    ;;
+esac
+
+exit 0

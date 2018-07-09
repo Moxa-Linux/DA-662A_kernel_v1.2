@@ -1,0 +1,55 @@
+Rule:
+alert icmp $EXTERNAL_NET any -> $HOME_NET any (msg:"ICMP PING Delphi-Piette Windows"; content:"|50696e67696e672066726f6d2044656c|"; itype:8; depth:32; reference:arachnids,155; sid:372; classtype:misc-activity; rev:4;)
+
+--
+Sid:
+372
+
+--
+Summary:
+This event is generated when an ICMP echo request is made from a Windows host running Delphi software.
+
+--
+Impact:
+Information gathering.  An ICMP echo request can determine if a host is active.
+
+--
+Detailed Information:
+An ICMP echo request is used by the ping command to elicit an ICMP echo reply from a listening live host.  An echo request that originates from a Windows host running Delphi software contains a unique payload in the message request.
+
+--
+Affected Systems:
+All
+
+--
+Attack Scenarios:
+An attacker may attempt to determine live hosts in a network prior to launching an attack.
+
+--
+Ease of Attack:
+Simple
+
+--
+False Positives:
+An ICMP echo request may be used to legimately troubleshoot networking problems.
+
+--
+False Negatives:
+None known.
+
+--
+Corrective Action:
+Block inbound ICMP echo requests.
+
+--
+Contributors:
+Original rule written by Max Vision <vision@whitehats.org>
+Documented by Steven Alexander<alexander.s@mccd.edu>
+Sourcefire Research Team
+Judy Novak <judy.novak@sourcefire.com>
+
+--
+Additional References:
+
+Arachnids:
+http://www.whitehats.com/info/IDS155

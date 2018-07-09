@@ -1,0 +1,59 @@
+Rule:  
+alert tcp $EXTERNAL_NET 80 -> $HOME_NET any (msg:"WEB-MISC readme.eml attempt"; flow:to_server; flags:A+; uricontent:"readme.eml"; nocase; classtype:attempted-user; sid:1284; rev:4; reference:url,www.cert.org/advisories/CA-2001-26.html;) 
+--
+
+Sid:
+1284
+
+--
+
+Summary:
+The destination web client may have been duped into downloading a
+Nimda-infected attachment from the source web server.
+
+--
+Impact:
+A Nimda-infected web server may have spread the Nimda worm to the web
+client.
+
+--
+Detailed Information:
+One of the methods the Nimda worm uses to propagate is by passing malicious
+mobile code from an infected web server to a web client.  The Nimda-infected
+mobile code often uses the filename extension ".EML".
+
+--
+Attack Scenarios:
+The fully automated Nimda worm that has already infected an IIS web server
+searches
+through and infects the local web pages with malicious javascript.  When
+a vulnerable web client attempts to load a web page from this server, the
+javascript will cause the web client to download and execute the
+Nimda-infected readme.eml file, causing the web client to become
+Nimda-infected.
+
+--
+Ease of Attack:
+The Nimda worm is fully automated and spreads rapidly.
+
+--
+False Positives:
+
+--
+False Negatives:
+The Nimda worm may spread via any file with the .EML or .NWS extension, not
+just readme.eml.  This rule will not catch other .EML or .NWS files.
+
+--
+Corrective Action:
+Examine packet to determine whether a malicious web request was made.
+Determine whether the target machine was running a vulnerable installation
+of IIS 4.0 or IIS 5.0.
+
+--
+Contributors:
+
+--
+References:
+http://www.incidents.org/react/nimda.pdf
+http://www.cert.org/advisories/CA-2001-26.html

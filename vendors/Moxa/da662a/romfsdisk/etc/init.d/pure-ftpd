@@ -1,0 +1,36 @@
+#!/bin/sh
+#
+# start/stop pure-ftpd super server.
+#
+# chkconfig: 2345 20 20
+#
+#
+PATH=/bin:/usr/bin:/sbin:/usr/sbin
+if ! [ -x /sbin/pure-ftpd ]; then
+	exit 0
+fi
+
+case "$1" in
+    start)
+	echo -n "Starting pure-ftpd:"
+	if [ ! -d "/dev/shm/ftp" ]; then
+		mkdir -p /dev/shm/ftp
+		chown -R ftp:ftp /dev/shm/ftp
+	fi
+	echo "."
+	/sbin/pure-ftpd -B -H -g /var/run/ftpd.pid
+	echo "."
+	;;
+    stop)
+	echo -n "Stopping pure-ftpd:"
+	killall pure-ftpd ;
+	echo "."
+	;;
+    *)
+	echo "Usage: /etc/init.d/pure-ftpd {start|stop}"
+	exit 1
+	;;
+esac
+
+exit 0
+

@@ -1,0 +1,9 @@
+Package: gpsd
+Version: 2.95
+Architecture: arm
+Maintainer: Jared_wu <Jared_Wu@moxa.com>
+Section: Misc
+Priority: optional
+Description: interface daemon for GPS receivers
+Source: http://ftp.de.debian.org/debian/pool/main/g/gpsd/gpsd_2.95.orig.tar.gz
+Depends:

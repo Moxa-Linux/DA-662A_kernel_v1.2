@@ -1,0 +1,9 @@
+Package: sqlite3
+Version: 3.7.12
+Architecture: xscsale
+Maintainer: Jared_wu <Jared_Wu@moxa.com>
+Section: base
+Priority: optional
+Description: A library and command line interface for SQLite version 3
+Source: http://fossies.org/unix/misc/sqlite-autoconf-3071300.tar.gz/
+Depends:

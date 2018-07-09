@@ -1,0 +1,61 @@
+Rule:
+alert icmp $EXTERNAL_NET any -> $HOME_NET any (msg:"ICMP Traceroute"; itype: 30; icode: 0; sid:456; classtype:misc-activity; rev:4;)
+
+--
+Sid:
+456
+
+--
+Summary:
+
+
+
+--
+Impact:
+
+Can be used as a reconnaissance tool.  Traceroute reveals information
+about the layout of a network.
+
+--
+Detailed Information:
+
+--
+Affected Systems:
+All
+
+--
+Attack Scenarios:
+
+Traceroute is often used against machines on a network prior to an
+attack.
+
+--
+Ease of Attack:
+Simple
+
+--
+False Positives:
+
+--
+False Negatives:
+None known.
+
+--
+Corrective Action:
+Block inbound ICMP type 30 messages.
+
+--
+Contributors:
+Original rule writer unknown
+Sourcefire Research Team
+Judy Novak <judy.novak@sourcefire.com>
+
+--
+Additional References:
+
+Miscellaneous
+http://www.faqs.org/rfcs/rfc1393.html
+
+
+
+

@@ -1,0 +1,35 @@
+diff -crB libnl-1.1.org/Makefile libnl-1.1/Makefile
+*** libnl-1.1.org/Makefile	Mon Jan 14 23:48:45 2008
+--- libnl-1.1/Makefile	Sun Oct  9 22:55:34 2011
+***************
+*** 37,44 ****
+  	@for dir in $(SUBDIRS); do \
+  		echo "Entering $$dir" && cd $$dir && $(MAKE) install && cd ..; \
+  	done
+! 	mkdir -p $(DESTDIR)$(libdir)/pkgconfig/
+! 	install -m 0644 libnl-1.pc $(DESTDIR)$(libdir)/pkgconfig/
+  
+  gendoc:
+  	$(MAKE) -C doc gendoc
+--- 37,44 ----
+  	@for dir in $(SUBDIRS); do \
+  		echo "Entering $$dir" && cd $$dir && $(MAKE) install && cd ..; \
+  	done
+! 	#mkdir -p $(DESTDIR)$(libdir)/pkgconfig/
+! 	#install -m 0644 libnl-1.pc $(DESTDIR)$(libdir)/pkgconfig/
+  
+  gendoc:
+  	$(MAKE) -C doc gendoc
+diff -crB libnl-1.1.org/include/netlink-local.h libnl-1.1/include/netlink-local.h
+*** libnl-1.1.org/include/netlink-local.h	Mon Jan 14 23:48:45 2008
+--- libnl-1.1/include/netlink-local.h	Sun Oct  9 22:54:53 2011
+***************
+*** 26,31 ****
+--- 26,32 ----
+  #include <sys/socket.h>
+  #include <inttypes.h>
+  #include <assert.h>
++ #include <limits.h>
+  
+  #include <arpa/inet.h>
+  #include <netdb.h>

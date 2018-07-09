@@ -1,0 +1,42 @@
+# FIXME: Add your own platform here
+menu "Moxa CPU Implementation Options"
+
+comment "Moxa CPU Platforms"
+
+config ARCH_MOXAART_DRAM_SIZE
+	hex "Set the DRAM size"
+	depends on ARCH_MOXAART
+	default '0x2000000'
+
+config MACH_MOXAART
+	bool "MACH MOXA ART"
+	help
+	  Say 'Y' here if you want your kernel to support Intel's
+	  KIXRP435 Reference Platform.
+	  For more information on this platform, see <file:Documentation/arm/IXP4xx>.
+choice
+prompt "Select Moxa Product Type"
+default ARCH_IA240
+
+config ARCH_IA3341
+	bool "Support for Moxa IA3341 Development Platform"
+	depends on ARCH_MOXACPU
+
+config ARCH_IA240
+	bool "MOXA IA240"
+	depends on MACH_MOXAART
+
+config ARCH_IA241
+	bool "MOXA IA241"
+	depends on MACH_MOXAART
+
+config ARCH_W321
+	bool "Moxa W321"
+	depends on ARCH_MOXAART
+
+config ARCH_W341
+	bool "Moxa W341"
+	depends on ARCH_MOXAART
+
+endchoice
+endmenu

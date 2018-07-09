@@ -1,0 +1,70 @@
+Rule:
+
+--
+Sid: 527
+
+--
+Summary:
+This event is generated when traffic on the network is using the same 
+source and destination IP address.
+
+--
+Impact:
+Possible Denial of Service.
+
+--
+Detailed Information:
+Under normal circumstances traffic to and from the same IP address 
+should not be seen on the network. This may be an indicator for the Land
+attack tool.
+
+Some TCP/IP stacks hang or even crash when presented with a TCP SYN 
+packet containing the same source and destination IP address. Some 
+target hosts will crash others will be temporarily disabled.
+
+an indicator of unauthorized network use, reconnaisance activity or 
+system compromise. These rules may also generate an event due to 
+improperly configured network devices.
+
+--
+Affected Systems:
+	Multiple systems from multiple vendors.
+
+--
+Attack Scenarios:
+The attacker may send traffic from a spoofed source address, in this 
+case the victims IP address.
+
+The attacker may be using the Land attack tool.
+
+--
+Ease of Attack:
+Simple
+
+--
+False Positives:
+None Known
+
+--
+False Negatives:
+None Known
+
+--
+Corrective Action:
+Employ egress filtering at the border router or firewall.
+
+--
+Contributors:
+Original rule writer unknown
+Sourcefire Research Team
+Nigel Houghton <nigel.houghton@sourcefire.com>
+Judy Novak <judy.novak@sourcefire.com>
+
+--
+Additional References:
+
+SANS:
+http://www.sans.org/rr/firewall/egress.php
+
+CERT:
+http://www.cert.org/advisories/CA-1997-28.html

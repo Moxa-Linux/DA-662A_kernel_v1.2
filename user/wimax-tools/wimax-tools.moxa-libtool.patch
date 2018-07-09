@@ -1,0 +1,36 @@
+*** ./libtool	2012-10-24 17:43:28.523049854 +0800
+--- libtool	2012-10-24 17:57:26.899047588 +0800
+***************
+*** 306,312 ****
+  archive_expsym_cmds="echo \\\"{ global:\\\" > \$output_objdir/\$libname.ver~
+  	    cat \$export_symbols | sed -e \\\"s/\\\\(.*\\\\)/\\\\1;/\\\" >> \$output_objdir/\$libname.ver~
+  	    echo \\\"local: *; };\\\" >> \$output_objdir/\$libname.ver~
+! 	    \$CC -shared \$libobjs \$deplibs \$compiler_flags \${wl}-soname \$wl\$soname \${wl}-version-script \${wl}\$output_objdir/\$libname.ver -o \$lib"
+  
+  # Commands used to build a loadable module if different from building
+  # a shared archive.
+--- 306,312 ----
+  archive_expsym_cmds="echo \\\"{ global:\\\" > \$output_objdir/\$libname.ver~
+  	    cat \$export_symbols | sed -e \\\"s/\\\\(.*\\\\)/\\\\1;/\\\" >> \$output_objdir/\$libname.ver~
+  	    echo \\\"local: *; };\\\" >> \$output_objdir/\$libname.ver~
+! 	    \$CC -shared \$libobjs \$deplibs \$compiler_flags \${wl}-soname \$wl\$soname -o \$lib"
+  
+  # Commands used to build a loadable module if different from building
+  # a shared archive.
+***************
+*** 370,376 ****
+  always_export_symbols=no
+  
+  # The commands to list exported symbols.
+! export_symbols_cmds="\$NM \$libobjs \$convenience | \$global_symbol_pipe | \$SED 's/.* //' | sort | uniq > \$export_symbols"
+  
+  # Symbols that should not be listed in the preloaded symbols.
+  exclude_expsyms="_GLOBAL_OFFSET_TABLE_|_GLOBAL__F[ID]_.*"
+--- 370,376 ----
+  always_export_symbols=no
+  
+  # The commands to list exported symbols.
+! export_symbols_cmds="\$NM \$libobjs \$convenience | \$SED 's/.* //' | sort | uniq > \$export_symbols"
+  
+  # Symbols that should not be listed in the preloaded symbols.
+  exclude_expsyms="_GLOBAL_OFFSET_TABLE_|_GLOBAL__F[ID]_.*"

@@ -1,0 +1,33 @@
+#!/bin/sh
+
+lcmmessage -c -m "Set to default"
+echo "!!! The system is resetting to default!!!"
+
+cd /
+# find processes which use mountpoint
+fuser -m -k /home
+fuser -m -k /etc
+fuser -m -k /tmp
+
+if [ "$1" = "-e" ]; then
+	# Not erase all mtdblock
+	# lazy umount
+	umount -l /home
+	umount -l /etc
+	rm -rf /tmp/.__etc
+	rm -rf /tmp/.__home
+	rm -rf /tmp/.__recover
+	# lazy umount
+	umount -l /tmp
+else
+	echo "!!!Erasing the user disk!!!"
+	# lazy umount
+	umount -l /home
+	umount -l /etc
+	umount -l /tmp
+	eraseall /dev/mtd3 0 0
+fi
+
+echo "!!!Now the system is going to reboot. !!!"
+lcmmessage -l -m "Rebooting ..."
+/sbin/reboot -d -f -i

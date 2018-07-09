@@ -1,0 +1,49 @@
+#!/bin/sh
+
+SCRIPT="$0"
+case "${SCRIPT}" in
+/*)
+	;;
+*)
+	if [ -f "${SCRIPT}" ]
+	then
+		SCRIPT="`pwd`/${SCRIPT}"
+	else
+		SCRIPT="`which ${SCRIPT}`"
+	fi
+	;;
+esac
+
+if [ ! -f "${SCRIPT}" ]
+then
+	echo "Cannot find the location of the install script ($SCRIPT) ?"
+	exit 1
+fi
+
+clear
+echo #################################################################
+echo	Welcome to MOXA PNAME firmware V1.0 auto installer.
+echo ##################################################################
+
+if [[ ! "`kversion`" =~ PNAME* ]]; then
+	echo "Firmware not for this machine."
+else
+	echo "Extracting..."
+fi           
+
+tail -n +50 ${SCRIPT} > /home/install.tgz
+# UC-1260-LX firmware
+tar zxvf /home/install.tgz -C /home
+is_mounted=`df | grep "\/dev\/sda1"`
+if [ -z "${is_mounted}" ]; then
+	mkdir -p /var/sda
+	mount /dev/sda1 /var/sda
+fi
+tar zxvf /home/kernel.tgz -C /var/sda
+mv /home/rfs.tgz /dev/shm/UC-1260-LX-FIRMWARE
+rm -rf /home/install.tgz
+rm -rf /home/kernel.tgz
+sync
+
+exit 0
+__ARCHIVE_FOLLOWS__

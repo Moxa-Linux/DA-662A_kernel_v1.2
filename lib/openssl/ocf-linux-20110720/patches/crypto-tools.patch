@@ -1,0 +1,34 @@
+Index: user/Makefile
+===================================================================
+RCS file: user/Makefile,v
+retrieving revision 1.243
+retrieving revision 1.244
+diff -u -r1.243 -r1.244
+--- user/Makefile	29 Nov 2004 07:37:47 -0000	1.243
++++ user/Makefile	30 Nov 2004 22:08:58 -0000	1.244
+@@ -62,6 +62,8 @@
+ dir_$(CONFIG_USER_CRAMFS_MKCRAMFS)          += cramfs
+ dir_$(CONFIG_USER_CRAMFS_CRAMFSCK)          += cramfs
+ dir_$(CONFIG_USER_CRON_CRON)                += cron
++dir_$(CONFIG_USER_CRYPTO_TOOLS_CRYPTOTEST)  += crypto-tools
++dir_$(CONFIG_USER_CRYPTO_TOOLS_CRYPTOKEYTEST)  += crypto-tools
+ dir_$(CONFIG_USER_CXXTEST_CXXTEST)          += cxxtest
+ dir_$(CONFIG_USER_DDNS3_CLIENT_DDNS3)        += ddns3-client
+ dir_$(CONFIG_USER_DE2TSCAL_DE2TSCAL)        += de2ts-cal
+Index: config/config.in
+===================================================================
+RCS file: config/config.in,v
+retrieving revision 1.269
+retrieving revision 1.270
+diff -u -r1.269 -r1.270
+--- config/config.in	29 Nov 2004 07:37:48 -0000	1.269
++++ config/config.in	30 Nov 2004 22:08:59 -0000	1.270
+@@ -584,6 +584,8 @@
+ bool 'cksum'			CONFIG_USER_CKSUM_CKSUM
+ bool 'clock'			CONFIG_USER_CLOCK_CLOCK
+ bool 'cpu'			CONFIG_USER_CPU_CPU
++bool 'cryptotest'		CONFIG_USER_CRYPTO_TOOLS_CRYPTOTEST
++bool 'cryptokeytest'		CONFIG_USER_CRYPTO_TOOLS_CRYPTOKEYTEST
+ bool 'date'			CONFIG_USER_CAL_DATE
+ bool 'dhrystone'   	  	CONFIG_USER_DHRYSTONE_DHRYSTONE
+ bool 'de2ts-cal'		CONFIG_USER_DE2TSCAL_DE2TSCAL

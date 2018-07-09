@@ -1,0 +1,3213 @@
+/*
+ * The hardware table is following:
+ *
+ * History :
+ * Date		Author			Comment
+ * 06-16-2004	Victor Yu.		Create it.
+ * 09-13-2004	Victor Yu.		Add to support new hardware with 921600 on
+ * 					seiral port. The old software will not support
+ * 					921600, just 230400.
+ * 10-21-2004	Victor Yu.		Fix LAN2 testing bug. More fast for RS232 testing.
+ * 11-16-2004	Victor Yu.		Add new software ID to support S/W reset button.
+ * 12-08-2004	Victor Yu.		To support UC7420 INV ODM.
+ * 12-28-2004	Victor Yu.		Add to get PC error code.
+ * 01-20-2005	Victor Yu.		Add to support UC7408 & UC7420-IVTC for DIN & DOUT.
+ * 02-09-2006   Jared Wu.               Burning test for DA-660
+ * 					Change version from 1.3 to 1.4.
+ * 04-13-2007	Victor Yu.		Porting to meet Moxa CPU with standard Linux platform.
+ * 08-22-2008	Jared Wu.		Porting to meet UC-8410 platform.
+ */
+#include	<stdio.h>
+#include	<stdlib.h>
+#include	<unistd.h>
+#include	<fcntl.h>
+#include	<errno.h>
+#include	<termios.h>
+#include	<time.h>
+#include	<sys/types.h>
+#include	<sys/socket.h>
+#include	<sys/ioctl.h>
+#include	<sys/select.h>
+#include	<linux/if.h>
+#include	<netinet/in.h>
+#include        <netinet/ip_icmp.h>
+#include	<arpa/inet.h>
+#include	<netpacket/packet.h>
+#include	<net/ethernet.h>
+#include	<sys/timeb.h>
+#include 	<linux/wireless.h>
+#include	<netdb.h>
+#include	<string.h>
+#if defined(ARCH_UC8400) || defined(ARCH_UC8000) || defined(ARCH_UC8406)
+#include "redboot_config.h"
+#endif
+#include	"moxacan_ioctl.h"
+#include	"swid.h" // define the software IDs
+#include	"moxaburn.h"
+
+#define	BUFSIZE 1024
+#define	ARCH_UC_7101
+static int SDWrite = 0;
+
+// nIndex: The nIndex for what product this is?
+static int nIndex = 0;
+
+#if defined ARCH_W341 || defined ARCH_W311 || defined ARCH_W321   
+static  unsigned long wlan_err_count;
+static char *APPESSID = "moxate0";
+#if 0	// mask by Victor Yu. 04-11-2007
+static char APPWEPKEY[11] = "1234567890";
+#else
+static char *APPWEPKEY=NULL;
+#endif
+static const char APPIP[17] = "172.16.0.1";
+static char  curssid[13];
+
+#elif defined ARCH_W345 || defined ARCH_W315 || defined ARCH_W325  
+static  unsigned long ppp_err_count;
+#endif
+
+MOXA_BURN_ITEM_T burning_items[] = { 
+  {	 
+#if ( defined ARCH_W341 )  
+          .swid = W341_SOFTWARE_ID,
+#elif ( defined ARCH_W345 )  
+           .swid = W345_SOFTWARE_ID,
+#elif ( defined ARCH_W345_IMP1 )  
+           .swid = W345_IMP1_SOFTWARE_ID,
+#elif ( defined ARCH_UC_7112_LX_PLUS )  
+            .swid = UC_7112_LX_PLUS_SOFTWARE_ID,
+#elif ( defined ARCH_UC_7112_LX_PLUS_LITON )  
+            .swid = UC_7112_LX_PLUS_LITON_SOFTWARE_ID,
+#elif ( defined ARCH_W311 )  
+            .swid = W311_SOFTWARE_ID,
+#elif ( defined ARCH_W321 )  
+            .swid = W321_SOFTWARE_ID,
+#elif ( defined ARCH_W315 )  
+            .swid = W315_SOFTWARE_ID,
+#elif ( defined ARCH_W315_NJKL )
+            .swid = W315_NJKL_SOFTWARE_ID,
+#elif ( defined ARCH_W325 )  
+            .swid = W325_SOFTWARE_ID,
+#elif ( defined ARCH_IA240 )  
+            .swid = IA240_SOFTWARE_ID,
+#elif ( defined ARCH_IA240_MARI )  
+            .swid = IA240_MARI_SOFTWARE_ID,
+#elif ( defined ARCH_IA241 )  
+            .swid = IA241_SOFTWARE_ID,
+#elif defined(ARCH_UC8400)  
+            .swid = UC8410_SOFTWARE_ID,
+#elif defined(ARCH_UC8406)  
+            .swid = UC8406_SOFTWARE_ID,
+#elif ( defined ARCH_UC8000 )  
+            .swid = UC8000_SOFTWARE_ID,
+#elif ( defined ARCH_IA241_32128 )  
+            .swid = IA241_32128_SOFTWARE_ID,
+#elif ( defined ARCH_IA241_NSPS )
+	    .swid = IA241_NSPS_SOFTWARE_ID,
+// leo 2007.08.20            
+#elif ( defined ARCH_UC_7101_LX )            
+	    .swid = UC_7101_LX_SOFTWARE_ID,
+#endif	   
+#if defined(ARCH_UC8400)  
+	  .TestSerial=testserial_half_duplex,
+#else
+	  .TestSerial=testserial,
+#endif
+	  .TestLAN1=NULL, // Set NULL by Jared, because LAN1 don't need test
+//leo_su 08.20
+#if ( defined ARCH_UC_7101_LX ) || ( defined ARCH_W315_NJKL ) || ( defined ARCH_W345_IMP1)
+ 	  .TestLAN2=NULL,
+#else
+	  .TestLAN2=testLAN2,	 
+#endif
+// Begin --- add by Jared 08-07-2008
+#if ( defined ARCH_UC8400) ||( defined ARCH_UC8000)
+	  .TestLAN3=testLAN3,
+#endif
+#if ( defined ARCH_UC8400 ) ||( defined ARCH_UC8000 )
+	  .TestLAN4=testLAN4,
+#endif
+#if ( defined ARCH_UC8400 ) ||( defined ARCH_UC8000 )
+	  .TestCF=testCF,
+#endif
+#if ( defined ARCH_UC8400 ) || ( defined ARCH_UC8000 )
+	  .TestUSB1=testUSB1,
+#endif
+#if ( defined ARCH_UC8400 ) || ( defined ARCH_UC8000 )
+	  .TestUSB2=testUSB2,
+#endif
+//johnson 08.23
+#if defined(ARCH_UC_7101_LX) || defined(ARCH_IA240) || defined(ARCH_IA240_MARI) || defined(ARCH_IA241)|| defined(ARCH_IA241_NSPS) || defined(ARCH_IA241_32128) || defined(ARCH_UC_7112_LX_PLUS) || defined(ARCH_UC_7112_LX_PLUS_LITON) || defined(ARCH_W345) || defined(ARCH_W345_IMP1) || defined(ARCH_W325) || defined(ARCH_W315) || defined(ARCH_W341) || defined(ARCH_W321) 
+// || defined(ARCH_UC8400) || defined(ARCH_UC8000)
+	  .TestSD=testSD,
+#endif
+#if ( defined ARCH_UC8400 )|| ( defined ARCH_UC8000 )
+	  .TestDIO=testDIO,
+#endif
+#if defined(ARCH_IA240) || defined(ARCH_IA240_MARI) || defined(ARCH_IA241)|| defined(ARCH_IA241_NSPS)
+	  .TestConsole=TestConsole,
+#endif
+#if defined (ARCH_UC8400 ) || defined (ARCH_UC8000 )
+	  .TestNAND=NULL, //testNAND,
+#endif
+#if defined (ARCH_UC8400 ) || defined (ARCH_UC8000 )
+	  .TestSRAM=NULL, // testSRAM,
+#endif // End --- add by Jared 08-07-2008
+#if defined (ARCH_UC8400 ) || defined (ARCH_UC8000 )
+	  .TestCAN=testCAN,
+#endif // End --- add by Jared 11-04-2008
+  }
+ // To do: Define the testing Function for a new platform
+};
+
+#define TOTAL_PRODUCTS sizeof(burning_items)/sizeof(MOXA_BURN_ITEM_T)
+
+// Jared: for DVT testing used 08-11-2008
+// 1: For DVT testing. 0: For general burning test
+static int bDVTBuring=0; 
+
+#define UDP_LOCAL_PORT		0x0409
+#define UDP_REMOTE_PORT		0x0408
+#define TEST_LEN		256
+#define RS232_WAIT_TIME		5	// unit seconds
+/*
+ * Command set (cn25ap.command) :
+ */
+#define CN25_POLL	0x0001	   /* Polling, can use on broad cast */
+				   /* CN25 will ack this command only when */
+				   /* 1. status = STATUS_IDLE */
+				   /* 2. command ser = 0 */
+#define CN25_QUERY	0x0002	   /* Query CN25 status, can't use on broad cast */
+#define CN25_SET_PARA	0x0003	   /* Set parameter, can't use on broad cast */
+#define CN25_START	0x0004	   /* Start burn, can't use on broad cast */
+#define CN25_STOP	0x0005	   /* Stop burn, can't use on broad cast */
+#define CN25_DOWNLOAD	0x0006	   /* Download, can't use on broad cast */
+#define CN25_DOWN_REST	0x0007	   /* Re-initialize download */
+#define CN25_DOWN_CHK	0x0008	   /* validate firmware format */
+#define CN25_SAVE	0x0009	   /* Save from, can't use on broad cast */
+#define CN25_RESET	0x3FFF	   /* Reset CN25 status to beginning mode */
+				   /* Can use on broad cast mode */
+				   /* If it is not sent by broad cast */
+				   /* This command is useless when CN25 is */
+				   /* >= STATUS_DOWN_OK */
+				   /* If it is sent by broad cast */
+				   /* This command is useless when CN25 is */
+				   /* >= STATUS_OK */
+#define CN25_DIAG	0xc000	   /* cn25 diagnostic packet */
+#define CN25_ACK	0x8000	   /* cn25 ACK bit */
+#define CN25_NAK	0x4000	   /* cn25 NAK bit */
+#define CN25_ALIVE	CN25_ACK   /* cn25 alive message */
+				   /* When CN25 doesn't receive any command */
+				   /*  >= 1 second. It'll broad cast an alive */
+				   /*  message with cn25ack.resp = CN25_ALIVE */
+				   /*  every second until it receives any */
+				   /*  valid command from AP */
+
+/*
+ * Notes for Command set :
+ * 1.	If command can use broad cast mode (CN25_RESET,CN25_POLL)
+ *	    Cn25 won't check command ser no. And will set ser to match AP.
+ *	If command can't use broad cast mode (CN25_SET_PARA,CN25_START ..)
+ *	    Cn25 will check command ser no. If not match cn25 will nak the
+ *	    command code with REASON_SER
+ *
+ * 2.	When download.
+ *	    The serial (cn25_download.serial) must be initialize to 0.
+ *	    And increase by 1 on next packet.
+ */
+
+/*
+ * Status set (cn25ack.status) :
+ */
+#define STATUS_IDLE	 0x0000     /* CN25 is idle */
+#define STATUS_BURN	 0x0001     /* CN25 is under burning */
+#define STATUS_FAIL	 0x0002     /* CN25 burning complete but fail */
+#define STATUS_OK	 0x0010     /* CN25 burning complete and ok */
+#define STATUS_DOWNLOAD  0x0020     /* CN25 is under downloading */
+#define STATUS_DOWN_FAIL 0x0030     /* CN25 firmware download fail */
+#define STATUS_DOWN_OK	 0x0100     /* CN25 firmware download ok */
+#define STATUS_FINISH	 0xf000	    /* firmware download and save to from ok */
+
+/*
+ * Reason code (cn25ack.reason) :
+ */
+#define REASON_UNKNOW	 0x00001 		/* unknown command */
+#define REASON_INVALID	 0x00002 		/* Invalid console udp packet */
+#define REASON_SER	 0x00003 		/* Invalid command ser no */
+#define REASON_PARA	 0x00004 		/* Invalid parameters */
+#define REASON_STATUS	 0x00005 		/* Invalid command under currnt status */
+#define REASON_BURN	 0x00006 		/* burning fail */
+#define REASON_TIME	 0x00007 		/* burning time <= 1 hour */
+#define REASON_DOWN_SER	 0x00008 		/* invalid download ser no */
+#define REASON_FIRMWARE  0x00009 		/* Invalid firmware format */
+#define REASON_SAVE	 0x0000a 		/* save from fail */
+#define REASON_ID	 0x0000b 		/* unknown CN2500 ID */
+#define REASON_OPEN	 0x0000C 		/* sio_open fail */
+#define REASON_LENGTH	 0x0000d 		/* download length exceed */
+
+/*
+ * Data structure :
+ */
+typedef struct {               /* total 9 bytes */
+    unsigned char   tm_sec;         /* GMT time      */
+    unsigned char   tm_min;
+    unsigned char   tm_hour;
+    unsigned char   tm_mday;
+    unsigned char   tm_mon;
+    unsigned char   tm_year;
+    unsigned char   tm_wday;
+    unsigned char   tm_yday;
+    unsigned char   tm_isdst;
+} __attribute__((packed)) rtcData;
+
+#if 1 // Add by Jared 01-30-2007, read/write hardware RTC directly
+/* Copied from linux/rtc.h to eliminate the kernel dependency */
+struct linux_rtc_time {
+	int tm_sec;
+	int tm_min;
+	int tm_hour;
+	int tm_mday;
+	int tm_mon;
+	int tm_year;
+	int tm_wday;
+	int tm_yday;
+	int tm_isdst;
+};
+
+#define RTC_SET_TIME   _IOW('p', 0x0a, struct linux_rtc_time) // Set RTC time
+#define RTC_RD_TIME    _IOR('p', 0x09, struct linux_rtc_time) // Read RTC time
+
+#if 0	// mask by Victor Yu. 05-10-2007
+pthread_mutex_t rtc_mutex; //protects both work_area and time_to_exit
+#else
+static int	rtc_lock_flag=0;
+#endif
+static time_t read_rtc(int utc)
+{
+	int rtc;
+	struct tm tm;
+	char *oldtz = 0;
+	time_t t = 0;
+	
+#if 1	// add by Victor Yu. 05-10-2007
+	while ( rtc_lock_flag ) usleep(1000 * 10);
+	rtc_lock_flag = 1;
+#else
+	pthread_mutex_lock(&rtc_mutex);
+#endif
+
+	if (( rtc = open ( "/dev/rtc", O_RDONLY )) < 0 ) {
+		if (( rtc = open ( "/dev/misc/rtc", O_RDONLY )) < 0 )
+			perror( "Could not access RTC in O_RDONLY mode" );
+	}
+	memset ( &tm, 0, sizeof( struct tm ));
+	if ( ioctl ( rtc, RTC_RD_TIME, &tm ) < 0 )
+		perror ( "Could not read time from RTC" );
+
+	tm.tm_isdst = -1; /* not known */
+	close ( rtc );
+	
+#if 1	// add by Victor Yu. 05-10-2007
+	rtc_lock_flag = 0;
+#else
+	pthread_mutex_unlock(&rtc_mutex);
+#endif
+
+	if ( utc ) {
+		oldtz = getenv ( "TZ" );
+		setenv ( "TZ", "UTC 0", 1 );
+		tzset ( );
+	}
+	t = mktime ( &tm );
+
+	if ( utc ) {
+		if ( oldtz )
+			setenv ( "TZ", oldtz, 1 );
+		else
+			unsetenv ( "TZ" );
+			tzset ( );
+	}
+	return t;
+}
+
+static void write_rtc(time_t t, int utc)
+{
+	int rtc;
+	struct tm tm;
+
+#if 1	// add by Victor Yu. 05-10-2007
+	while ( rtc_lock_flag ) usleep(1000 * 10);
+	rtc_lock_flag = 1;
+#else
+	pthread_mutex_lock(&rtc_mutex);
+#endif
+	
+	if (( rtc = open ( "/dev/rtc", O_WRONLY )) < 0 ) {
+		if (( rtc = open ( "/dev/misc/rtc", O_WRONLY )) < 0 ) {
+			perror ( "Could not access RTC in O_WRONLY mode" );
+		}
+	}
+
+	tm = *( utc ? gmtime ( &t ) : localtime ( &t ));
+	tm.tm_isdst = 0;
+					 
+	if ( ioctl ( rtc, RTC_SET_TIME, &tm ) < 0 ) {
+		perror ( "Could not set the RTC time" );
+	}
+
+	close ( rtc );
+	
+#if 1	// add by Victor Yu. 05-10-2007
+	rtc_lock_flag = 0;
+#else
+	pthread_mutex_unlock(&rtc_mutex);
+#endif
+}
+#endif
+
+typedef struct {	    	    /* filled by ap, total 127 bytes       */
+    unsigned short    cmd;	    /* command			       */
+    unsigned short    ser;	    /* command ser no		       */
+    unsigned short    data_len;     /* used on set para and download       */
+    unsigned long     baud;	    /* baud rate to be used on burning     */
+			            /* valid when command = set para       */
+    time_t  __attribute__((packed))  rtctime;      /* provide GMT time to device set RTC  */	
+#if 0	// mask by Victor Yu. 12-28-2004
+    unsigned char     reserve[113];/* reserved for future use             */
+#else	// add by Victor Yu. 12-28-2004
+    char		ssid[13];
+    unsigned short	monitor_error;	/* 1 has error, 0 for no error */
+    char		reserve[98];
+#endif
+} __attribute__((packed)) cn25ap;
+
+/*
+ * AP send to CN25 packet structure definition
+ */
+typedef struct {
+	cn25ap	req;
+	unsigned char	data[1];
+} __attribute__((packed)) cn25cmd;
+
+typedef struct {
+	char item_name[12];
+	unsigned long err_count;
+} __attribute__((packed)) testItem;
+
+/*
+ * CN25 send to AP packet structure definition
+ */
+#define MAXPORTNUM 64
+#define HALFPORTNUM 32
+#define MAXSPECIALTEST 8
+typedef struct { /* filled by console, total 512 bytes */
+    unsigned short resp; /* command | 0x8000 = ack, command | 0x4000 = nak */
+    unsigned short ser; /* on ACK --> next ser CN25 except to receive */
+		        /* on NAK --> currnet ser CN25 except to receive */
+    unsigned long  serial; /* serial no */
+    unsigned long  ip;     /* IP address */
+    unsigned short id;	   /* burning id */
+    unsigned long  ap_id;  /* AP Id */
+    unsigned short status; /* cn2500 burning status */
+    unsigned short reason; /* reason code if nak */
+    unsigned long  time;   /* burning time in seconds */
+    unsigned long  baud;   // baud rate to be used for burning
+    unsigned long  tot_cnt;/* total test count */
+    unsigned long  nic_tx;
+    unsigned long  nic_rx;
+    rtcData        rtcdata;// provide GMT time to device set RTC
+    unsigned short portnum;   /* port number */
+    unsigned long  p_err[MAXPORTNUM]; /* UART Error count , 256 bytes */
+    testItem       testitem[MAXSPECIALTEST];  /* Special Test Item Name and Error counter */
+                                 /* 128 bytes */ 
+    unsigned long  wlan_tx;
+    unsigned long  wlan_rx;
+    unsigned char  wlan_rssi;
+    unsigned char  wlan_speed;
+    unsigned char  reserve[65]; /* reserved for future use */	
+} __attribute__((packed)) cn25ack;
+	
+#define AP_ID_MASK		0x80ffffff	// add by Victor Yu. 01-20-2005
+
+static cn25ack		testresult;
+static int		haserror;
+static unsigned int	swid;	// add by Victor Yu. 12-08-2004
+
+static cn25ack          sendtestresult;
+static cn25cmd          recvhostcommand;
+static cn25cmd          hostcommand;
+
+void cn25ack_hton()
+{
+	int	i;	
+
+	sendtestresult.resp = htons(testresult.resp);
+	sendtestresult.ser = htons(testresult.ser);     	
+	sendtestresult.serial = htonl(testresult.serial);  
+	sendtestresult.ip = testresult.ip;    
+	sendtestresult.id = testresult.id;         	            
+	sendtestresult.ap_id = testresult.ap_id;                	        
+	sendtestresult.status = htons(testresult.status);         	            
+	sendtestresult.reason = htons(testresult.reason);         	                
+	sendtestresult.time = htonl(testresult.time);         	                    
+	sendtestresult.baud = htonl(testresult.baud);         	                        
+	sendtestresult.tot_cnt = htonl(testresult.tot_cnt);         	                            
+	sendtestresult.nic_tx = htonl(testresult.nic_tx);         	                                
+	sendtestresult.nic_rx = htonl(testresult.nic_rx);  
+    
+//rtcdata    
+	memcpy( &sendtestresult.rtcdata , &testresult.rtcdata ,sizeof(rtcData) );
+
+	sendtestresult.portnum = htons(testresult.portnum);
+    
+//p_err    
+	for ( i = 0 ; i < MAXPORTNUM ; i++ )
+		sendtestresult.p_err[i] = htonl(testresult.p_err[i]);   
+           
+//testItem                                                         	                                    
+	for ( i = 0 ; i < MAXSPECIALTEST ; i++ ) {
+		memcpy(sendtestresult.testitem[i].item_name,testresult.testitem[i].item_name,12);
+		sendtestresult.testitem[i].err_count = htonl( testresult.testitem[i].err_count  );	   
+	}
+
+//waln    
+	sendtestresult.wlan_tx = htonl(testresult.wlan_tx);    
+	sendtestresult.wlan_rx = htonl(testresult.wlan_rx);        
+
+	sendtestresult.wlan_rssi = testresult.wlan_rssi;            
+	sendtestresult.wlan_speed = testresult.wlan_speed; 
+    
+//reserve    
+	memcpy( &sendtestresult.reserve , &testresult.reserve ,sizeof(unsigned char)*65 );        
+}
+
+void cn25cmd_hton()
+{
+//req	
+    hostcommand.req.cmd	= htons(recvhostcommand.req.cmd);
+    hostcommand.req.ser	= htons( recvhostcommand.req.ser );
+    hostcommand.req.data_len	= htons( recvhostcommand.req.data_len );    
+    hostcommand.req.baud	= htonl( recvhostcommand.req.baud );            
+    hostcommand.req.rtctime = htonl(recvhostcommand.req.rtctime);
+
+    
+#if 0
+    memcpy( &hostcommand.req.reserve , &recvhostcommand.req.reserve , sizeof(unsigned char)*113);    
+#else
+    memcpy( &hostcommand.req.ssid , &recvhostcommand.req.ssid , sizeof(char)*13);    
+    hostcommand.req.monitor_error = recvhostcommand.req.monitor_error;                
+    memcpy( &hostcommand.req.reserve , &recvhostcommand.req.reserve , sizeof(char)*98);        
+#endif    
+//data    
+    hostcommand.data[0] = recvhostcommand.data[0];
+}
+
+#if ( defined ARCH_W345 ) || ( defined ARCH_W315 ) || ( defined ARCH_W325 )  
+static int	need_ping_flag = 0;
+static int set_gprs(void)
+{
+   int fd;
+   char buffer[256];   
+   system("gprscmd connect");
+   while ( 1 )
+   {
+       if ( ( fd = open("/var/run/ppp0.pid",O_RDONLY) ) < 0 )	   
+	 goto set_gprs_error;
+       else
+       {
+          close(fd);	       
+	  system("ifconfig | grep ppp0 > /var/con_status");
+	  if ( ( fd = open( "/var/con_status",O_RDONLY) ) < 0 )
+	     continue;
+	  
+	  read(fd,buffer,256);
+	  if ( buffer != NULL )
+             break; 
+	  else
+	  {
+	     close(fd);
+	     continue;
+	  }	  
+            
+       }
+   }
+   
+   dbg_printf("connect ppp0 ok!!\n");  
+   system("rm -rf /var/con_status");
+   close(fd);   
+   need_ping_flag = 1;
+   return 1;
+set_gprs_error:
+  dbg_printf("cannot connect ppp0!!\n");  
+  close(fd);  
+  system("gprscmd disconnect");
+  return -1;    
+}
+#endif
+
+
+#if  defined ARCH_W341 || defined ARCH_W311 || defined ARCH_W321  
+
+int count_char_length(char *mchar,int max_length)
+{
+    int retlength,count;
+    retlength = 0;
+    for ( count = 0 ; count < max_length ; count++ )
+    {
+ 	if ( isspace(mchar[count]) )
+	   break;
+        retlength = count;	
+	     	
+    }	    
+      	    
+    return retlength;	
+}
+
+int iw_pass_key(char *		input,
+	    unsigned char *	key)
+{
+  input = input; key = key;
+  fprintf(stderr, "Error: Passphrase not implemented\n");
+  return(-1);
+}
+
+
+
+int iw_in_key(char *		input,
+	  unsigned char *	key)
+{
+  int		keylen = 0;
+  char *	buff;
+  char *	hex;
+  char *	out;
+  char *	p;
+
+  
+
+  /* Check the type of key */
+  if(!strncmp(input, "s:", 2))
+    {
+      /* First case : as an ASCII string (Lucent/Agere cards) */
+      keylen = strlen(input + 2);		/* skip "s:" */
+      if(keylen > IW_ENCODING_TOKEN_MAX)
+	keylen = IW_ENCODING_TOKEN_MAX;
+      strncpy(key, input + 2, keylen);
+    }
+  else
+    if(!strncmp(input, "p:", 2))
+      {
+	/* Second case : as a passphrase (PrismII cards) */
+	return(iw_pass_key(input + 2, key));		/* skip "p:" */
+      }
+    else
+      {
+
+	/* Third case : as hexadecimal digits */
+	buff = malloc(IW_ENCODING_TOKEN_MAX + strlen(input) + 1);
+	if(buff == NULL)
+	  {
+	    fprintf(stderr, "Malloc failed (string too long ?)\n");
+	    return(-1);
+	  }
+	/* Preserve original buffers (both in & out) */
+	hex = buff + IW_ENCODING_TOKEN_MAX;
+	strcpy(hex, input);
+	out = buff;
+
+
+	/* Parse */
+	p = strtok(hex, "-:;.,");
+	while((p != (char *) NULL) && (keylen < IW_ENCODING_TOKEN_MAX))
+	  {
+	    int	temph;
+	    int	templ;
+	    int	count;
+	    int	len;
+	    /* Get each char separatly (and not by two) so that we don't
+	     * get confused by 'enc' (=> '0E'+'0C') and similar */
+	    count = sscanf(p, "%1X%1X", &temph, &templ);
+	    if(count < 1)
+	      return(-1);		/* Error -> non-hex char */
+	    /* Fixup odd strings such as '123' is '01'+'23' and not '12'+'03'*/
+	    len = strlen(p);
+	    if(len % 2)
+	      count = 1;
+	    /* Put back two chars as one byte */
+	    if(count == 2)
+	      templ |= temph << 4;
+	    else
+	      templ = temph;
+	    out[keylen++] = (unsigned char) (templ & 0xFF);
+	    /* Check where to get next char from */
+	    if(len > count)	/* Token not finished yet */
+	      p += count;
+	    else
+	      p = strtok((char *) NULL, "-:;.,");
+	  }
+
+
+	memcpy(key, out, keylen);
+
+
+	free(buff);
+
+      }
+
+  return(keylen);
+}
+
+
+void iw_ether_ntop(const struct ether_addr* eth, char* buf)
+{
+	sprintf(buf, "%02X:%02X:%02X:%02X:%02X:%02X", eth->ether_addr_octet[0], eth->ether_addr_octet[1], eth->ether_addr_octet[2], eth->ether_addr_octet[3], eth->ether_addr_octet[4], eth->ether_addr_octet[5]);
+}
+
+
+char* iw_pr_ether(char* bufp, const unsigned char* addr)
+{
+	iw_ether_ntop((const struct ether_addr *) addr, bufp);
+	return bufp;
+}
+
+
+int set_wirless(char* lan_name,char* messid,char *mkey)
+{
+	int			ret=TEST_OK, fd;
+        struct iwreq		wrq;
+	time_t                  start_time,now_time;
+	int                     keylen; 
+	unsigned char           key[128]; 
+        char                    buffer[30];
+	char                    iwconfig_str[60];	
+
+	fd = socket(AF_INET, SOCK_DGRAM, 0);
+	if ( fd < 0 ) 
+	{
+		ret = -1;
+		printf("%s socket open fail !\n", lan_name);
+		goto end_wirless;
+	}
+
+	
+        //SET ENC
+	if ( mkey != NULL )	
+	{
+	   //SET ESSID
+	   wrq.u.essid.flags = 1;
+	   wrq.u.essid.pointer = (caddr_t) messid;
+	   wrq.u.essid.length = strlen(APPESSID) + 1;
+	   strcpy( wrq.ifr_name ,lan_name);
+		if ( ioctl( fd , SIOCSIWESSID , &wrq ) < 0 )
+		{
+			printf("%s set ESSID fail !\n", lan_name);
+			ret = -1;
+			goto end_wirless;
+	
+		}	
+
+	   dbg_printf("%s set ESSID ok !\n", lan_name);
+
+		
+           keylen = iw_in_key( mkey , key );
+	   wrq.u.data.pointer = (caddr_t)key;
+	   wrq.u.data.length = keylen;
+	   wrq.u.data.flags = IW_ENCODE_OPEN;
+
+	   strcpy( wrq.ifr_name ,lan_name );
+	     if ( ioctl( fd , SIOCSIWENCODE , &wrq ) < 0 )
+	     {
+			dbg_printf("%s set WEPKEY fail !\n", lan_name);
+			ret = -1;
+			goto end_wirless;
+
+	     }
+
+	   dbg_printf("%s set WEPKEY ok !\n", lan_name);
+	}
+	else
+	{
+
+	    sprintf(iwconfig_str,"iwconfig %s key off",lan_name);	
+	    system(iwconfig_str);	
+	    dbg_printf("%s set WEPKEY off !\n", lan_name);
+
+
+	    sleep(5);	
+            //SET ESSID
+	    wrq.u.essid.flags = 1;
+	    wrq.u.essid.pointer = (caddr_t) messid;
+	    wrq.u.essid.length = strlen(APPESSID) + 1;
+	    strcpy( wrq.ifr_name ,lan_name);
+		if ( ioctl( fd , SIOCSIWESSID , &wrq ) < 0 )
+		{
+			dbg_printf("%s set ESSID fail !\n", lan_name);
+			ret = -1;
+			goto end_wirless;
+	
+		}	
+
+		dbg_printf("%s set ESSID ok !\n", lan_name);
+
+    	}
+
+	time( &start_time );
+	
+	   while ( 1 )
+	   {
+		//GET AP
+		   time( &now_time );
+		   strcpy( wrq.ifr_name ,lan_name );
+		     if ( ioctl( fd , SIOCGIWAP ,&wrq ) >= 0 )
+	             {
+
+	                    if ( strcmp( iw_pr_ether(buffer, wrq.u.ap_addr.sa_data ) ,"00:00:00:00:00:00" ) != 0  )  		      
+			        break;
+		     }	
+
+		     if ( difftime( now_time , start_time ) > WLAN_GETAP_TIMEOUT )
+		     {
+			dbg_printf("%s set APP ADRESS timeout !\n", lan_name);
+			ret = -1;
+			goto end_wirless;
+		     }		     
+	}     
+
+	     dbg_printf("%s get AP address ok!\n", lan_name);
+end_wirless:
+	close(fd);	
+	return ret;
+}
+
+void get_wirless_bitrate(char* lan_name)
+{
+   int fd;	
+   struct iwreq		wrq;
+   char                 buff[14];
+//  char			iw_buffer[sizeof(struct iw_range) * 2];	/* Large enough */
+
+//   struct iw_range      range;
+
+    fd = socket(AF_INET, SOCK_DGRAM, 0);
+	if ( fd < 0 ) 
+	{
+		dbg_printf("%s socket open fail !\n", lan_name);
+		goto end_wirless_bitrate;
+	}
+
+	
+    //GET BIT RATE
+    strcpy( wrq.ifr_name ,lan_name );
+
+       if  ( ioctl( fd , SIOCGIWRATE, &wrq )  < 0 )
+       {
+                dbg_printf("%s get BIT RATE fail !\n", lan_name);
+		goto end_wirless_bitrate;
+       }
+
+    sprintf(buff, "%g", wrq.u.bitrate.value / 1e6 );  
+    testresult.wlan_speed =  atol(buff);   
+    dbg_printf("%s get BIT RATE OK !\n", lan_name);
+
+/*
+//prince debug
+    memset(&wrq,0,sizeof(struct iwreq));
+    memset(buff,0,sizeof(buff));
+    //GET SIGNAL STRENGTH
+    strcpy( wrq.ifr_name ,lan_name );
+    wrq.u.data.pointer  =  (caddr_t) buff;
+    wrq.u.data.length = sizeof(buff);
+
+    wrq.u.mode = SIOCIWFIRSTPRIV + 0xF;  
+       if  ( ioctl( fd , SIOCIWFIRSTPRIV + 0xF , &wrq )  < 0 )
+       {
+                dbg_printf("%s get SIGNAL STRENGTH fail !\n", lan_name);
+		goto end_wirless_quality;
+       }
+
+    memcpy(buff,wrq.u.data.pointer,wrq.u.data.length);   
+//prince debug
+printf("buff:%s\n",buff);       
+
+//printf("wrq.u.data.pointer:%s\n",wrq.u.data.pointer);       
+
+     testresult.wlan_rssi =  atol(buff);  
+      
+//    testresult.wlan_rssi =  atol(wrq.u.data.pointer);  
+    dbg_printf("%s get SIGNAL STRENGTH OK !\n", lan_name);
+     //prince debug
+
+printf("testresult.wlan_rssi = %d\n",testresult.wlan_rssi);    
+
+*/
+
+end_wirless_bitrate:
+     close( fd );     
+   return; 
+}
+
+void get_wirless_signal(char* lan_name)
+{
+
+  FILE *	f = fopen("/proc/net/wireless", "r");
+  char		buf[256];
+  char *	bp;
+  int		t;
+  unsigned char prince;
+  if(f==NULL)
+    return;
+
+  /* Loop on all devices */
+  while(fgets(buf,255,f))
+    {
+      bp=buf;
+
+      while(*bp&&isspace(*bp))
+	bp++;
+      /* Is it the good device ? */
+      if(strncmp(bp,lan_name,strlen(lan_name))==0 && bp[strlen(lan_name)]==':')
+  	{
+
+	  /* Skip ethX: */
+	  bp=strchr(bp,':');
+	  bp++;
+	  /* -- status -- */
+	  bp = strtok(bp, " ");
+	  sscanf(bp, "%X", &t);
+//	  stats->status = (unsigned short) t;
+	  /* -- link quality -- */
+	  bp = strtok(NULL, " ");
+	  if(strchr(bp,'.') != NULL);
+//	    stats->qual.updated |= 1;
+	  sscanf(bp, "%d", &t);
+	  prince = (unsigned char) t;
+	  break;
+	  // -- signal level -- 
+/*	  
+	  bp = strtok(NULL, " ");
+	  if(strchr(bp,'.') != NULL)
+	    stats->qual.updated |= 2;
+	  sscanf(bp, "%d", &t);
+	  stats->qual.level = (unsigned char) t;
+	  // -- noise level -- 
+	  bp = strtok(NULL, " ");
+	  if(strchr(bp,'.') != NULL)
+	    stats->qual.updated += 4;
+	  sscanf(bp, "%d", &t);
+	  stats->qual.noise = (unsigned char) t;
+	  // -- discarded packets --
+	  bp = strtok(NULL, " ");
+	  sscanf(bp, "%d", &stats->discard.nwid);
+	  bp = strtok(NULL, " ");
+	  sscanf(bp, "%d", &stats->discard.code);
+	  bp = strtok(NULL, " ");
+	  sscanf(bp, "%d", &stats->discard.misc);
+	  fclose(f);
+	  return 0;
+*/	  
+  	}
+    }
+
+
+  fclose(f);
+
+  testresult.wlan_rssi = prince;  
+  
+  dbg_printf("%s get SIGNAL LEVEL OK !\n", lan_name);
+
+  return;
+
+}
+#endif	// defined(ARCH_W341)||defined(ARCH_W321)||defined(ARCH_W311)
+
+// for UC7408 & UC7420_IVTC ODM
+
+#include	<moxadevice.h>
+#define DIO_NODE			"/dev/dio"
+#define IOCTL_SET_DOUT  		15
+#define IOCTL_GET_DOUT  		16
+#define IOCTL_GET_DIN   		17
+static unsigned int	doutpattern1=0x5555, pattern1_mask=0;
+static unsigned int	doutpattern2=0xAAAA, pattern2_mask=0;
+static int max_dio = 8; // defaut is 8 dio ports
+
+typedef struct _dio_struct {
+	int	port;
+	int	data;
+} dio_t;
+
+int	testDIO(void)
+{
+	int		fd, i;
+	unsigned int	ch;
+	dio_t		dio;
+
+	fd = open(DIO_NODE, O_RDWR);
+	if ( fd < 0 ) {
+		dbg_printf("DIO node open fail !\n");
+		return TEST_FAIL;
+	}
+
+	// set pattern 1 to DOUT
+	for ( i=0, ch=1; i<max_dio; i++, ch<<=1 ) {
+		dio.port = i;
+		if ( doutpattern1 & ch )
+			dio.data = DIO_HIGH;
+		else
+			dio.data = DIO_LOW;
+		ioctl(fd, IOCTL_SET_DOUT, &dio);
+	}
+	usleep(50 * 1000);
+	for ( i=(max_dio-1), ch=0; i>=0; i-- ) {
+		dio.port = i;
+		ioctl(fd, IOCTL_GET_DIN, &dio);
+		if ( dio.data == DIO_HIGH )
+			ch |= 1;
+		if ( i != 0 )
+			ch <<= 1;
+		pattern1_mask |= (1<<i); // Get the mask of pattern1
+	}
+	if ( ch != (doutpattern1 & pattern1_mask) ) {
+		dbg_printf("DIO test fail:ch:%x, doutpattern1:%x, pattern1_mask:%x!\n", ch, doutpattern1, pattern1_mask);
+		close(fd);
+		return TEST_FAIL;
+	}
+
+	// set pattern 2 to DOUT
+	for ( i=0, ch=1; i<max_dio; i++, ch<<=1 ) {
+		dio.port = i;
+		if ( doutpattern2 & ch )
+			dio.data = DIO_HIGH;
+		else
+			dio.data = DIO_LOW;
+		ioctl(fd, IOCTL_SET_DOUT, &dio);
+	}
+	usleep(50 * 1000);
+	for ( i=(max_dio-1), ch=0; i>=0; i-- ) {
+		dio.port = i;
+		ioctl(fd, IOCTL_GET_DIN, &dio);
+		if ( dio.data == DIO_HIGH )
+			ch |= 1;
+		if ( i != 0 )
+			ch <<= 1;
+		pattern2_mask |= (1<<i); // Get the mask of pattern1
+	}
+	if ( ch != (doutpattern2 & pattern2_mask) ) {
+		dbg_printf("DIO test pattern 2 fail !\n");
+		close(fd);
+		return TEST_FAIL;
+	}
+	close(fd);
+	return TEST_OK;
+}
+
+// For USB dist test
+#define TEST_CHAR       'a'
+static char     buf[TEST_LEN];
+
+static int      CheckMount(char *dir)
+{
+        FILE    *file;
+        char    m1[64], m2[64];
+
+        file = fopen("/proc/mounts", "r");
+        if ( file == NULL ) {
+                printf("Open /proc/mounts fail !\n");
+                return -1;
+        }
+        while ( fgets(buf, TEST_LEN, file) ) {
+                sscanf(buf, "%s %s", m1, m2);
+                dbg_printf("get mount information m1=%s, m2=%s\n", m1, m2);
+
+                if ( strcmp(m1, dir) == 0 ) {
+                        fclose(file);
+                        return 0;
+                }
+        }
+        fclose(file);
+        return -1;
+}
+
+
+int	CompareTestFile(char *test_file) 
+{
+        int     i, fd1;
+
+	memset(buf, 0, sizeof(buf));
+
+        fd1 = open(test_file, O_RDONLY);
+        if ( fd1 < 0 ) {
+                printf("%s[%d]: reopen %s fail !\r\n", __FUNCTION__, __LINE__, test_file);
+                return TEST_FAIL;
+        }
+
+        if ( read(fd1, buf, TEST_LEN) != TEST_LEN ) {
+                printf("%s[%d]: read %s data length fail !\r\n", __FUNCTION__, __LINE__, test_file);
+                close(fd1);
+                return TEST_FAIL;
+        }
+        for ( i=0; i<TEST_LEN; i++ ) {
+                if ( buf[i] != TEST_CHAR ) {
+                        printf("%s[%d]: read %s data context fail !\r\n", __FUNCTION__, __LINE__, test_file);
+                        close(fd1);
+                        return TEST_FAIL;
+                }
+        }
+        close(fd1);
+
+        return TEST_OK;
+}
+
+#define TESTFILE_NAME "mptest.txt"
+int test_ExternalStorage(char *disk_path, char *mount_point)
+{
+        char test_file[40];
+
+       // first check if disk is mounted or not
+        if ( CheckMount(disk_path) ) {
+        	dbg_printf("We are going to  mount %s\n", mount_point);	
+		if( mount(disk_path, mount_point, "vfat", NULL, NULL) != 0 ) {
+			printf("%s[%d]mount %s in vfat format fail\n", __FUNCTION__, __LINE__, mount_point);
+                	return TEST_FAIL;
+		}
+
+        	if ( CheckMount(disk_path) ) {
+			printf("%s[%d]:Check mount %s fail!\n", __FUNCTION__, __LINE__, disk_path);
+                	return TEST_FAIL;
+		}
+        }
+
+        dbg_printf("%s[%d]%s has been mounted\n", __FUNCTION__, __LINE__, mount_point);	
+
+	// Create a test file, mptest.txt, on device
+        sprintf(test_file, "%s/%s", mount_point, TESTFILE_NAME);
+
+	return CompareTestFile(test_file);
+}
+
+int	createTestFile(char *test_file) {
+
+	int fd;
+
+       	fd = open(test_file, O_RDWR|O_CREAT|O_TRUNC);
+        if ( fd < 0 ) {
+               	printf("%s[%d]: open new file, %s, fail !\r\n", __FUNCTION__, __LINE__, test_file);
+       	        return TEST_FAIL;
+        }
+
+        memset(buf, TEST_CHAR, TEST_LEN* sizeof(char) );
+
+        if ( write(fd, buf, TEST_LEN) != TEST_LEN ) {
+       	        printf("%s[%d]: write data to %s fail !\r\n", __FUNCTION__,
+__LINE__, test_file);
+               	close(fd);
+                return TEST_FAIL;
+        }
+
+        close(fd);
+
+        return TEST_OK;
+}
+
+int createTestFileOnExternalStorage(char *disk_path, char *mount_point){
+        char test_file[40];
+
+       // first check if disk is mounted or not
+        if ( CheckMount(disk_path) ) {
+        	dbg_printf("We are going to  mount %s\n", mount_point);	
+		if( mount(disk_path, mount_point, "vfat", NULL, NULL) != 0 ) {
+			printf("%s[%d]mount %s in vfat format fail\n", __FUNCTION__, __LINE__, mount_point);
+                	return TEST_FAIL;
+		}
+
+        	if ( CheckMount(disk_path) ) {
+			printf("%s[%d]:Check mount %s fail!\n", __FUNCTION__, __LINE__, disk_path);
+                	return TEST_FAIL;
+		}
+        }
+
+        dbg_printf("%s[%d]%s has been mounted\n", __FUNCTION__, __LINE__, mount_point);	
+
+	// Create a test file, mptest.txt, on device
+        sprintf(test_file, "%s/%s", mount_point, TESTFILE_NAME);
+
+	return createTestFile(test_file);
+}
+
+int testCF(void)
+{
+	static int bCFWritten;
+	
+	if ( bCFWritten==0 ) {
+		if( createTestFileOnExternalStorage("/dev/sda1", "/mnt/sda") != 0) {
+       	        	printf("%s[%d]: createTestFileOnExternalStorage on /mnt/sda/ fail!\n", __FUNCTION__, __LINE__);
+			return TEST_FAIL;
+		}
+		bCFWritten=1;
+	}
+	return test_ExternalStorage("/dev/sda1","/mnt/sda");
+}
+
+
+int testUSB1(void)
+{
+	static int bUSB1Written;
+
+	if ( bUSB1Written==0 ) {
+		if( createTestFileOnExternalStorage("/dev/sdc1", "/mnt/sdc") != 0 ) {
+       	        	printf("%s[%d]: createTestFileOnExternalStorage on /mnt/sdc/ fail!\n", __FUNCTION__, __LINE__);
+			return TEST_FAIL;
+		}
+		bUSB1Written=1;
+	}
+        return test_ExternalStorage("/dev/sdc1","/mnt/sdc");
+}
+
+int testUSB2(void)
+{
+	static int bUSB2Written;
+
+	if ( bUSB2Written==0 ) {
+		if( createTestFileOnExternalStorage("/dev/sdd1", "/mnt/sdd") != 0 ) {
+       	        	printf("%s[%d]: createTestFileOnExternalStorage on /mnt/sdd/ fail!\n", __FUNCTION__, __LINE__);
+			return TEST_FAIL;
+		}
+		bUSB2Written=1;
+	}
+
+	return test_ExternalStorage("/dev/sdd1","/mnt/sdd");
+}
+
+int testNAND(void)
+{
+	static int bNANDWritten;
+	char test_file[40];
+	
+	sprintf(test_file, "/tmp/%s", TESTFILE_NAME);
+	if ( bNANDWritten==0 ) {
+		if( createTestFile(test_file) != 0) {
+       	        	printf("%s[%d]: create %s fail!\n", __FUNCTION__, __LINE__,test_file);
+			return TEST_FAIL;
+		}
+		bNANDWritten=1;
+	}
+	return CompareTestFile(test_file);
+}
+
+#define SRAM_SIZE	0x00040000  // 256 Kbytes
+static char sram_buf1[SRAM_SIZE];
+static char sram_buf2[SRAM_SIZE];
+
+int testSRAM(void)
+{
+	int fd, len;
+	static char pattern='0';
+
+	fd = open("/dev/sram", O_RDWR);
+	if( fd < 0 ) {
+		printf("Open /dev/sram fail");
+		return TEST_FAIL;
+	}
+
+	// Write the sram with patern
+	memset(sram_buf1, pattern, sizeof(sram_buf1));
+	len=write(fd, sram_buf1, sizeof(sram_buf1));
+	if( len < 0 ) {
+		printf("Write /dev/sram fail");
+		close(fd);
+		return TEST_FAIL;
+	}
+
+	// Read from sram and compare with pattern
+	len=read(fd, sram_buf2, sizeof(sram_buf2));
+	if( len < 0 ) {
+		printf("Read from /dev/sram fail\n");
+		close(fd);
+		return TEST_FAIL;
+	}
+
+	if ( memcmp(sram_buf1, sram_buf2, SRAM_SIZE) != 0 ) {
+		printf("Memory compared fail\n");
+		close(fd);
+		return TEST_FAIL;
+	}
+
+	close(fd);
+
+	// Rotate the pattern from "'0', '1', '2',...,'y'"
+	pattern++;
+	if ( pattern == 'z' )
+	 pattern = '0';
+
+        return TEST_OK;
+}
+
+
+char buf1[BUFSIZE], buf2[BUFSIZE];//johnson 08.31
+/* leo 08.21 */
+int testSD(void)
+{
+#if defined(ARCH_UC8400) || defined(ARCH_UC8000) // Write by Jared for UC8400/8000
+	static int bSDWritten;
+	
+	if ( bSDWritten==0 ) {
+		if( createTestFileOnExternalStorage("/dev/sdb1", "/mnt/sdb") != 0) {
+       	        	printf("%s[%d]: createTestFileOnExternalStorage on /mnt/sdb/ fail!\n", __FUNCTION__, __LINE__);
+			return TEST_FAIL;
+		}
+		bSDWritten=1;
+	}
+	return test_ExternalStorage("/dev/sdb1","/mnt/sdb");
+
+#else
+	int n, ans = 1;
+	int fd1, fd2;
+	static unsigned long count = 0;
+	FILE *fd;
+	char output[128];
+
+	if (SDWrite == 0)
+	{
+		fd=popen("cp /bin/moxaburn /mnt/sd","r");
+		if(fgets(output,128,fd)){
+			output[127]=0;
+			printf("Can't cp file to SD:%s\n",output);
+			testresult.testitem[burning_items[nIndex].nTestSD].err_count++;
+			haserror = TEST_FAIL;
+			return 1;
+		}
+		//system("cp /bin/moxaburn /mnt/sd");
+		SDWrite = 1;
+	}
+	
+	if ((testresult.tot_cnt%10000) == 0)
+	{
+		SDWrite = 0;	
+	}
+
+	// compare two file
+	while (1)
+	{
+		fd1 = fd2 = 0;
+		fd1 = open("/bin/moxaburn", O_RDONLY);
+		fd2 = open("/mnt/sd/moxaburn", O_RDONLY);
+		
+		if ((fd1==0) || (fd2==0))
+		{
+			if (count++ < 10000)
+			{
+				if (fd1)
+				{
+					close(fd1);
+				}
+				if (fd2)
+				{
+					close(fd2);
+				}
+				continue;
+			}
+			else
+			{
+				printf("open sd fail [%d][%d].\n", fd1, fd2);
+				ans = 1;
+				goto SD_FAIL;
+			}
+		}
+		
+		memcmp(buf1, 0, BUFSIZE);
+		memcmp(buf2, 0, BUFSIZE);
+		
+		while ((n = read(fd1, buf1, BUFSIZE)) > 0)
+		{
+			read(fd2, buf2, BUFSIZE);
+			ans = memcmp(buf1, buf2, BUFSIZE);
+//			printf("count = %d, ans = %d\n, SDWrite = %d", count++, ans, SDWrite);
+			if (ans != 0)
+			{
+				printf("SD test check data fail.\n");
+				break;
+			}
+		}
+
+SD_FAIL:		
+		if (fd1)
+		{
+			close(fd1);
+		}
+		if (fd2)
+		{
+			close(fd2);
+		}
+		                                
+		if (ans != 0)
+		{
+			testresult.testitem[burning_items[nIndex].nTestSD].err_count++;
+			haserror = TEST_FAIL;
+			return 1;
+		}
+		else
+		{
+			dbg_printf("SD test OK.\n");
+			return 0;	
+		}
+	}
+#endif
+}
+
+#define IOCTL_SW_READY_LED_ON           11
+#define IOCTL_SW_READY_LED_OFF          12
+static void ready_led_on(void)
+{
+	/*==prince delete 081162006	
+	int	fd;
+
+	fd = open("/dev/lcm", O_RDWR);
+	if ( fd < 0 ) {
+		dbg_printf("Open LCM device fail !\n");
+		return;
+	}
+	ioctl(fd, IOCTL_SW_READY_LED_ON, NULL);
+	close(fd);
+	=================*/	
+	return;
+}
+
+static void ready_led_off(void)
+{
+	/*=========prince delete 08162006	
+	int	fd;
+
+	fd = open("/dev/lcm", O_RDWR);
+	if ( fd < 0 )
+		return;
+	ioctl(fd, IOCTL_SW_READY_LED_OFF, NULL);
+	close(fd);
+	=====================*/
+	return; 	
+}
+
+struct screen {
+	int current_line;
+	char lines[2][20];
+};
+
+static int get_id(void)
+{	
+	int	retvalue = 0;
+
+#if defined ARCH_W341 
+        swid =  W341_SOFTWARE_ID;  
+	testresult.id = htons(W341_ID);
+	testresult.ap_id =htonl(W341_AP_ID);
+	testresult.portnum = 4;
+#elif defined ARCH_W345 
+        swid =  W345_SOFTWARE_ID;  
+	testresult.id = htons(W345_ID);
+	testresult.ap_id =htonl(W345_AP_ID);
+	testresult.portnum = 4;
+#elif defined ARCH_W345_IMP1
+        swid =  W345_IMP1_SOFTWARE_ID;  
+	testresult.id = htons(W345_IMP1_ID);
+	testresult.ap_id =htonl(W345_IMP1_AP_ID);
+	testresult.portnum = 1;
+//leo 08.20
+#elif defined ARCH_UC_7101_LX
+	swid =  UC_7101_LX_SOFTWARE_ID;  
+	testresult.id = htons(UC_7101_LX_ID);
+	testresult.ap_id =htonl(UC_7101_LX_AP_ID);
+	testresult.portnum = 1;
+#elif defined ARCH_UC_7112_LX_PLUS
+        swid =  UC_7112_LX_PLUS_SOFTWARE_ID;  
+	testresult.id = htons(UC_7112_LX_PLUS_ID);
+	testresult.ap_id =htonl(UC_7112_LX_PLUS_AP_ID);
+	testresult.portnum = 2;
+#elif defined ARCH_UC_7112_LX_PLUS_LITON
+        swid =  UC_7112_LX_PLUS_LITON_SOFTWARE_ID;  
+	testresult.id = htons(UC_7112_LX_PLUS_LITON_ID);
+	testresult.ap_id =htonl(UC_7112_LX_PLUS_LITON_AP_ID);
+	testresult.portnum = 2;
+#elif defined ARCH_W311 
+        swid =  W311_SOFTWARE_ID;  
+	testresult.id = htons(W311_ID);
+	testresult.ap_id =htonl(W311_AP_ID);
+	testresult.portnum = 1;
+#elif defined ARCH_W321 
+        swid =  W321_SOFTWARE_ID;  
+	testresult.id = htons(W321_ID);
+	testresult.ap_id =htonl(W321_AP_ID);
+	testresult.portnum = 2;
+#elif defined ARCH_W315 
+        swid =  W315_SOFTWARE_ID;  
+	testresult.id = htons(W315_ID);
+	testresult.ap_id =htonl(W315_AP_ID);
+	testresult.portnum = 1;
+#elif defined ARCH_W315_NJKL 
+        swid =  W315_NJKL_SOFTWARE_ID;  
+	testresult.id = htons(W315_NJKL_ID);
+	testresult.ap_id =htonl(W315_NJKL_AP_ID);
+	testresult.portnum = 0;
+#elif defined ARCH_W325 
+        swid =  W325_SOFTWARE_ID;  
+	testresult.id = htons(W325_ID);
+	testresult.ap_id =htonl(W325_AP_ID);
+	testresult.portnum = 2;
+#elif defined ARCH_IA240
+        swid =  IA240_SOFTWARE_ID;  
+	testresult.id = htons(IA240_ID);
+	testresult.ap_id =htonl(IA240_AP_ID);
+	testresult.portnum = 4;
+#elif defined ARCH_IA240_MARI
+        swid =  IA240_MARI_SOFTWARE_ID;  
+	testresult.id = htons(IA240_MARI_ID);
+	testresult.ap_id =htonl(IA240_MARI_AP_ID);
+	testresult.portnum = 4;
+#elif defined ARCH_IA241
+        swid =  IA241_SOFTWARE_ID;  
+	testresult.id = htons(IA241_ID);
+	testresult.ap_id =htonl(IA241_AP_ID);
+	testresult.portnum = 4;
+#elif (defined ARCH_UC8400)
+	read_procfs("/proc/bus/pci/devices", proc_buf);
+	swid =  get_swid();
+	switch(swid) {
+	  case UC8410_ID:
+            swid =  UC8410_SOFTWARE_ID;  
+            testresult.id = htons(UC8410_ID);
+            testresult.ap_id =htonl(UC8410_AP_ID);
+            testresult.portnum = 8;
+	    break;
+	  case UC8416_ID:
+            swid =  UC8416_SOFTWARE_ID;
+            testresult.id = htons(UC8416_ID);
+            testresult.ap_id =htonl(UC8416_AP_ID);
+            testresult.portnum = 8;
+	    break;
+	  case UC8411_ID:
+            swid =  UC8411_SOFTWARE_ID;
+            testresult.id = htons(UC8411_ID);
+            testresult.ap_id =htonl(UC8411_AP_ID);
+            testresult.portnum = 8;
+	    break;
+	  case UC8418_ID:
+            swid =  UC8418_SOFTWARE_ID;  
+            testresult.id = htons(UC8418_ID);
+            testresult.ap_id =htonl(UC8418_AP_ID);
+            testresult.portnum = 8;
+	    break;
+	  default:
+            swid =  UC8410_SOFTWARE_ID;  
+            testresult.id = htons(UC8410_ID);
+            testresult.ap_id =htonl(UC8410_AP_ID);
+            testresult.portnum = 8;
+	}
+	
+	dbg_printf("swid:%x\n", swid);
+	dbg_printf("testresult.id:%x\n", testresult.id);
+	dbg_printf("testresult.ap_id:%x\n", testresult.ap_id);
+	
+#elif defined(ARCH_UC8000)
+        swid =  UC8000_SOFTWARE_ID;  
+	testresult.id = htons(UC8000_ID);
+	testresult.ap_id =htonl(UC8000_AP_ID);
+	testresult.portnum = 8;
+#elif defined(ARCH_UC8406)
+        swid =  UC8406_SOFTWARE_ID;  
+	testresult.id = htons(UC8406_ID);
+	testresult.ap_id =htonl(UC8406_AP_ID);
+	testresult.portnum = 8;
+#elif defined ARCH_IA241_32128
+        swid =  IA241_32128_SOFTWARE_ID;  
+	testresult.id = htons(IA241_32128_ID);
+	testresult.ap_id =htonl(IA241_32128_AP_ID);
+	testresult.portnum = 4;
+#elif defined ARCH_IA241_NSPS
+        swid =  IA241_NSPS_SOFTWARE_ID;  
+	testresult.id = htons(IA241_NSPS_ID);
+	testresult.ap_id =htonl(IA241_NSPS_AP_ID);
+	testresult.portnum = 4;
+#else
+        retvalue = -1;
+#endif
+	return retvalue;
+}
+
+#if defined(ARCH_W341) || defined(ARCH_UC_7112_LX_PLUS) || defined(ARCH_UC_7112_LX_PLUS_LITON) || defined(ARCH_W311) || defined(ARCH_W321) || defined(ARCH_IA240) || defined(ARCH_IA240_MARI) || defined(ARCH_IA241) || defined(ARCH_UC8400) ||defined(ARCH_UC8000) ||defined(ARCH_IA241_32128) || defined(ARCH_IA241_NSPS) || defined(ARCH_UC8406)
+static char 		eth0ipstr[32], eth1ipstr[32], eth2ipstr[32], eth3ipstr[32], eth4ipstr[32];
+#elif ( defined ARCH_W345 ) || ( defined ARCH_W345_IMP1 ) || ( defined ARCH_W315 ) || ( defined ARCH_W325 ) || ( defined ARCH_UC_7101) || ( defined ARCH_W315_NJKL )
+static char 		eth0ipstr[32];
+#endif	
+
+void setLANnIP(char *ethname, char *ipstr) {
+	char		buf[128];
+	
+	if( strlen(ethname) ) { // if the interface exist, configure it
+		// Configure IP address
+		//if config eth0/ixp0 192.180.x.x netmask 255.255.0.0
+		sprintf(buf, "ifconfig %s %s netmask 255.255.0.0 up", ethname , ipstr);
+		dbg_printf("%s\n", buf);
+		system(buf);
+	}
+}
+
+static void setmyip(char *ethn)
+{
+	unsigned char	ip2, ip3;
+	char		buf[128];
+		
+	// to give each ethernet port IP address
+	ip2 = (testresult.serial / 254) + 1;
+	if ( ip2 == 0 || ip2 == 0xff )
+		ip2 = 1;
+	ip3 = (testresult.serial % 254) + 1;
+
+	if( strcmp(ethn, "eth0") == 0 ) {
+		sprintf(eth0ipstr, "192.180.%d.%d", ip2, ip3);
+		testresult.ip = inet_addr(eth0ipstr);
+	}
+	else if( strcmp(ethn, "eth1") == 0 ) {
+		sprintf(eth0ipstr, "192.181.%d.%d", ip2, ip3);
+	}
+	else if( strcmp(ethn, "eth2") == 0 ) {
+		sprintf(eth0ipstr, "192.182.%d.%d", ip2, ip3);
+	}
+	else if( strcmp(ethn, "eth3") == 0 ) {
+		sprintf(eth0ipstr, "192.183.%d.%d", ip2, ip3);
+	}
+	setLANnIP( ethn, eth0ipstr );
+}
+
+static void	setmytime(void)
+{
+	time_t	timep;
+	struct tm	p;
+		
+#if 0 // Masked by Jared 01-30-2007, read/write hardware RTC directly	
+	time(&timep);
+#else
+	timep=read_rtc(0);
+#endif
+	localtime_r(&timep, &p );
+	testresult.rtcdata.tm_sec  = p.tm_sec;
+	testresult.rtcdata.tm_min  = p.tm_min;
+	testresult.rtcdata.tm_hour = p.tm_hour;
+	testresult.rtcdata.tm_mday = p.tm_mday;
+	testresult.rtcdata.tm_mon  = p.tm_mon;
+	testresult.rtcdata.tm_year = p.tm_year;
+}
+
+/* common routines */
+static int in_cksum(unsigned short *buf, int sz)
+{
+	int nleft = sz;
+	int sum = 0;
+	unsigned short *w = buf;
+	unsigned short ans = 0;
+
+	while (nleft > 1) {
+		sum += *w++;
+		nleft -= 2;
+	}
+
+	if (nleft == 1) {
+		*(unsigned char *) (&ans) = *(unsigned char *) w;
+		sum += ans;
+	}
+
+	sum = (sum >> 16) + (sum & 0xFFFF);
+	sum += (sum >> 16);
+	ans = ~sum;
+	return (ans);
+}
+
+int	comp_time(struct timeb *oldtime, struct timeb *newtime)
+{
+	int	ret=0;
+
+	ret = (newtime->time - oldtime->time) * 1000;
+	ret += (newtime->millitm - oldtime->millitm);
+	return ret;
+}
+
+// must test item
+static char	sbuf[TEST_LEN], rbuf[MAXPORTNUM][TEST_LEN];
+
+int	testserial(void)
+{
+	int		fd[MAXPORTNUM];
+	int		i, j, k, ret=TEST_OK;
+	int		rcnt[MAXPORTNUM];
+	char		name[16];
+	struct termios	termio;
+	unsigned long	stime;
+
+	// initialize the file handle
+	for ( i=0; i<MAXPORTNUM; i++ ) {
+		fd[i] = -1;
+		rcnt[i] = 0;
+	}
+		
+	// open serial port
+	for ( i=0; i<testresult.portnum; i++ ) {
+		sprintf(name, "/dev/ttyM%d", i);
+		fd[i] = open(name, O_RDWR|O_NDELAY);
+		if ( fd[i] <= 0 ) {
+			dbg_printf("Open serial port /dev/ttyM%d fail !\n", i);
+			testresult.p_err[i]++;
+			ret = TEST_FAIL;
+			continue;
+		}
+	}
+
+	memset(rbuf[0], 0, TEST_LEN * MAXPORTNUM);
+	for ( i=0; i<TEST_LEN; i++ )
+		sbuf[i] =  i;
+
+	// initialize the serial
+	termio.c_iflag = 0;
+	termio.c_oflag = 0;
+	termio.c_lflag = 0;
+	termio.c_cflag = B115200 | CRTSCTS | CS8 | CREAD | CLOCAL;
+	termio.c_cc[VMIN] = 0;
+	termio.c_cc[VTIME] = 0;
+
+	for ( i=0; i<testresult.portnum; i++ ) {
+		tcsetattr(fd[i], TCSANOW, &termio);
+		tcflush(fd[i], TCIOFLUSH);
+	}
+
+	usleep(100*1000);
+
+	for ( i=0; i<testresult.portnum; i++ )
+		write(fd[i], sbuf, TEST_LEN);
+#if 1 // Masked by Jared 01-30-2007, read/write hardware RTC directly
+	stime = time(NULL);
+	while ( (unsigned long)(time(NULL)-stime) < RS232_WAIT_TIME ) {
+#else
+	stime=read_rtc(0);
+	while ( (unsigned long)(read_rtc(0)-stime) < RS232_WAIT_TIME ) {
+#endif
+		for ( i=0; i<testresult.portnum; i++ ) { 
+			if ( rcnt[i] < TEST_LEN )
+				break;
+		}
+		if ( i == testresult.portnum )
+			break;
+		for ( i=0; i<testresult.portnum; i++ ) {
+			if ( (j=rcnt[i]) >= TEST_LEN )
+				continue;
+			if ( (k=read(fd[i], &rbuf[i][j], TEST_LEN-j)) <= 0 )
+				continue;
+			rcnt[i] += k;
+		}
+		usleep(100 * 1000);
+	}
+
+	for ( i=0; i<testresult.portnum; i++ ) {
+		if ( rcnt[i] < TEST_LEN ) {
+			testresult.p_err[i]++;
+			dbg_printf("Serial port %d read length error !\n", i);
+			ret = TEST_FAIL;
+			continue;
+		}
+		for ( j=0; j<TEST_LEN; j++ ) {
+			if ( sbuf[j] != rbuf[i][j] ) {
+				testresult.p_err[i]++;
+				dbg_printf("Serial port %d read data error !\n", i);
+				dbg_printf("sbuf[%d]:%x!=rbuf[%d][%d]=%x\n", j, sbuf[j], i, j, rbuf[i][j]);
+				ret = TEST_FAIL;
+				break;
+			}
+		}
+	}
+	
+//end_testserial:
+	for ( i=0; i<MAXPORTNUM; i++ ) {
+		if ( fd[i] > 0 ) {
+			tcflush(fd[i], TCIOFLUSH);
+			close(fd[i]);
+		}
+	}
+	if( ret == TEST_OK )
+		dbg_printf("serial test OK!\n");
+
+	return ret;
+}
+
+int	testserial_half_duplex(void)
+{
+	int		fd[MAXPORTNUM];
+	int		i, j, k, ret=TEST_OK;
+	int		rcnt[MAXPORTNUM];
+	char		name[16];
+	struct termios	termio;
+	unsigned long	stime;
+
+	// initialize the file handle
+	for ( i=0; i<MAXPORTNUM; i++ ) {
+		fd[i] = -1;
+		rcnt[i] = 0;
+	}
+		
+	// open serial port
+	for ( i=0; i<testresult.portnum; i++ ) {
+		sprintf(name, "/dev/ttyM%d", i);
+		fd[i] = open(name, O_RDWR|O_NDELAY);
+		if ( fd[i] <= 0 ) {
+			dbg_printf("Open serial port /dev/ttyM%d fail !\n", i);
+			testresult.p_err[i]++;
+			ret = TEST_FAIL;
+			continue;
+		}
+	}
+
+	memset(rbuf[0], 0, TEST_LEN * MAXPORTNUM);
+	for ( i=0; i<TEST_LEN; i++ )
+		sbuf[i] =  i;
+
+	// initialize the serial
+	termio.c_iflag = 0;
+	termio.c_oflag = 0;
+	termio.c_lflag = 0;
+	termio.c_cflag = B115200 | CRTSCTS | CS8 | CREAD | CLOCAL;
+	termio.c_cc[VMIN] = 0;
+	termio.c_cc[VTIME] = 0;
+
+	for ( i=0; i<testresult.portnum; i++ ) {
+		tcsetattr(fd[i], TCSANOW, &termio);
+		tcflush(fd[i], TCIOFLUSH);
+	}
+
+	usleep(100*1000);
+	for ( i=1; i<testresult.portnum; i+=2 ) // prot 1,3,5,7
+		write(fd[i], sbuf, TEST_LEN);
+	
+	stime = time(NULL);
+	while ( (unsigned long)(time(NULL)-stime) < RS232_WAIT_TIME ) {
+		for ( i=0; i<testresult.portnum; i+=2 ) { // port 0, 2, 4, 6
+			if ( rcnt[i] < TEST_LEN )
+				break;
+		}
+		if ( i == testresult.portnum )
+			break;
+
+		for ( i=0; i<testresult.portnum; i+=2 ) { // port 0, 2, 4, 6
+			if ( (j=rcnt[i]) >= TEST_LEN )
+				continue;
+			if ( (k=read(fd[i], &rbuf[i][j], TEST_LEN-j)) <= 0 )
+				continue;
+			rcnt[i] += k;
+		}
+		usleep(100 * 1000);
+	}
+
+	for ( i=0; i<testresult.portnum; i+=2 ) { //port 0, 2, 4, 6
+		if ( rcnt[i] < TEST_LEN ) {
+			testresult.p_err[i]++;
+			dbg_printf("Serial port %d read length error !\n", i);
+			ret = TEST_FAIL;
+			continue;
+		}
+		for ( j=0; j<TEST_LEN; j++ ) {
+			if ( sbuf[j] != rbuf[i][j] ) {
+				testresult.p_err[i]++;
+				dbg_printf("Serial port %d read data error !\n", i);
+				dbg_printf("sbuf[%d]:%x!=rbuf[%d][%d]=%x\n", j, sbuf[j], i, j, rbuf[i][j]);
+				ret = TEST_FAIL;
+				break;
+			}
+		}
+	}
+	
+//end_testserial:
+	for ( i=0; i<MAXPORTNUM; i++ ) {
+		if ( fd[i] > 0 ) {
+			tcflush(fd[i], TCIOFLUSH);
+			close(fd[i]);
+		}
+	}
+	if( ret == TEST_OK )
+		dbg_printf("serial test OK!\n");
+
+	return ret;
+}
+
+int	TestConsole(void)
+{
+	int		fd;
+	int		i=4, j, k, ret=TEST_OK;
+	int		rcnt;
+	char		name[16];
+	struct termios	termio;
+	unsigned long	stime;
+
+	// initialize the file handle
+		fd = -1;
+		rcnt = 0;
+	
+	// open serial port
+
+	sprintf(name, "/dev/ttyS1");
+
+	fd = open(name, O_RDWR|O_NDELAY);
+	
+	if ( fd <= 0 ) {
+		dbg_printf("Open serial port /dev/ttyS1 fail !\n");
+		testresult.testitem[burning_items[nIndex].nTestConsole].err_count++;
+		ret = TEST_FAIL;
+		return ret;
+	}
+
+	memset(rbuf[i], 0, TEST_LEN );
+	for ( j=0; j<TEST_LEN; j++ )
+		sbuf[j] =  j;
+
+	// initialize the serial
+	termio.c_iflag = 0;
+	termio.c_oflag = 0;
+	termio.c_lflag = 0;
+	termio.c_cflag = B115200 | CRTSCTS | CS8 | CREAD | CLOCAL;
+	termio.c_cc[VMIN] = 0;
+	termio.c_cc[VTIME] = 0;
+
+	tcsetattr(fd, TCSANOW, &termio);
+	tcflush(fd, TCIOFLUSH);
+
+
+	usleep(100*1000);
+	
+	write(fd, sbuf, TEST_LEN);
+#if 1 // Masked by Jared 01-30-2007, read/write hardware RTC directly
+	stime = time(NULL);
+	while ( (unsigned long)(time(NULL)-stime) < RS232_WAIT_TIME ) {
+#else
+	stime=read_rtc(0);
+	while ( (unsigned long)(read_rtc(0)-stime) < RS232_WAIT_TIME ) {
+#endif	
+		if ( (j=rcnt) >= TEST_LEN )
+			break;
+		if ( (k=read(fd, &rbuf[i][j], TEST_LEN-j)) <= 0 )
+			continue;
+		rcnt += k;
+		usleep(100 * 1000);
+	}
+
+	
+	if ( rcnt < TEST_LEN ) {
+		testresult.testitem[burning_items[nIndex].nTestConsole].err_count++;
+		dbg_printf("Serial Console read length error !\n");
+		ret = TEST_FAIL;
+	}else{
+		for ( j=0; j<TEST_LEN; j++ ) {
+			if ( sbuf[j] != rbuf[i][j] ) {
+				testresult.testitem[burning_items[nIndex].nTestConsole].err_count++;
+				dbg_printf("Serial Console read data error !\n");
+				dbg_printf("sbuf[%d]:%x!=rbuf[%d][%d]=%x\n", j, sbuf[j], i, j, rbuf[i][j]);
+				ret = TEST_FAIL;
+				break;
+			}
+		}
+	}
+	
+//end_testserial:
+	if ( fd > 0 ) {
+		tcflush(fd, TCIOFLUSH);
+		close(fd);
+	}
+	
+	if( ret == TEST_OK )
+		dbg_printf("serial Console test OK!\n");
+
+	return ret;
+}
+
+
+// must test item
+#define UDP_TEST_PORT		0x404
+static int	looptestLAN( char *lan_name )
+{
+	int			i, ret=TEST_OK, fd;
+	struct ifreq		ifr;
+	struct timeval		tm;
+	fd_set			readfds;
+	struct sockaddr_ll	ll;
+
+	fd = socket(AF_PACKET, SOCK_DGRAM, 0);
+	if ( fd < 0 ) {
+		ret = TEST_FAIL;
+		dbg_printf("%s socket open fail !\n", lan_name);
+		goto end_testLAN;
+	}
+
+	// set this socket file handle to force to send out by "ethn" interface
+	memset(&ifr, 0, sizeof(struct ifreq));
+	strcpy(ifr.ifr_name, lan_name);
+	if ( setsockopt(fd, SOL_SOCKET, SO_BINDTODEVICE, &ifr, sizeof(ifr)) < 0 ) {
+		dbg_printf("Cannot assign the opened socket file handle to %s !\n", lan_name);
+		ret = TEST_FAIL;
+		goto end_testLAN;
+	}
+	i = 1;
+	setsockopt(fd, SOL_SOCKET, SO_BROADCAST, &i, sizeof(int));
+
+	// bind the socket file handle local port number
+	strcpy(ifr.ifr_name, lan_name);
+	ioctl(fd, SIOCGIFINDEX, &ifr);
+	ll.sll_family = AF_PACKET;
+	ll.sll_protocol = htons(ETH_P_ALL);
+	ll.sll_ifindex = ifr.ifr_ifindex;
+	ll.sll_pkttype = htons(PACKET_BROADCAST);
+	ll.sll_halen = 6;
+	memset(ll.sll_addr, 0xff, 8);
+	if ( bind(fd, (struct sockaddr *)&ll, sizeof(ll)) < 0 ) {
+		dbg_printf("Bind %s the local UDP port fail !\n", lan_name);
+		ret = TEST_FAIL;
+		goto end_testLAN;
+	}
+
+	// initialize the data buffer
+	memset(rbuf[0], 0, TEST_LEN);
+	for ( i=0; i<TEST_LEN; i++ )
+		sbuf[i] =  i;
+
+	// send data
+	ll.sll_family = AF_PACKET;
+	ll.sll_protocol = htons(ETH_P_ALL);
+	ll.sll_ifindex = ifr.ifr_ifindex;
+	ll.sll_pkttype = htons(PACKET_BROADCAST);
+	ll.sll_halen = 6;
+	memset(ll.sll_addr, 0xff, 8);
+	if ( sendto(fd, sbuf, TEST_LEN, 0, (struct sockaddr *)&ll, sizeof(ll)) <= 0 ) {
+		ret = TEST_FAIL;
+		dbg_printf("%s send data error [%d] !\n", lan_name, errno);
+		goto end_testLAN;
+	}
+
+	// receive data
+	FD_ZERO(&readfds);
+	FD_SET(fd, &readfds);
+	tm.tv_sec = 0;
+	tm.tv_usec = 100 * 1000;
+	if ( select(fd+1, &readfds, NULL, NULL, &tm) <= 0 ) {
+		ret = TEST_FAIL;
+		dbg_printf("%s wait data coming timeout !\n", lan_name);
+		goto end_testLAN;
+	}
+	if ( recvfrom(fd, rbuf[0], TEST_LEN, 0, (struct sockaddr *)&ll, &i) != TEST_LEN ) {
+		ret = TEST_FAIL;
+		dbg_printf("%s receive data length fail !\n", lan_name);
+		goto end_testLAN;
+	}
+	for ( i=0; i<TEST_LEN; i++ ) {
+		if ( sbuf[i] != rbuf[0][i] )
+			break;
+	}
+	if ( i != TEST_LEN ) {
+		ret = TEST_FAIL;
+		dbg_printf("%s receive data error !\n", lan_name);
+		goto end_testLAN;
+	}
+	dbg_printf("%s test OK.\n", lan_name);
+
+end_testLAN:
+	if ( fd > 0 )
+		close(fd);
+
+	return ret;
+}
+
+static int pingtestLAN( char *lan_name ,const char *pin_ip, int m_timeout,int mode)
+{
+	int			i, ret=TEST_OK, pingfd;
+	struct ifreq		ifr;
+	struct timeval		tm;
+	fd_set			readfds;
+	time_t                  ping_start_time,ping_now_time;
+        struct icmp		*pkt;
+	struct iphdr		*iphdr;
+	struct sockaddr_in	ping_addr;	/* address of ourselves */
+        struct hostent		*he;
+	int			flag;
+
+	pingfd = socket(AF_INET, SOCK_RAW, IPPROTO_ICMP);
+	if ( pingfd < 0 ) {
+		ret = TEST_FAIL;
+		dbg_printf("%s socket open ICMP fail !\n", lan_name);
+		goto end_pingtestLAN;
+	}
+
+	// set this socket file handle to force to send out by "ethn" interface
+	memset(&ifr, 0, sizeof(struct ifreq));
+	strcpy(ifr.ifr_name, lan_name);
+	if ( setsockopt(pingfd, SOL_SOCKET, SO_BINDTODEVICE, &ifr, sizeof(ifr)) < 0 ) {
+		dbg_printf("Cannot assign the opened socket file handle to %s !\n", lan_name);
+		ret = TEST_FAIL;
+		goto end_pingtestLAN;
+	}
+
+        i = 1;	
+	setsockopt(pingfd, SOL_SOCKET, SO_BROADCAST, &i, sizeof(int));
+
+	flag = fcntl ( pingfd , F_GETFL , 0);
+        fcntl( pingfd , F_SETFL , O_NONBLOCK );
+
+	// initialize the data buffer
+	memset(rbuf[0], 0, TEST_LEN);
+	for ( i=0; i<TEST_LEN; i++ )
+		sbuf[i] =  i;
+
+	he = gethostbyname(pin_ip);
+	ping_addr.sin_family = AF_INET;
+	memcpy( &ping_addr.sin_addr ,he->h_addr , sizeof( ping_addr.sin_addr));
+  	pkt = (struct icmp *) sbuf;
+	memset(pkt, 0, sizeof(sbuf));
+	pkt->icmp_type = ICMP_ECHO;
+	pkt->icmp_cksum = in_cksum((unsigned short *) pkt, sizeof(sbuf));
+	i = sendto( pingfd, (char *)sbuf, TEST_LEN , 0,(struct sockaddr *)&ping_addr, sizeof(struct sockaddr));
+	if (i < 0 || i != TEST_LEN )  {
+		ret = TEST_FAIL;
+		dbg_printf("%s send data error [%d] !\n", lan_name, errno);
+		goto end_pingtestLAN;
+	}
+	if ( mode == 0 )	
+		testresult.wlan_tx++;
+
+        time( &ping_start_time );
+        while ( 1 ) {
+		// receive data
+		FD_ZERO(&readfds);
+		FD_SET( pingfd, &readfds);
+		tm.tv_sec = 0;
+		tm.tv_usec = 10 * 1000;
+		if ( select( pingfd , &readfds, NULL, NULL, &tm) < 0 ) {
+			ret = TEST_FAIL;
+			dbg_printf("%s ping select fail !\n", lan_name);
+			goto end_pingtestLAN;
+		}
+		if ( FD_ISSET( pingfd , &readfds) == 0 ) {
+			i = read( pingfd, rbuf, TEST_LEN ); 
+			if (  i >= 76 ) {
+				iphdr = (struct iphdr *) rbuf;
+				pkt = (struct icmp *) (rbuf + (iphdr->ihl << 2));	/* skip ip hdr */
+				if (pkt->icmp_type == ICMP_ECHOREPLY)
+					break;
+			}
+		}
+		time( &ping_now_time );
+		if ( difftime( ping_now_time , ping_start_time ) > m_timeout ) {
+			ret = TEST_FAIL;
+			dbg_printf("%s ping machine timeout fail !\n", lan_name);
+			goto end_pingtestLAN;
+		}
+		FD_CLR( pingfd ,&readfds );	      
+	}
+	dbg_printf("%s test OK.\n", lan_name);
+#if 1	// add by Victor Yu. 04-11-2007
+	if ( mode == 0 )
+		testresult.wlan_rx++;
+#endif
+
+end_pingtestLAN:
+	if ( pingfd > 0 )
+		close(pingfd);
+
+	return ret;
+}
+
+#if ( defined ARCH_W341 ) || ( defined ARCH_W311 ) || ( defined ARCH_W321 )
+int   testLAN1( void )
+{
+        dbg_printf("eth0 test OK.\n");
+	return TEST_OK;
+}
+
+int     testLAN2( void )
+{
+        get_wirless_bitrate("eth1");
+	get_wirless_signal("eth1");
+
+	return pingtestLAN("eth1",APPIP,WLAN_PINGAP_TIMEOUT,0 );
+}
+
+#elif ( defined ARCH_W345 ) || ( defined ARCH_W345_IMP1 ) || ( defined ARCH_W315 ) || ( defined ARCH_W325 ) || (defined ARCH_W315_NJKL)
+int     testLAN1( void )
+{
+        dbg_printf("eth0 test OK.\n");
+	return TEST_OK;
+}
+#if ( defined ARCH_W345 ) || ( defined ARCH_W315 ) || ( defined ARCH_W325 )
+int     testLAN2( void )
+{
+	if ( need_ping_flag )
+		return pingtestLAN("ppp0","168.95.1.1" , GPRS_PINGAP_TIMEOUT,0 );
+	else
+		return TEST_OK;
+}
+#endif
+// leo 2007.08.20
+#elif defined(ARCH_UC_7112_LX_PLUS) || defined(ARCH_UC_7112_LX_PLUS_LITON) || defined(ARCH_IA240) || defined(ARCH_IA240_MARI) || defined(ARCH_IA241) || defined(ARCH_IA241_32128) || defined(ARCH_IA241_NSPS) || defined(ARCH_UC_7101_LX) || defined(ARCH_UC8400) || defined(ARCH_UC8000) || defined(ARCH_UC8406)
+
+int     testLAN1( void )
+{
+        dbg_printf("eth0 test OK.\n");
+	return TEST_OK;
+}
+
+int     testLAN2( void )
+{
+	return  looptestLAN("eth1");
+}
+#endif
+
+int     testLAN3( void )
+{
+	return  looptestLAN("eth2");
+}
+
+int     testLAN4( void )
+{
+	return  looptestLAN("eth3");
+}
+
+#define PORT1_NAME	"/dev/can0"
+#define PORT2_NAME	"/dev/can1"
+int     testCAN( void )
+{
+	int		fd1, fd2, i, j, baudrate, wlen, rlen;
+	user_frame_t	txframe, rxframe;
+
+	fd1 = open(PORT1_NAME, O_RDWR);
+	if ( fd1 < 0 ) {
+		printf("Open %s fail !\n", PORT1_NAME);
+		return TEST_FAIL;
+	}
+	fd2 = open(PORT2_NAME, O_RDWR);
+	if ( fd2 < 0 ) {
+		printf("Open %s fail !\n", PORT2_NAME);
+		close(fd1);
+		return TEST_FAIL;
+	}
+
+	// set baud rate
+	baudrate = 100000;	// 100K
+	ioctl(fd1, MOXACAN_IOCTL_SET_BAUD_RATE, &baudrate);
+	ioctl(fd2, MOXACAN_IOCTL_SET_BAUD_RATE, &baudrate);
+
+	for ( j=0; j< 2; j++ ) {
+		// with extend ID address testing
+		// first port 1 send and port 2 receive
+		// clear frame buffer
+		memset(&txframe, 0, sizeof(txframe));
+		memset(&rxframe, 0, sizeof(rxframe));
+
+		txframe.id = j+10;
+		txframe.data_length = MAX_CAN_DATA_LENGTH;
+		txframe.info |= USER_EXTEND_ID;
+		for ( i=0; i<MAX_CAN_DATA_LENGTH; i++ ) {
+			txframe.data.array[i] = 0x30+i;
+		}
+
+		wlen = write(fd1, &txframe, sizeof(txframe));
+		usleep(20000); //sleep(1);
+		rlen = read(fd2, &rxframe, sizeof(rxframe));
+		if ( rlen != wlen ) {
+   			dbg_printf("testCAN: rlen(%d) != wlen(%d)!\n", rlen, wlen);
+			close(fd2);
+			close(fd1);
+			return TEST_FAIL;
+		}
+	}
+
+	close(fd2);
+	close(fd1);
+
+   	dbg_printf("testCAN OK!!\n");
+
+	return  TEST_OK;
+}
+
+void init_testitems()
+{
+	int		i, testitem_index = 0;
+	
+	for ( i=0; i<MAXPORTNUM; i++ )
+		testresult.p_err[i] = 0;
+
+
+	if( burning_items[nIndex].TestLAN1 !=NULL ) {
+		burning_items[nIndex].nTestLAN1 = testitem_index;
+		strcpy(testresult.testitem[ testitem_index ].item_name, LAN1_ITEM_NAME);
+		testresult.testitem[ testitem_index ].err_count = 0;
+		testitem_index ++;
+	}
+
+#if ( defined ARCH_W341 ) || ( defined ARCH_W311 )  || ( defined ARCH_W321 ) 
+	if( burning_items[nIndex].TestLAN2 !=NULL ) {
+		setmyip("eth1");
+		burning_items[nIndex].nTestLAN2 = testitem_index;
+		strcpy(testresult.testitem[ testitem_index ].item_name, WLAN1_ITEM_NAME);
+		testresult.testitem[ testitem_index ].err_count = 0;
+                wlan_err_count = 0;
+		testitem_index ++;
+	}
+#elif ( defined ARCH_W345 ) || ( defined ARCH_W315 ) || ( defined ARCH_W325 )
+	if( burning_items[nIndex].TestLAN2 !=NULL ) {
+		setmyip("eth1");
+		burning_items[nIndex].nTestLAN2 = testitem_index;
+		strcpy(testresult.testitem[ testitem_index ].item_name, PPP1_ITEM_NAME);
+		testresult.testitem[ testitem_index ].err_count = 0;
+	        ppp_err_count = 0;
+		testitem_index ++;
+	}
+#elif defined(ARCH_UC_7112_LX_PLUS) || defined(ARCH_UC_7112_LX_PLUS_LITON) || defined(ARCH_IA240) || defined(ARCH_IA240_MARI) || defined(ARCH_IA241) ||defined(ARCH_UC8400) ||defined(ARCH_UC8000) || defined(ARCH_IA241_32128) || defined(ARCH_IA241_NSPS) || defined(ARCH_UC8406)
+	if( burning_items[nIndex].TestLAN2 !=NULL ) {
+		setmyip("eth1");
+		burning_items[nIndex].nTestLAN2 = testitem_index;
+		strcpy(testresult.testitem[ testitem_index ].item_name, LAN2_ITEM_NAME);
+		testresult.testitem[ testitem_index ].err_count = 0;
+		testitem_index ++;
+	}
+#endif
+
+#if defined(ARCH_UC8400)
+	if ( swid == UC8411_SOFTWARE_ID ) {
+		// Only 8411 doesn't equip with the LAN3
+		burning_items[nIndex].TestLAN3=NULL;
+	}
+#endif
+	if( burning_items[nIndex].TestLAN3 !=NULL ) {
+		setmyip("eth2");
+		burning_items[nIndex].nTestLAN3 = testitem_index;
+		strcpy(testresult.testitem[ testitem_index ].item_name, LAN3_ITEM_NAME);
+		testresult.testitem[ testitem_index ].err_count = 0;
+		testitem_index ++;
+	}
+#if defined(ARCH_UC8400)
+	// Jared. 10-25-2008 
+	// UC-8416 LAN4 is MoxaNet dummy hub, ip178c. 
+	// We need to load the module to initialize the VLAN configuration.
+	if ( swid == UC8416_SOFTWARE_ID ) {
+		// Only 8416 equips with a Ethernet hub
+		system("modprobe ip178c");
+	}
+	else {	// 8410/8418, doesn't has the LAN4
+		burning_items[nIndex].TestLAN4=NULL;
+	}
+#endif
+	if( burning_items[nIndex].TestLAN4 !=NULL ) {
+		setmyip("eth3");
+		burning_items[nIndex].nTestLAN4 = testitem_index;
+		strcpy(testresult.testitem[ testitem_index ].item_name, LAN4_ITEM_NAME);
+		testresult.testitem[ testitem_index ].err_count = 0;
+		testitem_index ++;
+	}
+#if defined(ARCH_UC8400)
+	if ( swid == UC8411_SOFTWARE_ID ) {
+		// Only 8411 doesn't equip with the USB
+		burning_items[nIndex].TestUSB1=NULL;
+	}
+#endif
+	if( burning_items[nIndex].TestUSB1 !=NULL ) {
+		if ( bDVTBuring==1 ) {
+			burning_items[nIndex].nTestUSB1 = testitem_index;
+			strcpy(testresult.testitem[ testitem_index ].item_name, USB1_ITEM_NAME);
+			testresult.testitem[ testitem_index ].err_count = 0;
+			testitem_index ++;
+		}
+		else {
+			burning_items[nIndex].TestUSB1 = NULL;
+		}
+	}
+
+#if defined(ARCH_UC8400)
+	if ( swid == UC8411_SOFTWARE_ID ) {
+		// Only 8411 doesn't equip with the USB
+		burning_items[nIndex].TestUSB2=NULL;
+	}
+#endif
+	if( burning_items[nIndex].TestUSB2 !=NULL ) {
+		if ( bDVTBuring==1 ) {
+			burning_items[nIndex].nTestUSB2 = testitem_index;
+			strcpy(testresult.testitem[ testitem_index ].item_name, USB2_ITEM_NAME);
+			testresult.testitem[ testitem_index ].err_count = 0;
+			testitem_index ++;
+		}
+		else {
+			burning_items[nIndex].TestUSB2 = NULL;
+		}
+        }
+
+#if defined(ARCH_UC8400)
+	if ( swid == UC8411_SOFTWARE_ID ) {
+		// Only 8411 doesn't equip with the CF
+		burning_items[nIndex].TestCF=NULL;
+	}
+#endif
+        if( burning_items[nIndex].TestCF !=NULL ) {
+		if ( bDVTBuring==1 ) {
+       	        	burning_items[nIndex].nTestCF = testitem_index;
+	                strcpy(testresult.testitem[ testitem_index ].item_name, CF_ITEM_NAME);
+        	        testresult.testitem[ testitem_index ].err_count = 0;
+			testitem_index ++;
+		}
+		else {
+			burning_items[nIndex].TestCF = NULL;
+		}
+        }
+
+	if( burning_items[nIndex].TestNAND !=NULL ) {
+		if ( bDVTBuring==1 ) {
+			burning_items[nIndex].nTestNAND = testitem_index;
+			strcpy(testresult.testitem[ testitem_index ].item_name, NAND_ITEM_NAME);
+			testresult.testitem[ testitem_index ].err_count = 0;
+			testitem_index ++;
+		}
+		else {
+			burning_items[nIndex].TestNAND = NULL;
+		}
+        }
+
+        if( burning_items[nIndex].TestSRAM !=NULL ) {
+		if ( bDVTBuring==1 ) {
+       	        	burning_items[nIndex].nTestSRAM = testitem_index;
+	                strcpy(testresult.testitem[ testitem_index ].item_name, SRAM_ITEM_NAME);
+	                testresult.testitem[ testitem_index ].err_count = 0;
+			testitem_index ++;
+		}
+		else {
+			burning_items[nIndex].TestSRAM = NULL;
+		}
+        }
+// leo 08.22 //johnson 08.23
+#if defined(ARCH_UC_7101_LX) //|| defined(ARCH_IA240) || defined(ARCH_IA241) || defined(ARCH_IA241_32128) || defined(ARCH_UC_7112_LX_PLUS) || defined(ARCH_W345) || defined(ARCH_W325) || defined(ARCH_W315) || defined(ARCH_W341) || defined(ARCH_W321
+       	if( burning_items[nIndex].TestSD !=NULL ) {
+		if ( bDVTBuring==1 ) {
+               		burning_items[nIndex].nTestSD = testitem_index;
+	                strcpy(testresult.testitem[ testitem_index ].item_name, SD_ITEM_NAME);
+       		        testresult.testitem[ testitem_index ].err_count = 0;
+			testitem_index ++;
+		}
+		else {
+			burning_items[nIndex].TestSD = NULL;
+		}
+	}
+#endif
+        if( burning_items[nIndex].TestDIO !=NULL ) {
+	        burning_items[nIndex].nTestDIO = testitem_index;
+	        strcpy(testresult.testitem[ testitem_index ].item_name, DIO_ITEM_NAME);
+	        testresult.testitem[ testitem_index ].err_count = 0;
+		testitem_index ++;
+#if defined(ARCH_UC8400)
+		// Jared. 10-25-2008 
+		// UC-8418 CAN board has external DIO module, do the DIO test
+		switch ( swid ) {
+			case UC8418_SOFTWARE_ID:
+				max_dio =12; //4
+				break;
+			case UC8416_SOFTWARE_ID:
+			case UC8410_SOFTWARE_ID:
+			case UC8411_SOFTWARE_ID:
+				max_dio =4;
+				break;
+			default:
+				max_dio =8;
+				break;
+		}
+#endif
+        }
+#if defined(ARCH_IA240) || defined(ARCH_IA240_MARI) || defined(ARCH_IA241) || defined(ARCH_IA241_NSPS)
+        if( burning_items[nIndex].TestConsole !=NULL ) {
+                burning_items[nIndex].nTestConsole = testitem_index;
+                strcpy(testresult.testitem[ testitem_index ].item_name, CONSOLE_ITEM_NAME);
+                testresult.testitem[ testitem_index ].err_count = 0;
+		testitem_index ++;
+        }
+                                                                                
+#endif
+
+#if defined(ARCH_UC8400)
+	switch ( swid ) {
+		case UC8418_SOFTWARE_ID:
+			break;
+		default:
+	// Jared. 10-25-2008 
+	// UC-8410/8416 doesn't has CAN module, we need to disable CAN test
+			burning_items[nIndex].TestCAN=NULL;
+			break;
+	}
+#endif
+        if( burning_items[nIndex].TestCAN !=NULL ) {
+	        burning_items[nIndex].nTestCAN = testitem_index;
+	        strcpy(testresult.testitem[ testitem_index ].item_name, CAN_ITEM_NAME);
+	        testresult.testitem[ testitem_index ].err_count = 0;
+		testitem_index ++;
+        }
+	// To do: Add a new test Item here
+
+}
+
+static void	*testmain(void *parm)
+{
+	dbg_printf("Enter test main thread !\n");
+	init_testitems();
+
+	while ( 1 ) {
+		if ( testresult.status == STATUS_IDLE ) {
+			dbg_printf("Test main loop sleep !\n");
+			sleep(1);
+			continue;
+		}
+		if ( testresult.status == STATUS_OK ) {
+			dbg_printf("status: STATUS_OK! Test main loop break !\n");
+			break;
+		}
+		if ( testresult.status == STATUS_FAIL ) {
+			dbg_printf("status: STATUS_FAIL! Test main loop break !\n");
+                        break;
+		}
+
+		if ( burning_items[nIndex].TestSerial )
+			if ( burning_items[nIndex].TestSerial() == TEST_FAIL ) {
+				haserror = TEST_FAIL;
+			}	
+						
+		if ( burning_items[nIndex].TestLAN1 )
+			if ( burning_items[nIndex].TestLAN1() == TEST_FAIL ) {
+				testresult.testitem[ burning_items[nIndex].nTestLAN1 ].err_count++;
+				haserror = TEST_FAIL;
+			}
+#if defined ARCH_W341 || defined ARCH_W311 || defined ARCH_W321
+		if ( burning_items[nIndex].TestLAN2 )
+			if ( burning_items[nIndex].TestLAN2() == TEST_FAIL ) {
+			//	testresult.testitem[ burning_items[nIndex].nTestLAN2 ].err_count++;
+				wlan_err_count++;
+				memset(testresult.testitem[ burning_items[nIndex].nTestLAN2 ].item_name,0,12);
+				sprintf(testresult.testitem[ burning_items[nIndex].nTestLAN2 ].item_name,"%s%ld",WLAN1_ITEM_NAME,wlan_err_count);
+
+//				haserror = TEST_FAIL;
+			}
+#elif defined ARCH_W345 || defined ARCH_W315 || defined ARCH_W325
+		if ( burning_items[nIndex].TestLAN2 )
+			if ( burning_items[nIndex].TestLAN2() == TEST_FAIL ) {
+			//	testresult.testitem[ burning_items[nIndex].nTestLAN3 ].err_count++;
+				ppp_err_count++;
+				memset(testresult.testitem[ burning_items[nIndex].nTestLAN2 ].item_name,0,12);
+				sprintf(testresult.testitem[ burning_items[nIndex].nTestLAN2 ].item_name,"%s%ld",PPP1_ITEM_NAME,ppp_err_count);
+#if 0	// mask by Victor Yu. 04-13-2007, Sun says that don't show it.
+				haserror = TEST_FAIL;
+#endif
+			}
+
+#elif defined(ARCH_UC_7112_LX_PLUS) || defined(ARCH_UC_7112_LX_PLUS_LITON) || defined(ARCH_IA240) || defined(ARCH_IA240_MARI) || defined(ARCH_IA241) || defined(ARCH_IA241_32128) || defined(ARCH_IA241_NSPS) || defined(ARCH_UC8400) || defined(ARCH_UC8000) || defined(ARCH_UC8406)
+		if ( burning_items[nIndex].TestLAN2 )
+			if ( burning_items[nIndex].TestLAN2() == TEST_FAIL ) {
+				testresult.testitem[ burning_items[nIndex].nTestLAN2 ].err_count++;
+				haserror = TEST_FAIL;
+			}
+#endif
+
+		if ( burning_items[nIndex].TestLAN3 )
+			if ( burning_items[nIndex].TestLAN3() == TEST_FAIL ) {
+				testresult.testitem[ burning_items[nIndex].nTestLAN3 ].err_count++;
+				haserror = TEST_FAIL;
+			}
+
+		if ( burning_items[nIndex].TestLAN4 )
+			if ( burning_items[nIndex].TestLAN4() == TEST_FAIL ) {
+				testresult.testitem[ burning_items[nIndex].nTestLAN4 ].err_count++;
+				haserror = TEST_FAIL;
+			}
+
+		if ( burning_items[nIndex].TestUSB1 )
+			if ( burning_items[nIndex].TestUSB1() == TEST_FAIL ) {
+				testresult.testitem[ burning_items[nIndex].nTestUSB1 ].err_count++;
+				haserror = TEST_FAIL;
+			}
+
+		if ( burning_items[nIndex].TestUSB2 )
+			if ( burning_items[nIndex].TestUSB2() == TEST_FAIL ) {
+				testresult.testitem[ burning_items[nIndex].nTestUSB2 ].err_count++;
+				haserror = TEST_FAIL;
+			}
+
+		if ( burning_items[nIndex].TestCF )
+			if ( burning_items[nIndex].TestCF() == TEST_FAIL ) {
+				testresult.testitem[ burning_items[nIndex].nTestCF ].err_count++;
+				haserror = TEST_FAIL;
+			}
+
+		if ( burning_items[nIndex].TestNAND )
+			if ( burning_items[nIndex].TestNAND() == TEST_FAIL ) {
+				testresult.testitem[ burning_items[nIndex].nTestNAND ].err_count++;
+				haserror = TEST_FAIL;
+			}
+
+		if ( burning_items[nIndex].TestSRAM )
+			if ( burning_items[nIndex].TestSRAM() == TEST_FAIL ) {
+				testresult.testitem[ burning_items[nIndex].nTestSRAM ].err_count++;
+				haserror = TEST_FAIL;
+			}
+
+		if ( burning_items[nIndex].TestSD )
+			if ( burning_items[nIndex].TestSD() == TEST_FAIL )
+			{
+				testresult.testitem[ burning_items[nIndex].nTestSD ].err_count++;
+				haserror = TEST_FAIL;
+			}
+
+		if ( burning_items[nIndex].TestDIO )
+			if ( burning_items[nIndex].TestDIO() == TEST_FAIL ) {
+				testresult.testitem[ burning_items[nIndex].nTestDIO ].err_count++;
+				haserror = TEST_FAIL;
+			}
+
+		if ( burning_items[nIndex].TestCAN )
+			if ( burning_items[nIndex].TestCAN() == TEST_FAIL ) {
+				testresult.testitem[ burning_items[nIndex].nTestCAN ].err_count++;
+				haserror = TEST_FAIL;
+			}
+
+//johnson
+#if defined(ARCH_IA240) || defined(ARCH_IA240_MARI) || defined(ARCH_IA241) || defined(ARCH_IA241_NSPS)
+		if ( burning_items[nIndex].TestConsole )
+			if ( burning_items[nIndex].TestConsole() == TEST_FAIL )
+				haserror = TEST_FAIL;
+#endif
+		// To do: Add a new test Item here
+
+		testresult.tot_cnt++;
+	}
+
+	dbg_printf("Exit from test_main\n");
+	
+	return NULL;
+}
+
+#if !defined(ARCH_UC8400) && !defined(ARCH_UC8406) // add by Jared 07-28-2008 for UC8400
+//if get 0 == normal mode 
+//       1 == burning mode
+//      -1 == error  
+
+int	burnflag_get(void)
+{
+	int fdburn;
+	int retflag = -1;
+	unsigned char buff;
+	fdburn = open(BOOTLOADER_DEV,O_RDWR);
+	if ( fdburn < 0 )  	
+		printf("open bootloader partion fail !\n");
+	else {
+       	        lseek(fdburn,BURNFLAG_ADDR,SEEK_SET);
+               	read(fdburn, &buff, sizeof(buff));
+		if ( ( buff & 0x8 ) == 0x00 )
+		      retflag = 1;
+		else if ( ( buff & 0x8 ) == 0x8 )
+		      retflag = 0;	   
+       }
+	close(fdburn);	
+	return retflag;	
+}
+
+//if set 0 == burning mode 
+//       1 == normal mode
+//   return value == 1 set ok
+//          value == 0 set fail     
+int	burnflag_set(int mflag)
+{
+	int fdburn;
+	int retvalue = 0;
+	unsigned char buff;
+
+	fdburn = open(BOOTLOADER_DEV,O_RDWR);
+	if ( fdburn < 0 )  	
+        	printf("open bootloader partion fail !\n");
+	else {
+       	        lseek(fdburn,BURNFLAG_ADDR,SEEK_SET);
+		read( fdburn,&buff,sizeof(buff));
+		if ( mflag == 0 )
+			buff = buff & 0x03;//0x7;//johnson modify for WT	
+		else if ( mflag == 1 ){//johnson add for WT 
+			buff = buff | 0x8;
+			if(buff&0x04) buff&=0x0d;
+		}//johnson add for WT
+
+		lseek(fdburn,BURNFLAG_ADDR,SEEK_SET);
+		write(fdburn,&buff,sizeof(buff));
+
+		retvalue = 1;
+	}
+	close(fdburn);	
+	return retvalue;	
+}
+
+unsigned long serial_get(void)
+{
+	int		fdserial;
+	unsigned long	retvalue;
+    
+	fdserial = open(BOOTLOADER_DEV,O_RDWR);
+	if ( fdserial < 0 )  	
+		printf("open bootloader partion fail !\n");
+	else {
+		lseek(fdserial,SERIALNO_ADDR,SEEK_SET);
+		read(fdserial,&retvalue,sizeof(retvalue));
+	}
+	close(fdserial);	
+	return retvalue;	
+}	
+#endif
+
+
+extern int optind, opterr, optopt;
+extern char *optarg, **environ;
+static pthread_t	testthreadh;
+int	main(int argc, char *argv[])
+{
+	int			i, rlen;
+	unsigned long		burning_flag;
+	int			sock_fd;
+	struct sockaddr_in	local, remote;
+	struct ifreq		ifr;
+	struct timeval		tm;
+	fd_set			readfds;
+	unsigned short		ack;
+	int			alive_flag=1, c;
+	time_t			startburntime=0, stopburntime=0;
+	struct timeb		starttime, nowtime;
+	char     optstring[] = "dns";
+	
+#if 1 //Add by Hank 09-09-2008, for setting EOT and MAC flag
+	int			mac_flag, EOT_flag;
+#endif //Add by Hank 09-09-2008
+	
+#if defined ARCH_W341 || defined ARCH_W311 || defined ARCH_W321 	
+	int ssid_length;
+#endif	
+	
+	if ( argc > 2 ) {
+		printf("moxaburn version 1.2.\n");
+		printf("Usage : %s [-dns]\n", argv[0]);
+		printf("\t-d: ignore the burning flags\n");
+		printf("\t-n: add nand flash into buring test\n");
+		printf("\t-s: add sram into buring test\n");
+		exit(0);
+	}
+	
+	memset(&testresult, 0, sizeof(testresult));
+	while ((c = getopt(argc, argv, optstring)) != -1)
+	switch (c) {
+	case 'd':
+		bDVTBuring = 1;  // force upfirm
+		printf("For DVT testing. This will not check the DVT flag\n");
+		break;
+	case 'n':
+		// add nand flash into buring test
+		burning_items[0].TestNAND=testNAND; 
+		printf("Add nand flash into buring test\n");
+		break;
+	case 's':
+		// add sram into buring test
+		burning_items[0].TestSRAM=testSRAM; 
+		printf("Add sram into buring test\n");
+		break;
+
+	case '?':
+		printf("Found an option that was not in optstring. %c\n", optopt);
+		break;
+	}
+
+#if (defined ARCH_UC8400) || (defined ARCH_UC8000) || defined(ARCH_UC8406)
+// Add by Jared 07-28-2008 for UC-8400 get burning_flag
+	if ( config_init() < 0 ) {
+		printf("Flash configuraiton initialize fail !\r\n");
+		exit(0);
+	} else {
+		if ( config_get("burning_flag", &burning_flag) < 0 ) {
+			printf("Get burning_flag form redboot configurations fail !\r\n");
+			exit(0);
+		} else {
+			// Don't do the DVT buring and burning_flag is set
+			if ( bDVTBuring==0 && burning_flag!=0 ) {
+				dbg_printf("Get burning_flag is true.\r\n");
+				exit(0);
+			}
+		}
+	}
+
+	config_get("serial_no", &testresult.serial);
+	dbg_printf("%s[%d]get_serial number:%d",__FUNCTION__,__LINE__,testresult.serial);
+
+#if 1 //Add by Hank 09-09-2008, for setting EOT and MAC flag
+	config_get("mac_flag", &mac_flag);
+	config_get("EOT", &EOT_flag);
+	config_get("mp_flag", &i);
+	if ( i == 0 )
+	{
+		dbg_printf("MP test false. Need first to do MP test.\n");
+		exit(0);
+	}
+#endif //Add by Hank 09-09-2008
+
+#else // Add by Jared 07-28-2008 for UC-8400 get burning_flag
+	// Don't do the DVT buring and burning_flag is set
+	if ( bDVTBuring==0 && burnflag_get() == 0 ) 
+	{
+		dbg_printf("The burning flag is set.\n");
+#ifndef TEST
+		exit(0);
+#endif		
+	}
+      
+	testresult.serial = serial_get();
+#endif
+	
+	// get my product ID, now support
+	if ( get_id() == -1 ) {
+		printf("The apid get Fail.\n");
+		exit (0);
+	}
+	
+mbl1:	// add by Victor Yu. 12-08-2004
+	// to set my IP for testing using
+	setmyip("eth0");
+
+	sprintf(sbuf, "burning,no:%d\n", testresult.serial);
+	sprintf(sbuf, "%s\n", eth0ipstr);
+
+#if ( defined ARCH_W341 ) || ( defined ARCH_W311 ) || ( defined ARCH_W321 )   
+	set_wirless("eth1",APPESSID,APPWEPKEY);
+#elif ( defined ARCH_W345 ) || ( defined ARCH_W315 ) || ( defined ARCH_W325 )
+	set_gprs();
+#endif	
+
+	// initialize the global variable for remote PC monitor used
+	testresult.status = STATUS_IDLE;
+	haserror = TEST_OK;
+	sock_fd = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
+	if ( sock_fd < 0 ) {
+		dbg_printf("Open the socket is fail !\n");
+		exit(-1);
+	}
+	// set this socket file handle to force to send out by eth0 interface
+	memset(&ifr, 0, sizeof(struct ifreq));
+#ifdef FACTORY_MODE	
+	strcpy(ifr.ifr_name, "eth0");
+#else
+	strcpy(ifr.ifr_name, "eth1");
+#endif	
+	if ( setsockopt(sock_fd, SOL_SOCKET, SO_BINDTODEVICE, &ifr, sizeof(ifr)) < 0 ) {
+#ifdef FACTORY_MODE		
+		printf("Cannot assign the opened socket file handle to eth0 !\n");
+#else
+		printf("Cannot assign the opened socket file handle to eth1 !\n");
+#endif		
+		close(sock_fd);
+		exit(-1);
+	}
+	i = 1;
+	setsockopt(sock_fd, SOL_SOCKET, SO_BROADCAST, &i, sizeof(int));
+	{
+	struct linger	__lin;
+	__lin.l_onoff = 1;
+	__lin.l_linger = 3;
+	setsockopt(sock_fd, SOL_SOCKET, SO_LINGER, &__lin, sizeof(__lin));
+	}
+
+	// bind the socket file handle local port number
+	memset(&local,0,sizeof(local));
+	local.sin_port = htons(UDP_LOCAL_PORT);
+	local.sin_addr.s_addr = htonl(INADDR_ANY);
+	local.sin_family = AF_INET;
+	if ( bind(sock_fd, (struct sockaddr *)&local, sizeof(local)) < 0 ) {
+		dbg_printf("Bind the local UDP port222 fail !\n");
+		close(sock_fd);
+		exit(-1);
+	}
+	
+	pthread_create(&testthreadh, NULL, &testmain, NULL);
+	
+	// start to do burning, first to wait the remote monitor PC to start it
+	while ( testresult.status != STATUS_OK && testresult.status != STATUS_FAIL ) {
+		if ( testresult.status == STATUS_IDLE && alive_flag ) {
+
+			testresult.resp = CN25_ALIVE;
+			setmytime();
+			
+			remote.sin_port = htons(UDP_REMOTE_PORT);
+			remote.sin_addr.s_addr = htonl(INADDR_BROADCAST);
+			remote.sin_family = AF_INET;
+			
+			cn25ack_hton();
+			i = sendto(sock_fd, &sendtestresult, sizeof(sendtestresult), 0, (struct sockaddr *)&remote, sizeof(remote));			
+			
+			alive_flag = 1;
+			dbg_printf("Send ALIVE message to PC to want to start burning. [%d]\n", i);
+#if 1
+		} else if ( testresult.status == STATUS_BURN ) {
+			ftime(&nowtime);
+			if ( comp_time(&starttime, &nowtime) < 100 ) {
+				goto wait_new_message;
+			}
+			testresult.resp = CN25_DIAG;
+			setmytime();
+			if ( testresult.status == STATUS_BURN )
+#if 0 // Masked by Jared 01-30-2007, read/write hardware RTC directly
+				testresult.time = time(NULL) - startburntime;
+#else
+				testresult.time = read_rtc(0) - startburntime;
+#endif
+			else
+				testresult.time = stopburntime - startburntime;
+
+ 			cn25ack_hton();                      	
+                      	sendto(sock_fd, &sendtestresult, sizeof(sendtestresult), 0, (struct sockaddr *)&remote, sizeof(remote)); 			
+			testresult.nic_tx++;
+//			testresult.wlan_tx++;
+			starttime = nowtime;
+			dbg_printf("STATUS_BURN Response, time=%lu!\n", testresult.time);
+		}
+#else
+		}
+#endif
+
+wait_new_message:
+		FD_ZERO(&readfds);
+		FD_SET(sock_fd, &readfds);
+		if ( testresult.status == STATUS_IDLE ) {
+                  	tm.tv_sec = 3;
+			tm.tv_usec = 0;
+		} else {
+			tm.tv_sec = 0;
+			tm.tv_usec = 100 * 10000;
+		}
+		
+		if ( select(sock_fd+1, &readfds, NULL, NULL, &tm) <= 0 ) {
+			dbg_printf("Cannot Receive Data!\n");
+			continue;
+		}
+		dbg_printf("Recieve Data OK!\n");
+		rlen = recvfrom(sock_fd, &recvhostcommand, sizeof(recvhostcommand), 0, (struct sockaddr *)&remote, &i);	
+		cn25cmd_hton();
+		
+		dbg_printf("receive from PC length = %d, ser=%d\n", rlen, hostcommand.req.ser);
+		if ( rlen < sizeof(hostcommand) ) {
+			dbg_printf("The data length is too short, need [%d]\n", sizeof(hostcommand));
+			continue;
+		}
+//prince mark for special
+#if defined ARCH_W341 || defined ARCH_W311 || defined ARCH_W321  		
+		if ( hostcommand.req.ssid[0] != 0 ) {
+			ssid_length = count_char_length(hostcommand.req.ssid ,13);	
+			if ( curssid[0] == 0 && strncmp(curssid,hostcommand.req.ssid,ssid_length) != 0 ) {
+				strncpy(curssid,hostcommand.req.ssid,ssid_length);	   
+				curssid[ssid_length+1] = '\0';
+				set_wirless("eth1",curssid,NULL);	
+			}
+		}
+#endif		
+		
+#define CHECK_CMD_SER()	{ \
+	if ( testresult.ser != hostcommand.req.ser ) { \
+		ack = CN25_NAK; \
+		testresult.reason = REASON_SER; \
+		dbg_printf("Error sequence number my [%d], PC [%d]\n", testresult.ser, hostcommand.req.ser); \
+		break; \
+	} \
+}
+
+		ack = 0;
+		testresult.reason = 0;
+	
+		switch ( hostcommand.req.cmd ) {
+		case CN25_POLL :	/* Polling, can use on broad cast */
+				   	/* CN25 will ack this command only when */
+					/* 1. status = STATUS_IDLE */
+					/* 2. command ser = 0 */
+			dbg_printf("Receive polling command from PC.\n");
+			if ( testresult.status == STATUS_IDLE && testresult.ser == 0 )
+				ack = CN25_ACK;
+			break;
+		case CN25_QUERY :	/* Query CN25 status, can't use on broad cast */
+			dbg_printf("Receive query command from PC.\n");
+			CHECK_CMD_SER();
+			ack = CN25_ACK;
+			testresult.ser++;
+			break;
+		case CN25_SET_PARA :	/* Set parameter, can't use on broad cast */
+			dbg_printf("Receive set parameter command from PC.\n");
+			CHECK_CMD_SER();
+			if ( hostcommand.req.baud > 921600 ) {
+				ack = CN25_NAK;
+				testresult.reason = REASON_PARA;
+				dbg_printf("Error baud rate too large !\n");
+				break;
+			}
+			if ( testresult.status != STATUS_IDLE ) {
+				ack = CN25_NAK;
+				testresult.reason = REASON_STATUS;
+				dbg_printf("Error status is not at idle status !\n");
+				break;
+			}
+			ack = CN25_ACK;
+			testresult.ser++;
+			break;
+		case CN25_START :	/* Start burn, can't use on broad cast */
+			dbg_printf("Receive start command from PC.\n");
+			CHECK_CMD_SER();
+			if ( testresult.status != STATUS_IDLE ) {
+				ack = CN25_NAK;
+				testresult.reason = REASON_STATUS;
+				dbg_printf("Error status is not at idle status !\n");
+				break;
+			}
+			putenv("TZ=CST-8");
+			tzset();
+#if 0 // Masked by Jared 01-30-2007, read/write hardware RTC directly
+			// Add by Jared 07-07-2006. Fix the alignment's problem:
+			// &hostcommand.req.rtctime is not at the four bytes alignment address
+			startburntime=hostcommand.req.rtctime;
+			if( stime(&startburntime) != 0)
+				dbg_printf("stime() fail, errno:%d!\n",errno);
+#else
+			write_rtc(hostcommand.req.rtctime, 0);
+#endif
+			testresult.nic_tx = 0;
+			testresult.nic_rx = 0;
+			testresult.tot_cnt = 0;
+			testresult.wlan_rx = 0;
+			testresult.wlan_tx = 0;
+#if defined(ARCH_W345) || defined(ARCH_W325) || defined(ARCH_W315)
+			testresult.wlan_rssi = 100;
+#endif
+#if 0 // Masked by Jared 01-30-2007, read/write hardware RTC directly
+			startburntime = time(NULL);
+#else
+			startburntime = read_rtc(0);
+#endif
+			testresult.ser++;
+			ack = CN25_ACK;
+			testresult.status = STATUS_BURN;
+			ftime(&starttime);
+			sprintf(sbuf, "Starting,No:%d\n", testresult.serial);
+
+			break;
+		case CN25_STOP :	/* Stop burn, can't use on broad cast */
+			dbg_printf("Receive stop command from PC.\n");
+			CHECK_CMD_SER();
+			if ( testresult.status != STATUS_BURN ) {
+				ack = CN25_NAK;
+				testresult.reason = REASON_STATUS;
+				dbg_printf("Error status is not at idle status !\n");
+				break;
+			}
+//prince debug begin                       
+                        dbg_printf("testresult.wlan_rx = %d\n", testresult.wlan_rx);	
+		        dbg_printf("testresult.wlan_tx = %d\n", testresult.wlan_tx);		
+                        dbg_printf("hostcommand.req.cmd = %d\n", hostcommand.req.cmd);		
+			dbg_printf("hostcommand.req.ser = %d\n", hostcommand.req.ser);		
+                        dbg_printf("hostcommand.req.data_len = %d\n", hostcommand.req.data_len);		
+                        dbg_printf("hostcommand.req.baud = %ld\n", hostcommand.req.baud);		
+                        dbg_printf("hostcommand.req.rtctime = %ld\n", hostcommand.req.rtctime);		
+			dbg_printf("hostcommand.req.monitor_error = %d\n", hostcommand.req.monitor_error);
+			dbg_printf("hostcommand.req.reserve = %s\n", hostcommand.req.reserve);		
+//prince debug end
+
+#if 0 // Masked by Jared 01-30-2007, read/write hardware RTC directly
+			stopburntime = time(NULL);
+#else
+			stopburntime = read_rtc(0);
+#endif
+			dbg_printf("stopburntime:%lu\n", stopburntime);
+			
+			if ( hostcommand.req.monitor_error )
+				haserror = TEST_FAIL;
+				
+			if ( haserror == TEST_OK )
+				testresult.status = STATUS_OK;
+			else {
+				testresult.status = STATUS_FAIL;
+				testresult.reason = REASON_BURN;
+			}
+			testresult.ser++;
+			ack = CN25_ACK;
+			break;
+		case CN25_DOWNLOAD :	/* Download, can't use on broad cast */
+			// now not support this command
+			dbg_printf("Receive download command from PC.\n");
+			break;
+		case CN25_DOWN_REST :	/* Re-initialize download */
+			// now not support this command
+			dbg_printf("Receive download reset command from PC.\n");
+			break;
+		case CN25_DOWN_CHK :	/* validate firmware format */
+			// now not support this command
+			dbg_printf("Receive download check command from PC.\n");
+			break;
+		case CN25_SAVE :		/* Save from, can't use on broad cast */
+			// now not support this command
+			dbg_printf("Receive save command from PC.\n");
+			break;
+		case CN25_RESET :	/* Reset CN25 status to beginning mode */
+					/* Can use on broad cast mode */
+					/* If it is not sent by broad cast */
+					/* This command is useless when CN25 is */
+					/* >= STATUS_DOWN_OK */
+					/* If it is sent by broad cast */
+					/* This command is useless when CN25 is */
+					/* >= STATUS_OK */
+			dbg_printf("Receive reset command from PC.\n");
+			testresult.status = STATUS_IDLE;
+			testresult.ser = 0;
+			testresult.nic_rx = 0;
+			testresult.nic_tx = 0;
+			testresult.wlan_rx = 0;
+			testresult.wlan_tx = 0;
+#if defined(ARCH_W345) || defined(ARCH_W325) || defined(ARCH_W315)
+			testresult.wlan_rssi = 100;
+#endif
+			startburntime = stopburntime = 0;
+			testresult.time = 0;
+			testresult.tot_cnt = 0;
+			for ( i=0; i<MAXPORTNUM; i++ )
+				testresult.p_err[i] = 0;
+			for ( i=0; i<MAXSPECIALTEST; i++ )
+				testresult.testitem[i].err_count = 0;
+			alive_flag = 1;	// add by Victor Yu. 12-30-2004
+			break;
+		case CN25_DIAG :	/* cn25 diagnostic packet */
+			dbg_printf("Receive diagnostic command from PC.\n");
+			if ( testresult.status != STATUS_BURN )
+				break;
+			testresult.nic_rx++;
+//			testresult.wlan_rx++;
+#if 0 
+			testresult.resp = CN25_DIAG;
+			testresult.nic_tx++;
+			setmytime();
+			if ( testresult.status == STATUS_BURN )
+				testresult.time = time(NULL) - startburntime;
+			else
+				testresult.time = stopburntime - startburntime;
+			//prince delete 08142006	
+			//sendto(sock_fd, &testresult, sizeof(testresult), 0, (struct sockaddr *)&remote, sizeof(remote));
+			//prince add 08142006 begin
+ 			cn25ack_hton();                      	
+                      	sendto(sock_fd, &sendtestresult, sizeof(sendtestresult), 0, (struct sockaddr *)&remote, sizeof(remote)); 						
+			//prince add 08142006 end                      	
+			alive_flag = 0;
+#endif
+			break;
+		case CN25_ALIVE	:	/* cn25 alive message */
+			dbg_printf("Receive alive check command from PC.\n");
+			break;
+		default :
+			dbg_printf("Receive unknow command from PC.\n");
+			break;
+		}
+		
+		if ( ack ) {
+			alive_flag = 0;
+			testresult.resp = hostcommand.req.cmd | ack;
+			setmytime();
+			if ( testresult.status == STATUS_BURN ) {
+#if 0 // Masked by Jared 01-30-2007, read/write hardware RTC directly
+				testresult.time = time(NULL) - startburntime;
+#else
+				testresult.time = read_rtc(0) - startburntime;
+#endif
+			}
+			else {
+				testresult.time = stopburntime - startburntime;
+			}
+
+ 			cn25ack_hton();                      	
+                      	sendto(sock_fd, &sendtestresult, sizeof(sendtestresult), 0, (struct sockaddr *)&remote, sizeof(remote)); 						
+			dbg_printf("Response command to PC my ser=%d, time=%lu!\n", testresult.ser, testresult.time);
+		}
+	}
+	
+	dbg_printf("Stop main program loop !\n");
+	dbg_printf("Wait test main thread stop !\n");
+#if 0 // Add by Jared 01-30-2007, read/write hardware RTC directly
+	pthread_mutex_destroy(&rtc_mutex);
+#endif
+	close(sock_fd);
+	dbg_printf("Test main thread has stopped !\n");
+	if ( haserror == TEST_OK ) {
+		dbg_printf("Burning OK.\n");
+#ifndef TEST
+	//	i = 1; // true
+	#if defined(ARCH_UC8400) || defined(ARCH_UC8406)// add by Jared 07-28-2008 for UC8400
+		burning_flag = 1;
+		if ( config_set("burning_flag", &burning_flag) < 0 ) {
+			printf("%s[%d]set burning_flag fail !\r\n",__FUNCTION__,__LINE__);
+			exit(0);
+		}
+		#if 1 //Add by Hank 09-09-2008
+		if (EOT_flag == 1)
+		{
+			mac_flag=0;
+			config_set("mac_flag", &mac_flag);
+		}
+		#endif //Add by Hank 09-09-2008
+		
+		if ( bDVTBuring==0 && config_write() < 0 ) {
+			printf("%s[%d]Write flash configuration fail !\r\n",__FUNCTION__,__LINE__);
+			exit(0);
+		}
+	#else
+		if ( bDVTBuring==0 && burnflag_set(1) == 0 ){
+				printf("Write Burnning flag fail !\n");
+				haserror = TEST_FAIL;
+		}
+	#endif // add by Jared 07-28-2008 for UC8400 /UC8411
+	        else	
+	        {
+#endif // end of #ifndef TEST
+		    sprintf(sbuf, "OK.No:%d\n", testresult.serial);
+		    goto test_ok;
+#ifndef TEST		    
+                }
+#endif
+		
+	}
+	else
+	{
+#ifndef TEST
+	#if defined(ARCH_UC8400) || defined(ARCH_UC8406) // add by Jared 07-28-2008 for UC8400
+		// Nothing to do
+		#if 1 //Add by Hank 09-09-2008
+		if (EOT_flag == 1)
+		{
+			EOT_flag=0;
+			config_set("EOT", &EOT_flag);
+			config_write();
+		}
+		#endif //Add by Hank 09-09-2008
+	#else
+		if ( bDVTBuring==0 )
+			burnflag_set(0);
+	#endif
+#endif
+	}	
+	
+	dbg_printf("Burning fail !\n");
+	sprintf(sbuf, "Fail.No:%d\n", testresult.serial);
+	i = 0;
+	while ( 1 ) {
+		if ( i ) {
+			ready_led_on();
+			i = 0;
+		} else {
+			ready_led_off();
+			i = 1;
+		}
+		sleep(1);
+	}
+
+test_ok:	
+	sprintf(sbuf, "Power off.No:%d\n", testresult.serial);
+	
+#ifndef TEST
+	while ( 1 ) sleep(1);
+#endif
+}

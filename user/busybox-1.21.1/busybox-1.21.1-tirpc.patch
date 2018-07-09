@@ -1,0 +1,14 @@
+diff -urN busybox-1.21.1/Makefile.flags busybox-1.21.1.new/Makefile.flags
+--- busybox-1.21.1/Makefile.flags	2013-05-12 07:30:43.000000000 +0800
++++ busybox-1.21.1.new/Makefile.flags	2013-10-14 23:33:23.000000000 +0800
+@@ -126,6 +126,10 @@
+ LDLIBS += m
+ endif
+ 
++ifeq ($(CONFIG_FEATURE_MOUNT_NFS),y)
++LDLIBS += tirpc
++endif
++
+ ifeq ($(CONFIG_PAM),y)
+ # libpam uses libpthread, so for static builds busybox must be linked to
+ # libpthread. On some platforms that requires an explicit -lpthread, so

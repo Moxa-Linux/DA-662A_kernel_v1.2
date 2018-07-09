@@ -1,0 +1,9 @@
+Package: dbus
+Version: 1.1.2
+Architecture: arm
+Maintainer: Jared_wu <Jared_Wu@moxa.com>
+Section: Misc
+Priority: optional
+Description: D-Bus is a message bus system, a simple way for applications to talk to one another.
+Source: http://dbus.freedesktop.org/releases/dbus/
+Depends: 

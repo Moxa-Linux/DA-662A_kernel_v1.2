@@ -1,0 +1,9 @@
+Package: sudo
+Version: 1.8.1p2
+Architecture: arm
+Maintainer: Jared_wu <Jared_Wu@moxa.com>
+Section: base
+Priority: optional
+Description: execute a command as another user
+Source: http://www.sudo.ws/sudo/dist/sudo-1.8.1p2.tar.gz
+Depends: 

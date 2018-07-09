@@ -1,0 +1,58 @@
+只在 busybox-1.14.1.new 存在：.config
+只在 busybox-1.14.1.new 存在：.config.old
+只在 busybox-1.14.1.new/docs 存在：BusyBox.1
+只在 busybox-1.14.1.new/docs 存在：BusyBox.html
+只在 busybox-1.14.1.new/docs/busybox.net 存在：BusyBox.html
+只在 busybox-1.14.1.new/docs 存在：busybox.pod
+只在 busybox-1.14.1.new/docs 存在：BusyBox.txt
+只在 busybox-1.14.1.new/include 存在：applet_tables.h
+只在 busybox-1.14.1.new/include 存在：autoconf.h
+只在 busybox-1.14.1.new/include 存在：bbconfigopts.h
+只在 busybox-1.14.1.new/include 存在：config
+只在 busybox-1.14.1.new/include 存在：usage_compressed.h
+diff -crB busybox-1.14.1/modutils/insmod.c busybox-1.14.1.new/modutils/insmod.c
+*** busybox-1.14.1/modutils/insmod.c	2009-05-28 00:00:23.000000000 +0800
+--- busybox-1.14.1.new/modutils/insmod.c	2009-10-01 13:42:50.000000000 +0800
+***************
+*** 13,18 ****
+--- 13,21 ----
+  int insmod_main(int argc, char **argv) MAIN_EXTERNALLY_VISIBLE;
+  int insmod_main(int argc UNUSED_PARAM, char **argv)
+  {
++ #if 1  // Jared 2009-10-1
++         char **phead_argv=argv;
++ #endif
+  	char *filename;
+  	int rc;
+  
+***************
+*** 34,39 ****
+--- 37,47 ----
+  		bb_show_usage();
+  
+  	rc = bb_init_module(filename, parse_cmdline_module_options(argv));
++ 
++ #if 1 // Jared 2009-10-01
++ 	if (rc)
++         	rc = modprobe_main(argc, phead_argv);
++ #endif
+  	if (rc)
+  		bb_error_msg("can't insert '%s': %s", filename, moderror(rc));
+
+diff -crB busybox-1.14.1/util-linux/mount.c busybox-1.14.1.new/util-linux/mount.c
+*** busybox-1.14.1/util-linux/mount.c	2009-05-28 00:00:23.000000000 +0800
+--- busybox-1.14.1.new/util-linux/mount.c	2009-10-21 16:46:23.000000000 +0800
+***************
+*** 1052,1058 ****
+--- 1052,1062 ----
+  	noac = 0;
+  	nordirplus = 0;
+  	retry = 10000;		/* 10000 minutes ~ 1 week */
++ #if 0 // Jared
+  	tcp = 0;
++ #else
++ 	tcp = 1;
++ #endif
+  
+  	mountprog = MOUNTPROG;
+  	mountvers = 0; 

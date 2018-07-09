@@ -1,0 +1,50 @@
+diff -crB linux-atm-2.5.2/src/extra/Makefile.in linux-atm-2.5.2.new/src/extra/Makefile.in
+*** linux-atm-2.5.2/src/extra/Makefile.in	2010-12-29 00:06:10.000000000 +0800
+--- linux-atm-2.5.2.new/src/extra/Makefile.in	2011-12-05 15:25:05.000000000 +0800
+***************
+*** 380,388 ****
+  
+  install-exec-hook:
+  	$(MKDIR_P) $(DESTDIR)/lib/firmware
+! 	$(INSTALL_DATA) $(srcdir)/pca200e.bin $(DESTDIR)/lib/firmware
+! 	$(INSTALL_DATA) $(srcdir)/pca200e_ecd.bin2 $(DESTDIR)/lib/firmware
+! 	$(INSTALL_DATA) $(srcdir)/sba200e_ecd.bin2 $(DESTDIR)/lib/firmware
+  
+  %.bin %.bin2: %.data
+  	objcopy -Iihex $< -Obinary $@.gz
+--- 380,388 ----
+  
+  install-exec-hook:
+  	$(MKDIR_P) $(DESTDIR)/lib/firmware
+! 	$(INSTALL_DATA) $(abs_builddir)/pca200e.bin $(DESTDIR)/lib/firmware
+! 	$(INSTALL_DATA) $(abs_builddir)/pca200e_ecd.bin2 $(DESTDIR)/lib/firmware
+! 	$(INSTALL_DATA) $(abs_builddir)/sba200e_ecd.bin2 $(DESTDIR)/lib/firmware
+  
+  %.bin %.bin2: %.data
+  	objcopy -Iihex $< -Obinary $@.gz
+diff -crB linux-atm-2.5.2/src/led/main.c linux-atm-2.5.2.new/src/led/main.c
+*** linux-atm-2.5.2/src/led/main.c	2009-03-04 01:56:59.000000000 +0800
+--- linux-atm-2.5.2.new/src/led/main.c	2011-12-05 15:18:53.000000000 +0800
+***************
+*** 42,47 ****
+--- 42,48 ----
+  #include <errno.h>
+  #include <fcntl.h>
+  #include <limits.h>
++ #include <linux/limits.h>
+  
+  #include <atm.h>
+  #include <atmd.h>
+diff -crB linux-atm-2.5.2/src/sigd/atmsigd.c linux-atm-2.5.2.new/src/sigd/atmsigd.c
+*** linux-atm-2.5.2/src/sigd/atmsigd.c	2008-01-01 08:14:52.000000000 +0800
+--- linux-atm-2.5.2.new/src/sigd/atmsigd.c	2011-12-05 15:18:53.000000000 +0800
+***************
+*** 13,18 ****
+--- 13,19 ----
+  #include <errno.h>
+  #include <signal.h>
+  #include <limits.h>
++ #include <linux/limits.h>
+  #include <sys/types.h>
+  
+  #include "atm.h"

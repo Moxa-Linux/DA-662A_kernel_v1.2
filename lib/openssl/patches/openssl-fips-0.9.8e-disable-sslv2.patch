@@ -1,0 +1,87 @@
+diff -up openssl-fips-0.9.8e/doc/apps/ciphers.pod.disable-sslv2 openssl-fips-0.9.8e/doc/apps/ciphers.pod
+--- openssl-fips-0.9.8e/doc/apps/ciphers.pod.disable-sslv2	2007-04-25 15:15:50.000000000 +0200
++++ openssl-fips-0.9.8e/doc/apps/ciphers.pod	2016-02-24 15:49:57.949108087 +0100
+@@ -383,11 +383,11 @@ Note: these ciphers can also be used in
+ =head2 SSL v2.0 cipher suites.
+ 
+  SSL_CK_RC4_128_WITH_MD5                 RC4-MD5
+- SSL_CK_RC4_128_EXPORT40_WITH_MD5        EXP-RC4-MD5
+- SSL_CK_RC2_128_CBC_WITH_MD5             RC2-MD5
+- SSL_CK_RC2_128_CBC_EXPORT40_WITH_MD5    EXP-RC2-MD5
++ SSL_CK_RC4_128_EXPORT40_WITH_MD5        Not implemented.
++ SSL_CK_RC2_128_CBC_WITH_MD5             RC2-CBC-MD5
++ SSL_CK_RC2_128_CBC_EXPORT40_WITH_MD5    Not implemented.
+  SSL_CK_IDEA_128_CBC_WITH_MD5            IDEA-CBC-MD5
+- SSL_CK_DES_64_CBC_WITH_MD5              DES-CBC-MD5
++ SSL_CK_DES_64_CBC_WITH_MD5              Not implemented.
+  SSL_CK_DES_192_EDE3_CBC_WITH_MD5        DES-CBC3-MD5
+ 
+ =head1 NOTES
+diff -up openssl-fips-0.9.8e/ssl/ssl_lib.c.disable-sslv2 openssl-fips-0.9.8e/ssl/ssl_lib.c
+--- openssl-fips-0.9.8e/ssl/ssl_lib.c.disable-sslv2	2016-02-24 15:49:57.927107582 +0100
++++ openssl-fips-0.9.8e/ssl/ssl_lib.c	2016-02-24 15:49:57.948108064 +0100
+@@ -1548,6 +1548,12 @@ SSL_CTX *SSL_CTX_new(SSL_METHOD *meth)
+ 	 */
+ 	ret->options |= SSL_OP_LEGACY_SERVER_CONNECT;
+ 
++	if (__secure_getenv("OPENSSL_ENABLE_SSL2") == NULL)
++		{
++		/* Disable SSLv2 by default (affects the SSLv23_method() only) */
++		ret->options |= SSL_OP_NO_SSLv2;
++		}
++
+ 	return(ret);
+ err:
+ 	SSLerr(SSL_F_SSL_CTX_NEW,ERR_R_MALLOC_FAILURE);
+diff -up openssl-fips-0.9.8e/ssl/s2_lib.c.disable-sslv2 openssl-fips-0.9.8e/ssl/s2_lib.c
+--- openssl-fips-0.9.8e/ssl/s2_lib.c.disable-sslv2	2016-02-24 15:49:57.949108087 +0100
++++ openssl-fips-0.9.8e/ssl/s2_lib.c	2016-02-24 15:52:27.697544452 +0100
+@@ -97,6 +97,7 @@ OPENSSL_GLOBAL SSL_CIPHER ssl2_ciphers[]
+ 	SSL_ALL_CIPHERS,
+ 	SSL_ALL_STRENGTHS,
+ 	},
++#if 0
+ /* RC4_128_EXPORT40_WITH_MD5 */
+ 	{
+ 	1,
+@@ -110,6 +111,7 @@ OPENSSL_GLOBAL SSL_CIPHER ssl2_ciphers[]
+ 	SSL_ALL_CIPHERS,
+ 	SSL_ALL_STRENGTHS,
+ 	},
++#endif
+ /* RC2_128_CBC_WITH_MD5 */
+ 	{
+ 	1,
+@@ -123,6 +125,7 @@ OPENSSL_GLOBAL SSL_CIPHER ssl2_ciphers[]
+ 	SSL_ALL_CIPHERS,
+ 	SSL_ALL_STRENGTHS,
+ 	},
++#if 0
+ /* RC2_128_CBC_EXPORT40_WITH_MD5 */
+ 	{
+ 	1,
+@@ -136,7 +139,7 @@ OPENSSL_GLOBAL SSL_CIPHER ssl2_ciphers[]
+ 	SSL_ALL_CIPHERS,
+ 	SSL_ALL_STRENGTHS,
+ 	},
+-/* IDEA_128_CBC_WITH_MD5 */
++#endif
+ #ifndef OPENSSL_NO_IDEA
+ 	{
+ 	1,
+@@ -151,6 +154,7 @@ OPENSSL_GLOBAL SSL_CIPHER ssl2_ciphers[]
+ 	SSL_ALL_STRENGTHS,
+ 	},
+ #endif
++#if 0
+ /* DES_64_CBC_WITH_MD5 */
+ 	{
+ 	1,
+@@ -164,6 +168,7 @@ OPENSSL_GLOBAL SSL_CIPHER ssl2_ciphers[]
+ 	SSL_ALL_CIPHERS,
+ 	SSL_ALL_STRENGTHS,
+ 	},
++#endif
+ /* DES_192_EDE3_CBC_WITH_MD5 */
+ 	{
+ 	1,

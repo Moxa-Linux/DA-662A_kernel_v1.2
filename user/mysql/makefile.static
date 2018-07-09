@@ -1,0 +1,136 @@
+# History:
+# Date		Author			Comment
+# 06-12-2009	Jared Wu.		install at BERoot or
+#					LERoot
+#	INSTALL_ROOT= $(ROOTDIR)/BERoot
+#	INSTALL_ROOT= $(ROOTDIR)/LERoot
+#
+# compile: 
+#   make CROSS=xscale-linux- ROOTDIR=/root/sdlinux-moxaart INSTALL_ROOT=/root/sdlinux-moxaart/BERoot
+#   make CROSS=arm-linux- ROOTDIR=/root/sdlinux-moxaart INSTALL_ROOT=/root/sdlinux-moxaart/LERoot
+
+CONFIGURE_TARGET := $(strip $(subst -, ,$(CROSS)))
+CONFIGURE_TARGET := $(word 1,$(CONFIGURE_TARGET))-$(word 2,$(CONFIGURE_TARGET))
+
+CONFIGURE_SETTINGS :=	--build=i686-linux                              \
+		--host=$(CONFIGURE_TARGET)                              \
+		--target=$(CONFIGURE_TARGET)                            \
+		--prefix="$(INSTALL_ROOT)"				\
+		--program-transform-name=""                             \
+		--without-perl                                          \
+		--without-man                                           \
+		--without-bench                                         \
+		--without-docs                                          \
+		--without-debug                                         \
+		--with-low-memory                                       \
+		--with-client-ldflags=-all-static                       \
+		--with-mysqld-ldflags=-all-static                       \
+		--enable-static						\
+#		--with-embedded-server                                  \
+#		--datadir="/home/mysql/var"				\
+#		--with-client-ldflags=-static                           \
+#		--with-mysqld-ldflags=-static                           \
+#		--with-big-tables                                       \
+#		--with-mit-threads=no                                   \
+#		--with-pthread                                          \
+#		--disable-assembler                                     \
+#		--without-server                                        \
+
+all: $(INSTALL_ROOT)/lib/mysql/libmysqlclient.so.16.0.0
+
+
+$(INSTALL_ROOT)/lib/mysql/libmysqlclient.so.16.0.0: build_$(CONFIGURE_TARGET)/.libs/libmysqlclient.so.16.0.0
+	make -C build_$(CONFIGURE_TARGET) install;
+
+build_$(CONFIGURE_TARGET)/.libs/libmysqlclient.so.16.0.0: build_$(CONFIGURE_TARGET)/build
+#build_$(CONFIGURE_TARGET)/.libs/libmysqlclient.so.16.0.0:
+	[ -f ./build_$(CONFIGURE_TARGET)/sql/lex_hash.h ] || cp -f ./lex_hash.h ./build_$(CONFIGURE_TARGET)/sql/lex_hash.h ;
+	unset CFLAGS CPPFLAGS CXXFLAGS && \
+	make -C build_$(CONFIGURE_TARGET) -j 2;
+
+build_$(CONFIGURE_TARGET)/build:makefile
+	rm -rf build_$(CONFIGURE_TARGET)
+	tar xzvf mysql-5.1.23-rc.tar.gz;
+	mv mysql-5.1.23-rc build_$(CONFIGURE_TARGET)
+	( \
+	cd build_$(CONFIGURE_TARGET); \
+	sed -e "s/^AC_SYS_RESTARTABLE_SYSCALLS/#AC_SYS_RESTARTABLE_SYSCALLS/" < configure.in > configure.in.temp; \
+	sed -i "s/^MYSQL_STACK_DIRECTION/#MYSQL_STACK_DIRECTION/g"  configure.in.temp; \
+	mv -f configure.in.temp configure.in; \
+	autoconf; \
+	unset LDFLAGS CFLAGS CPPFLAGS CXXFLAGS && \
+	./configure \
+	ac_cv_func_dlerror=no \
+	ac_cv_func_dlopen=no \
+	ac_cv_lib_dl_dlopen=no \
+	mysql_use_mysys_new=yes \
+	CC=$(CONFIGURE_TARGET)-gcc \
+	CXX=$(CONFIGURE_TARGET)-gcc \
+	LD=$(CONFIGURE_TARGET)-ld \
+	CPPFLAGS="-DSTACK_DIRECTION=1 -DHAVE_GETHOSTBYNAME_R_GLIBC2_STYLE" \
+	CFLAGS="-Os -pipe -isystem /usr/local/arm-linux/include" \
+	CXXFLAGS="-O3 -felide-constructors -fno-exceptions -fno-rtti -isystem /usr/local/arm-linux/include" \
+	LDFLAGS="-static" \
+	$(CONFIGURE_SETTINGS) ; \
+	)
+	touch build_$(CONFIGURE_TARGET)/build
+
+
+romfs:
+#	10-01-2008. Comment out by Jared. libmysqlclient will not be a default built-in software. It will be provided as a package.
+#	$(STRIP) -s build_$(CONFIGURE_TARGET)/libmysql/.libs/libmysqlclient.so.16.0.0
+#	$(ROMFSINST) build_$(CONFIGURE_TARGET)/libmysql/.libs/libmysqlclient.so.16.0.0 /lib/libmysqlclient.so.16.0.0
+#	( cd  ${ROMFSDIR}/lib; \
+	[ -L libmysqlclient.so.16 ] || ln -s libmysqlclient.so.16.0.0 libmysqlclient.so.16; \
+	[ -L libmysqlclient.so ] || ln -s libmysqlclient.so.16.0.0 libmysqlclient.so; \
+	)
+
+package:
+	# Make the libmysqlclient.so.16.0.0 client library package
+	#mkdir -p ipkg_src_libmysqlclient_$(CONFIGURE_TARGET)/usr/local/lib
+	#cp -a $(INSTALL_ROOT)/lib/mysql/libmysqlclient.so.16.0.0 ipkg_src_libmysqlclient_$(CONFIGURE_TARGET)/usr/local/lib/libmysqlclient.so.16.0.0
+	#$(STRIP) -s ipkg_src_libmysqlclient_$(CONFIGURE_TARGET)/usr/local/lib/libmysqlclient.so.16.0.0
+	#( cd  ipkg_src_libmysqlclient_$(CONFIGURE_TARGET)/usr/local/lib; \
+	#[ -L libmysqlclient.so.16 ] || ln -s libmysqlclient.so.16.0.0 libmysqlclient.so.16; \
+	#[ -L libmysqlclient.so ] || ln -s libmysqlclient.so.16.0.0 libmysqlclient.so; \ )
+	#$(STRIP) -s ipkg_src_libmysqlclient_$(CONFIGURE_TARGET)/usr/local/lib/libmysqlclient.so.16.0.0
+	#$(IPKGBUILD) ipkg_src_libmysqlclient_$(CONFIGURE_TARGET) $(IPKGDIR)/ipkg_$(CONFIGURE_TARGET)
+	# Make the mysql client package
+	mkdir -p ipkg_src_mysqlclient_$(CONFIGURE_TARGET)/usr/local/bin
+	cp -a $(INSTALL_ROOT)/bin/mysql ipkg_src_mysqlclient_$(CONFIGURE_TARGET)/usr/local/bin/
+	$(STRIP) -s ipkg_src_mysqlclient_$(CONFIGURE_TARGET)/usr/local/bin/mysql
+	$(IPKGBUILD) ipkg_src_mysqlclient_$(CONFIGURE_TARGET) $(IPKGDIR)/ipkg_$(CONFIGURE_TARGET)
+	# Make the MySQL server package
+	mkdir -p ipkg_src_server_root_$(CONFIGURE_TARGET)/etc/rc.d/init.d
+	mkdir -p ipkg_src_server_root_$(CONFIGURE_TARGET)/home/mysql/bin
+	mkdir -p ipkg_src_server_root_$(CONFIGURE_TARGET)/home/mysql/libexec
+	mkdir -p ipkg_src_server_root_$(CONFIGURE_TARGET)/home/mysql/var
+	mkdir -p ipkg_src_server_root_$(CONFIGURE_TARGET)/home/mysql/share/mysql
+	cp -a $(INSTALL_ROOT)/share/mysql/mysql.server ipkg_src_server_root_$(CONFIGURE_TARGET)/etc/rc.d/init.d/
+	sed -i '46 s/basedir=/basedir=\/home\/mysql/g' ipkg_src_server_root_$(CONFIGURE_TARGET)/etc/rc.d/init.d/mysql.server
+	sed -i '47 s/datadir=/datadir=\/home\/mysql\/var/g' ipkg_src_server_root_$(CONFIGURE_TARGET)/etc/rc.d/init.d/mysql.server
+	cp $(INSTALL_ROOT)/bin/my_print_defaults ipkg_src_server_root_$(CONFIGURE_TARGET)/home/mysql/bin/
+	cp $(INSTALL_ROOT)/bin/mysqladmin ipkg_src_server_root_$(CONFIGURE_TARGET)/home/mysql/bin/
+	cp $(INSTALL_ROOT)/libexec/mysqld  ipkg_src_server_root_$(CONFIGURE_TARGET)/home/mysql/libexec/
+	cp $(INSTALL_ROOT)/bin/mysqld_safe ipkg_src_server_root_$(CONFIGURE_TARGET)/home/mysql/bin/
+	cp $(INSTALL_ROOT)/bin/mysql_install_db ipkg_src_server_root_$(CONFIGURE_TARGET)/home/mysql/bin/
+	cp $(INSTALL_ROOT)/share/mysql/fill_help_tables.sql ipkg_src_server_root_$(CONFIGURE_TARGET)/home/mysql/share/mysql
+	cp $(INSTALL_ROOT)/share/mysql/mysql_system_tables.sql ipkg_src_server_root_$(CONFIGURE_TARGET)/home/mysql/share/mysql
+	cp $(INSTALL_ROOT)/share/mysql/mysql_system_tables_data.sql ipkg_src_server_root_$(CONFIGURE_TARGET)/home/mysql/share/mysql
+	cp -a $(INSTALL_ROOT)/share/mysql/english ipkg_src_server_root_$(CONFIGURE_TARGET)/home/mysql/share/mysql/
+	$(STRIP) ipkg_src_server_root_$(CONFIGURE_TARGET)/home/mysql/bin/my_print_defaults
+	$(STRIP) ipkg_src_server_root_$(CONFIGURE_TARGET)/home/mysql/bin/mysqladmin
+	$(STRIP) ipkg_src_server_root_$(CONFIGURE_TARGET)/home/mysql/libexec/mysqld
+	$(IPKGBUILD) ipkg_src_server_root_$(CONFIGURE_TARGET) $(IPKGDIR)/ipkg_$(CONFIGURE_TARGET)
+
+# Jared 08-05-2008 said:
+# In order to speed-up the making proess, we don't clean the pre-build binaries.
+# If you need to rebuild the binaries, please make distclean in this directory.
+#clean:
+#	-[ -d build_$(CONFIGURE_TARGET) ] && make -C build_$(CONFIGURE_TARGET) clean;
+#	find -type l | xargs rm -rf;
+
+clean distclean:
+	#-[ -d build_$(CONFIGURE_TARGET) ] && make -C build_$(CONFIGURE_TARGET) distclean;
+	rm -rf build_$(CONFIGURE_TARGET) 
+	rm -rf ipkg_src_client_root_$(CONFIGURE_TARGET)/usr ipkg_src_server_root_$(CONFIGURE_TARGET)/usr ipkg_src_server_root_$(CONFIGURE_TARGET)/home/mysql

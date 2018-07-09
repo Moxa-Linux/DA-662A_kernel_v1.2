@@ -1,0 +1,493 @@
+# Author: Jared Wu
+# Environment: Debian 5.0r2
+# Pre-requirments:
+#	apt-get install gawk build-essential libc6-dev-i386 bison flex texinfo
+#
+
+KERNEL_HEADER=$(CURDIR)/../../linux-2.6.x/include
+INSTALL_ROOT=/usr/local/arm-linux-4.4.2
+TARFILE=arm-linux-4.4.2.tar.gz
+INSTALLFILE=arm-linux_4.1_Build_$(shell date +%y%m%d%H).sh
+TARGET_LE=arm-linux
+TARGET_BE=xscale-linux
+SOURCE=$(CURDIR)/src
+
+# unused cross binary files (only for glibc)
+UNUSED_CROSS_BIN=as ar c++ gcc g++ ld nm objcopy objdump ranlib strip
+
+
+export PATH:=${PATH}:$(INSTALL_ROOT)/bin
+export SOURCE TARGET_LE TARGET_BE INSTALL_ROOT
+
+
+.PHONY: untar-all-source \
+	build-gmp build-mpfr build-mpc \
+	build-binutil \
+	build-gcc-bootstrap \
+	build-glibc \
+	build-gcc-full \
+	fix-include \
+	create_link \
+	remove-unused \
+	build-userland build-host-utils
+
+
+all:$(INSTALLFILE)
+
+#all: untar-all-source \
+	build-gmp build-mpfr build-mpc \
+	build-binutil \
+	build-gcc-bootstrap \
+	build-glibc \
+	build-gcc-full \
+	fix-include \
+	create_link \
+	remove-unused \
+	build-userland build-host-utils \
+	$(INSTALLFILE)
+
+# Build the soft-float glibc
+multilib: untar-all-source \
+	build-gmp build-mpfr build-mpc \
+	build-binutil \
+	build-gcc-bootstrap-multilib \
+	build-glibc-multilib \
+	build-gcc-full \
+	fix-include \
+	create_link \
+	remove-unused \
+	build-userland build-host-utils \
+	$(INSTALLFILE)
+
+
+untar-all-source:
+	#[ -d linux-2.6.x ] || tar xvf $(SOURCE)/linux-2.6.x.tar.bz2
+	if [ ! -d linux-2.6.x ]; then \
+		ln -sf ../../linux-2.6.x linux-2.6.x; \
+	fi
+	if [ ! -d binutils-2.19.1 ]; then \
+		[ ! -f $(SOURCE)/binutils-2.19.1.tar.bz2 ] && wget http://ftp.gnu.org/gnu/binutils/binutils-2.19.1.tar.bz2 -P $(SOURCE); \
+		[ -f $(SOURCE)/binutils-2.19.1.tar.bz2 ] && tar xjf $(SOURCE)/binutils-2.19.1.tar.bz2; \
+	fi
+	if [ ! -d gmp-5.0.1 ]; then \
+		[ ! -f $(SOURCE)/gmp-5.0.1.tar.bz2 ] && wget http://ftp.gnu.org/gnu/gmp/gmp-5.0.1.tar.bz2 -P $(SOURCE); \
+		[ -f $(SOURCE)/gmp-5.0.1.tar.bz2 ] && tar xjf $(SOURCE)/gmp-5.0.1.tar.bz2; \
+	fi
+	if [ ! -d mpc-0.8.2 ]; then \
+		[ ! -f $(SOURCE)/mpc-0.8.2.tar.gz ] && wget http://www.multiprecision.org/mpc/download/mpc-0.8.2.tar.gz -P $(SOURCE); \
+		[ -f $(SOURCE)/mpc-0.8.2.tar.gz ] && tar xzvf $(SOURCE)/mpc-0.8.2.tar.gz; \
+	fi
+	if [ ! -d mpfr-3.0.0 ]; then \
+		[ ! -f $(SOURCE)/mpfr-3.0.0.tar.bz2 ] && wget http://ftp.gnu.org/gnu/mpfr/mpfr-3.0.0.tar.bz2 -P $(SOURCE); \
+		[ -f $(SOURCE)/mpfr-3.0.0.tar.bz2 ] && tar xjf $(SOURCE)/mpfr-3.0.0.tar.bz2; \
+	fi
+	if [ ! -d gcc-4.4.2 ]; then \
+		[ ! -f $(SOURCE)/gcc-4.4.2.tar.bz2 ] && wget http://ftp.gnu.org/gnu/gcc/gcc-4.4.2/gcc-4.4.2.tar.bz2 -P $(SOURCE); \
+		[ -f $(SOURCE)/gcc-4.4.2.tar.bz2 ] && tar xjf $(SOURCE)/gcc-4.4.2.tar.bz2; \
+		(cd gcc-4.4.2; \
+		patch -p1 < ../src/patches/gcc-4.4.2-xscale.patch); \
+	fi
+	if [ ! -d glibc-2.10.1 ]; then \
+		[ ! -f $(SOURCE)/glibc-2.10.1.tar.bz2 ] && wget http://ftp.gnu.org/gnu/glibc/glibc-2.10.1.tar.bz2 -P $(SOURCE); \
+		[ -f $(SOURCE)/glibc-2.10.1.tar.bz2 ] && tar xjf $(SOURCE)/glibc-2.10.1.tar.bz2; \
+		[ ! -f $(SOURCE)/glibc-ports-2.10.1.tar.bz2 ] && wget http://ftp.gnu.org/gnu/glibc/glibc-ports-2.10.1.tar.bz2 -P $(SOURCE); \
+		[ -f $(SOURCE)/glibc-ports-2.10.1.tar.bz2 ] && tar xjf $(SOURCE)/glibc-ports-2.10.1.tar.bz2 -C glibc-2.10.1/; \
+		mv glibc-2.10.1/glibc-ports-2.10.1 glibc-2.10.1/ports; \
+		(cd glibc-2.10.1; \
+		patch -p1 < ../src/patches/glibc-2.10.1-libgcc_eh.multilib.patch); \
+	fi
+
+
+# $(call build-binutil,target)
+# build the binutil for different target
+define build-binutil
+	@mkdir -p build-binutil-$1
+	(cd build-binutil-$1; \
+	../binutils-2.19.1/configure \
+		--prefix=$(INSTALL_ROOT) \
+		--host=i686-pc-linux \
+		--build=i686-pc-linux \
+		--target=$1 \
+		--enable-shared \
+		--enable-multilib \
+		--with-gmp=$(INSTALL_ROOT)/tools \
+		--with-mpfr=$(INSTALL_ROOT)/tools \
+		--with-mpc=$(INSTALL_ROOT)/tools \
+		--with-lib-path=$(INSTALL_ROOT)/lib:$(INSTALL_ROOT)/$(TARGET_LE)/lib:$(INSTALL_ROOT)/$(TARGET_BE)/lib \
+	)
+	make -C build-binutil-$1
+	make -C build-binutil-$1 install
+endef
+
+
+# $(call build-gcc-bootstrap,target[,options])
+# build the gcc-bootstrap for different targets
+define build-gcc-bootstrap
+	@mkdir -p build-gcc-bootstrap-$1
+	(cd build-gcc-bootstrap-$1; \
+	../gcc-4.4.2/configure \
+		--host=i686-pc-linux \
+		--build=i686-pc-linux \
+		--target=$1 \
+		--prefix=$(INSTALL_ROOT) \
+		--with-gmp=$(INSTALL_ROOT)/tools \
+		--with-mpc=$(INSTALL_ROOT)/tools \
+		--with-mpfr=$(INSTALL_ROOT)/tools \
+		--with-gnu-ld \
+		--with-gnu-as \
+		--without-newlib \
+		--enable-long-long \
+		--disable-libada \
+		--without-cvs \
+		--disable-libgomp \
+		--disable-libmudflap \
+		--disable-libssp \
+		--disable-threads \
+		--enable-__cxa_atexit \
+		--disable-initfini-array \
+		--disable-shared \
+		--enable-languages=c \
+		--with-system-zlib \
+		--enable-multilib \
+		$2 \
+	)
+	make -C build-gcc-bootstrap-$1
+	make -C build-gcc-bootstrap-$1 install
+endef
+
+
+# $(call build-gcc-full,target[,options])
+# build the gcc-full for different targets
+define build-gcc-full
+	@mkdir -p build-gcc-full-$1
+	(cd build-gcc-full-$1; \
+	../gcc-4.4.2/configure \
+		--host=i686-pc-linux \
+		--build=i686-pc-linux \
+		--target=$1 \
+		--prefix=$(INSTALL_ROOT) \
+		--with-gmp=$(INSTALL_ROOT)/tools \
+		--with-mpc=$(INSTALL_ROOT)/tools \
+		--with-mpfr=$(INSTALL_ROOT)/tools \
+		--with-headers=${KERNEL_HEADER} \
+		--with-gnu-ld \
+		--with-gnu-as \
+		--without-newlib \
+		--enable-long-long \
+		--disable-libada \
+		--without-cvs \
+		--disable-libgomp \
+		--disable-libmudflap \
+		--disable-libssp \
+		--enable-threads \
+		--enable-__cxa_atexit \
+		--enable-shared \
+		--enable-languages=c,c++ \
+		--with-system-zlib \
+		--enable-multilib \
+		$2 \
+	)
+	make -C build-gcc-full-$1
+	make -C build-gcc-full-$1 install
+endef
+
+
+# $(call build-glibc,target,host,env[,options])
+# build the gcc-glibc for different targets
+GLIBC_ENV_LE=CC="$(TARGET_LE)-gcc" \
+			 LD="$(TARGET_LE)-ld" \
+			 STRIP="$(TARGET_LE)-strip" \
+			 CXX="$(TARGET_LE)-g++" \
+			 CPP="$(TARGET_LE)-gcc -E" \
+			 AS="$(TARGET_LE)-as" \
+			 NM="$(TARGET_LE)-nm" \
+			 AR="$(TARGET_LE)-ar" \
+			 RANLIB="$(TARGET_LE)-ranlib"
+GLIBC_ENV_BE=CC="$(TARGET_LE)-gcc -mbig-endian" \
+			 LD="$(TARGET_LE)-ld -EB" \
+			 STRIP="$(TARGET_LE)-strip" \
+			 CXX="$(TARGET_LE)-g++ -mbig-endian" \
+			 CPP="$(TARGET_LE)-gcc -mbig-endian -E" \
+			 AS="$(TARGET_LE)-as -EB" \
+			 NM="$(TARGET_LE)-nm" \
+			 AR="$(TARGET_LE)-ar" \
+			 RANLIB="$(TARGET_LE)-ranlib"
+define build-glibc
+	@mkdir -p build-glibc-$1
+	(\
+	export PATH=${PATH}:${INSTALL_ROOT}/bin; \
+	cd build-glibc-$1; \
+	$3 \
+	ARCH=arm \
+	libc_cv_gcc_unwind_find_fde=yes \
+	libc_cv_forced_unwind=yes \
+	libc_cv_c_cleanup=yes \
+	../glibc-2.10.1/configure \
+		--prefix="" \
+		--disable-profile \
+		--build=i686-pc-linux-gnu \
+		--host=$2 \
+		--without-cvs \
+		--enable-add-ons \
+		--enable-shared \
+		--with-headers=${KERNEL_HEADER} \
+		--without-gd \
+		--enable-threads=posix \
+		--disable-sanity-checks \
+		--with-__thread \
+		--with-gnu-ld \
+		--with-gnu-as \
+		--enable-kernel=2.6.16 \
+		--enable-multilib \
+		$4 \
+	)
+	make -C build-glibc-$1
+	make -C build-glibc-$1 install_root=$(INSTALL_ROOT)/$1 prefix="" install
+endef
+#		--prefix=$(INSTALL_ROOT)/$1 \
+
+
+# $(call fix-glibc-link,target,libdir)
+# build the gcc-glibc for different targets
+define fix-glibc-link
+	(cd $(INSTALL_ROOT)/$1/$2/; \
+		sed -e 's:/$2/::g' -i libc.so; \
+		sed -e 's:/$2/::g' -i libpthread.so; \
+	)
+endef
+
+
+# $(call build-glibc,target)
+# only left the required include files in sys-include
+define fix-include
+	echo "Copy the kernel headers"
+	(cd $(INSTALL_ROOT)/$1; \
+		mkdir -p sys-include.bak; \
+		mv sys-include/xen sys-include.bak; \
+		mv sys-include/video sys-include.bak; \
+		mv sys-include/sound sys-include.bak; \
+		mv sys-include/rdma sys-include.bak; \
+		mv sys-include/mtd sys-include.bak; \
+		mv sys-include/linux sys-include.bak; \
+		mv sys-include/crypto sys-include.bak; \
+		mv sys-include/asm sys-include.bak; \
+		mv sys-include/asm-generic sys-include.bak; \
+		mv sys-include/asm-arm sys-include.bak; \
+		rm -rf sys-include; \
+		mv sys-include.bak sys-include; \
+	)
+endef
+
+
+###############################################################################
+# supported library
+#
+build-gmp:
+	mkdir -p build-gmp
+	(cd build-gmp; \
+	enable_shared=no \
+	../gmp-5.0.1/configure \
+	--prefix=$(INSTALL_ROOT)/tools \
+	--enable-cxx \
+	--with-gnu-ld \
+	)
+	make -C build-gmp
+	make -C build-gmp install
+	-rm -f $(INSTALL_ROOT)/tools/lib/*.so*
+	-rm -f $(INSTALL_ROOT)/tools/lib/*.la*
+		
+build-mpfr:
+	mkdir -p build-mpfr
+	(cd build-mpfr; \
+	../mpfr-3.0.0/configure \
+	--prefix=$(INSTALL_ROOT)/tools \
+	--with-gmp=$(INSTALL_ROOT)/tools \
+	--with-gnu-ld \
+	--enable-shared=no \
+	)
+	make -C build-mpfr
+	make -C build-mpfr install
+	-rm -f $(INSTALL_ROOT)/tools/lib/*.so*
+	-rm -f $(INSTALL_ROOT)/tools/lib/*.la*
+
+build-mpc:
+	mkdir -p build-mpc
+	(cd build-mpc; \
+	../mpc-0.8.2/configure \
+	--prefix=$(INSTALL_ROOT)/tools \
+	--with-gmp=$(INSTALL_ROOT)/tools \
+	--with-mpfr=$(INSTALL_ROOT)/tools \
+	--with-gnu-ld \
+	--enable-shared=no \
+	)
+	make -C build-mpc
+	make -C build-mpc install
+	-rm -f $(INSTALL_ROOT)/tools/lib/*.so*
+	-rm -f $(INSTALL_ROOT)/tools/lib/*.la*
+
+
+###############################################################################
+# binary utilities
+#
+build-binutil:
+	$(call build-binutil,$(TARGET_LE))
+
+
+###############################################################################
+# default library: hard-float
+#
+build-gcc-bootstrap:
+	(cd gcc-4.4.2; \
+		patch -p1 < ../src/patches/gcc-4.4.2-multilib.endian.patch;)
+	$(call build-gcc-bootstrap,$(TARGET_LE))
+
+build-gcc-full:
+	$(call build-gcc-full,$(TARGET_LE))
+
+build-glibc:
+	$(call build-glibc,$(TARGET_LE),$(TARGET_LE),$(GLIBC_ENV_LE))
+	$(call build-glibc,$(TARGET_BE),$(TARGET_LE),$(GLIBC_ENV_BE))
+	(cd $(INSTALL_ROOT)/$(TARGET_LE)/lib; \
+		ln -sf ../../$(TARGET_BE)/lib be;)
+	$(call fix-glibc-link,$(TARGET_LE),lib)
+	$(call fix-glibc-link,$(TARGET_BE),lib)
+
+
+###############################################################################
+# with soft-float library (didn't try yet)
+#
+build-gcc-bootstrap-multilib:
+	(cd gcc-4.4.2; \
+		patch -p1 < ../src/patches/gcc-4.4.2-multilib.float.patch;)
+	$(call build-gcc-bootstrap,$(TARGET_LE))
+
+build-glibc-multilib: 
+	$(call build-glibc,$(TARGET_LE),$(TARGET_LE),$(GLIBC_ENV_LE))
+	$(call build-glibc,$(TARGET_LE),$(TARGET_LE),$(GLIBC_ENV_LE), \
+		--without-fp \
+		--libdir=$(INSTALL_ROOT)/$(TARGET_LE)/lib/soft-float)
+	$(call build-glibc,$(TARGET_BE),$(TARGET_LE),$(GLIBC_ENV_BE))
+	$(call build-glibc,$(TARGET_BE),$(TARGET_LE),$(GLIBC_ENV_BE), \
+		--without-fp \
+		--libdir=$(INSTALL_ROOT)/$(TARGET_BE)/lib/soft-float)
+	$(call fix-glibc-link,$(TARGET_LE),lib)
+	$(call fix-glibc-link,$(TARGET_LE),lib/soft-float)
+	$(call fix-glibc-link,$(TARGET_BE),lib)
+	$(call fix-glibc-link,$(TARGET_BE),lib/soft-float)
+
+
+###############################################################################
+# fix link & include files
+#
+fix-include:
+	$(call fix-include,$(TARGET_LE))
+	(cd $(INSTALL_ROOT)/$(TARGET_BE); \
+		ln -sf ../$(TARGET_LE)/sys-include sys-include;)
+	(cd $(INSTALL_ROOT)/$(TARGET_BE)/include; \
+		ln -sf ../../$(TARGET_LE)/include/c++ c++;)
+
+
+create_link:
+	echo "#!/bin/sh" > $(INSTALL_ROOT)/bin/$(TARGET_LE)-ldd
+	echo "$(TARGET_LE)-objdump -x \$$@|grep NEEDED" >> $(INSTALL_ROOT)/bin/$(TARGET_LE)-ldd
+	echo "#!/bin/sh" > $(INSTALL_ROOT)/bin/$(TARGET_BE)-ld
+	echo "$(TARGET_LE)-ld -EB \$$@">>$(INSTALL_ROOT)/bin/$(TARGET_BE)-ld
+	echo "#!/bin/sh" > $(INSTALL_ROOT)/bin/$(TARGET_BE)-as
+	echo "$(TARGET_LE)-as -EB \$$@">>$(INSTALL_ROOT)/bin/$(TARGET_BE)-as
+	echo "#!/bin/sh" > $(INSTALL_ROOT)/bin/$(TARGET_BE)-c++
+	echo "$(TARGET_LE)-c++ -mbig-endian \$$@">>$(INSTALL_ROOT)/bin/$(TARGET_BE)-c++
+	echo "#!/bin/sh" > $(INSTALL_ROOT)/bin/$(TARGET_BE)-cpp
+	echo "$(TARGET_LE)-cpp -mbig-endian \$$@">>$(INSTALL_ROOT)/bin/$(TARGET_BE)-cpp
+	echo "#!/bin/sh" > $(INSTALL_ROOT)/bin/$(TARGET_BE)-g++
+	echo "$(TARGET_LE)-g++ -mbig-endian \$$@">>$(INSTALL_ROOT)/bin/$(TARGET_BE)-g++
+	echo "#!/bin/sh" > $(INSTALL_ROOT)/bin/$(TARGET_BE)-gcc
+	echo "$(TARGET_LE)-gcc -mbig-endian \$$@">>$(INSTALL_ROOT)/bin/$(TARGET_BE)-gcc
+	chmod a+x $(INSTALL_ROOT)/bin/*
+	(cd $(INSTALL_ROOT)/bin; \
+		ln -sf $(TARGET_LE)-addr2line $(TARGET_BE)-addr2line; \
+		ln -sf $(TARGET_LE)-ar $(TARGET_BE)-ar; \
+		ln -sf $(TARGET_LE)-c++filt $(TARGET_BE)-c++filt; \
+		ln -sf $(TARGET_LE)-gccbug $(TARGET_BE)-gccbug; \
+		ln -sf $(TARGET_LE)-gcov $(TARGET_BE)-gcov; \
+		ln -sf $(TARGET_LE)-gprof $(TARGET_BE)-gprof; \
+		ln -sf $(TARGET_LE)-ldd $(TARGET_BE)-ldd; \
+		ln -sf $(TARGET_LE)-nm $(TARGET_BE)-nm; \
+		ln -sf $(TARGET_LE)-objcopy $(TARGET_BE)-objcopy; \
+		ln -sf $(TARGET_LE)-objdump $(TARGET_BE)-objdump; \
+		ln -sf $(TARGET_LE)-ranlib $(TARGET_BE)-ranlib; \
+		ln -sf $(TARGET_LE)-readelf $(TARGET_BE)-readelf; \
+		ln -sf $(TARGET_LE)-size $(TARGET_BE)-size; \
+		ln -sf $(TARGET_LE)-strings $(TARGET_BE)-strings; \
+		ln -sf $(TARGET_LE)-strip $(TARGET_BE)-strip; \
+	)
+
+
+remove-unused:
+	(cd $(INSTALL_ROOT)/$(TARGET_LE)/bin; \
+		mv $(UNUSED_CROSS_BIN) $(INSTALL_ROOT)/libexec/gcc/$(TARGET_LE)/4.4.2; \
+		for file in $(UNUSED_CROSS_BIN); do \
+			ln -s $(INSTALL_ROOT)/libexec/gcc/$(TARGET_LE)/4.4.2/$$file; \
+		done; \
+	)
+	(cd $(INSTALL_ROOT)/$(TARGET_BE)/bin; \
+		for file in $(UNUSED_CROSS_BIN); do \
+			ln -s $(INSTALL_ROOT)/libexec/gcc/$(TARGET_LE)/4.4.2/$$file; \
+		done; \
+	)
+
+
+###############################################################################
+# build required libraries
+#
+build-userland:
+	make -C ../../lib toolchain CROSS=$(TARGET_LE)- TOOLCHAIN_DIR=$(INSTALL_ROOT) INSTALL_ROOT="" MACHINE=arm
+	make -C ../../lib toolchain CROSS=$(TARGET_BE)- TOOLCHAIN_DIR=$(INSTALL_ROOT) INSTALL_ROOT="" MACHINE=arm
+
+
+%_only:
+	[ ! -d "$(@:_only=)" ] || $(MAKE) -C $(@:_only=)
+
+
+build-host-utils:
+	make -C ../ucfinder
+	make -C ../ucfinder install
+	make PLATFORM=UC8400 CROSS=$(TARGET_BE)- -C ../moxalib
+	make PLATFORM=UC8400 CROSS=$(TARGET_BE)- -C ../moxalib install
+	make PLATFORM=IA261 CROSS=$(TARGET_LE)- -C ../moxalib
+	make PLATFORM=IA261 CROSS=$(TARGET_LE)- -C ../moxalib install
+	make -C ../mkencryp CROSS=$(TARGET_LE)-
+	make -C ../mkencryp install
+	-cp $(INSTALL_ROOT)/lib/libiberty.a $(INSTALL_ROOT)/lib/libiberty.a.bak
+	make -C ../gdb-6.8 CROSS=$(TARGET_LE)-
+	make -C ../gdb-6.8 install
+	(cd $(INSTALL_ROOT)/bin; \
+		ln -sf $(TARGET_LE)-gdb $(TARGET_BE)-gdb; \
+		ln -sf $(TARGET_LE)-gdbtui $(TARGET_BE)-gdbtui; \
+		ln -sf $(TARGET_LE)-run $(TARGET_BE)-run; \
+	)
+
+
+$(INSTALLFILE):
+	tar cvfz $(TARFILE) $(INSTALL_ROOT)
+	cat header.sh $(TARFILE) > $(INSTALLFILE)
+	chmod +x $(INSTALLFILE)
+	rm -f $(TARFILE)
+
+clean:
+	make -C ../gdb-6.8 clean
+	make -C userlib clean
+	-rm -rf binutils-2.19.1
+	-rm -rf build-binutil-arm
+	-rm -rf build-gmp-arm
+	-rm -rf build-mpfr-arm
+	-rm -rf build-mpc-arm
+	-rm -rf build-gcc-arm-static
+	-rm -rf build-glibc-le
+	-rm -rf build-glibc-be
+	-rm -rf build-gcc-arm-shared
+	-rm -rf gmp-5.0.1 mpc-0.8.2 mpfr-3.0.0
+	-rm -rf gcc-4.4.2
+	-rm -rf glibc-2.10.1
+	-rm -rf linux-2.6.x
+	-rm -f $(INSTALLFILE)
+

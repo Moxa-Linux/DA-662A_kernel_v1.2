@@ -1,0 +1,9 @@
+Package: libmysqlclient5
+Version: 5.1.23
+Architecture: arm
+Maintainer: Jared_wu <Jared_Wu@moxa.com>
+Section: base
+Priority: optional
+Description: This package provides libmysqlclient.so.16.0.0 (mysql v5.1.23), which supports php web programming.
+Source: http://mirror.provenscaling.com/mysql/community/source/5.1/mysql-5.1.23-rc.tar.gz
+Depends:

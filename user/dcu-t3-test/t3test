@@ -1,0 +1,14 @@
+#!/bin/sh
+
+case "$1" in
+	start)
+		/usr/sbin/t3-test.sh
+		;;
+	stop)
+		killall -9 t3-test.sh
+		;;
+	*)
+		echo "usage: $0 {start|stop}"
+		exit 1
+esac
+exit 0

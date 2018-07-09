@@ -1,0 +1,9 @@
+Package: libffi
+Version: 3.0.10
+Architecture: xscale
+Maintainer: Jared_wu <Jared.Wu@moxa.com>
+Section: base
+Priority: optional
+Description: Foreign Function Interface library
+Source: ftp://sourceware.org/pub/libffi/libffi-3.0.10.tar.gz
+Depends:

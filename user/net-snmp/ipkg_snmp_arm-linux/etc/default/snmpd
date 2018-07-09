@@ -1,0 +1,20 @@
+# This file controls the activity of snmpd and snmptrapd
+
+# MIB directories.  /usr/share/snmp/mibs is the default, but
+# including it here avoids some strange problems.
+export MIBDIRS=/usr/share/snmp/mibs
+
+# snmpd control (yes means start daemon).
+SNMPDRUN=yes
+
+# snmpd options (use syslog, close stdin/out/err).
+SNMPDOPTS='-Lf /dev/null -c /etc/snmp/snmpd.conf'
+
+# snmptrapd control (yes means start daemon).
+TRAPDRUN=yes
+
+# snmptrapd options (use syslog).
+#TRAPDOPTS='-c /etc/snmp/snmptrapd.conf -Lf /home/snmptrapd.log'
+TRAPDOPTS='-c /etc/snmp/snmptrapd.conf -Lf /dev/null'
+#TRAPDOPTS='-c /etc/snmp/snmptrapd.conf -f -Lo'
+

@@ -1,0 +1,71 @@
+# This is a template for submitting snort signature descriptions to
+# the snort.org website
+#
+# Ensure that your descriptions are your own
+# and not the work of others.  References in the rules themselves
+# should be used for linking to other's work. 
+#
+# If you are unsure of some part of a rule, use that as a commentary
+# and someone else perhaps will be able to fix it.
+# 
+# $Id: 1175.txt,v 1.1 2002/08/08 13:50:16 cazz Exp $
+#
+# 
+
+Note:  Please change the CVE reference to CAN-1999-0930
+
+Rule:  
+alert tcp $EXTERNAL_NET any -> $HTTP_SERVERS 80 (msg:"WEB-MISC wwwboard.pl access"; uricontent:"/wwwboard.pl"; nocase; flags: A+; reference:bugtraq,1795; reference:cve,CVE-1999-0953; classtype:attempted-recon; sid:1175; rev:2;)
+--
+
+Sid:
+1175
+
+--
+
+Summary:
+The client attempted to access wwwboard.pl web application
+
+--
+Impact:
+Possible remote administration of the webboard application, or overwriting
+of existing followup posts to the webboard
+
+--
+Detailed Information:
+Some versions of WWWBoard, Matt Wright's CGI web application, have
+vulnerabities in them, including a default administration password for
+the web application, and a flaw in content checking for posts of followup
+messages that can allow an attacker to overwrite previous posts
+
+--
+Attack Scenarios:
+Remote login with the default login/password of WebAdmin/WebBoard
+Remote overwriting of previous posts by playing with a POST input value
+
+--
+Ease of Attack:
+
+
+--
+False Positives:
+Normal, non-malicious accesses to wwwboard will be caught by this rule.
+
+--
+False Negatives:
+
+--
+Corrective Action:
+Insure that local installations of WWWBoard are current and properly
+configured with a non-default administration password.  Look at the
+packet to see if a followup post likely overwrote an existing post.
+
+--
+Contributors:
+
+--
+References:
+CVE:   CAN-1999-0930
+CVE:  CVE-1999-0954
+Bugtraq:  BID 649
+Bugtraq:  BID 1795

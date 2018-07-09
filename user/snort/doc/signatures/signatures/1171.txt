@@ -1,0 +1,52 @@
+Rule:  
+alert tcp $EXTERNAL_NET any -> $HTTP_SERVERS 80 (msg:"WEB-MISC whisker HEAD with large datagram"; content:"HEAD"; offset: 0; depth: 4; nocase; dsize:>512; flags:A+; classtype:attempted-recon; reference:url,www.wiretrip.net/rfp/pages/whitepapers/whiskerids.html; sid:1171; rev:3;)
+
+--
+
+Sid:
+1171
+
+--
+
+Summary:
+Someone attempted to bypass the IDS in a possible web attack by sending
+an obfuscated request using HEAD.
+
+--
+Impact:
+Someone may have run a reconnaissance tool like Whisker or an obfuscated
+attack against a web server.
+
+--
+Detailed Information:
+Some CGI attacks can be accomplished by using HEAD instead of GET.
+This method can be used by an attacker to obfuscate attacks or
+reconnaissance to bypass some IDS systems.  Tools such as Whisker can
+be configured to do this.
+
+--
+Attack Scenarios:
+An attacker runs an automated tool, like Whisker, or sends a hand-crafted
+attack to a web server
+
+--
+Ease of Attack:
+Automated tools (e.g., Whisker) exist and are available in the wild.
+
+--
+False Positives:
+Very long legitimate HEAD requests.
+
+--
+False Negatives:
+
+--
+Corrective Action:
+Examine the packet to determine what kind of attack or probe was launched.
+
+--
+Contributors:
+
+--
+Additional References:
+URL:  www.wiretrip.net/rfp/pages/whitepapers/whiskerids.html

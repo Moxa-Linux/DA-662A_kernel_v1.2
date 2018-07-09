@@ -1,0 +1,98 @@
+#! /bin/sh
+#
+# chkconfig: 2345 20 20
+#
+PATH=/bin:/usr/bin:/sbin:/usr/sbin
+
+# /etc/init.d/ssh: start and stop the OpenBSD "secure shell(tm)" daemon
+
+# Autokeygen control is located in /etc/default/ssh
+. /etc/default/ssh
+
+test -x /bin/sshd || exit 0
+( /bin/sshd -\? 2>&1 | grep -q OpenSSH ) 2>/dev/null || exit 0
+
+# forget it if we're trying to start, and /etc/ssh/etc/sshd_not_to_be_run exists
+if [ -e /etc/ssh/sshd_not_to_be_run ]; then 
+    echo "OpenBSD Secure Shell server not in use (/etc/ssh/sshd_not_to_be_run)"
+    exit 0
+fi
+
+setupKeys()
+{
+	if [ ! -s /etc/ssh/ssh_host_key ]; then
+		/bin/ssh-keygen -b 1024 -f /etc/ssh/ssh_host_key -N ""
+	fi
+	if [ ! -s /etc/ssh/ssh_host_rsa_key ]; then
+		/bin/ssh-keygen -b 1024 -f /etc/ssh/ssh_host_rsa_key -N "" -t rsa
+	fi
+	if [ ! -s /etc/ssh/ssh_host_dsa_key ]; then
+		/bin/ssh-keygen -b 1024 -f /etc/ssh/ssh_host_dsa_key -N "" -t dsa
+	fi
+}
+
+checkKeys()
+{
+	if [ ! -s /etc/ssh/ssh_host_key ]; then
+		echo "failed - no ssh_host_key!"
+		exit 1
+	fi
+	if [ ! -s /etc/ssh/ssh_host_rsa_key ]; then
+		echo "failed - no ssh_host_rsa_key!"
+		exit 1
+	fi
+	if [ ! -s /etc/ssh/ssh_host_dsa_key ]; then
+		echo "failed - no ssh_host_dsa_key!"
+		exit 1
+	fi
+}
+
+# Configurable options:
+
+case "$1" in
+  start)
+	test -f /etc/ssh/sshd_not_to_be_run && exit 0
+	[ "$AUTOKEYGEN" = yes ] && setupKeys
+        echo -n "Starting OpenBSD Secure Shell server: "
+	checkKeys
+	echo -n "sshd"
+	start-stop-daemon -S -q -m -p /var/run/sshd6.pid -x /bin/sshd -- -6 -f /etc/ssh/sshd_config
+	start-stop-daemon -S -q -m -p /var/run/sshd4.pid -x /bin/sshd -- -4 -f /etc/ssh/sshd_config
+        echo "."
+	;;
+  stop)
+        echo -n "Stopping OpenBSD Secure Shell server: sshd"
+        killall sshd
+	[ -f /var/run/sshd4.pid ] && rm /var/run/sshd4.pid
+	[ -f /var/run/sshd6.pid ] && rm /var/run/sshd6.pid
+	[ -f /var/run/sshd.pid ] && rm /var/run/sshd.pid
+        echo "."
+	;;
+
+  reload|force-reload)
+	test -f /etc/ssh/sshd_not_to_be_run && exit 0
+	echo -n "Reloading OpenBSD Secure Shell server's configuration"
+	start-stop-daemon -S --signal 1 -q -x /bin/sshd -- -6 -f /etc/ssh/sshd_config
+	start-stop-daemon -S --signal 1 -q -x /bin/sshd -- -4 -f /etc/ssh/sshd_config
+	echo "."
+	;;
+
+  restart)
+	test -f /etc/ssh/sshd_not_to_be_run && exit 0
+	echo -n "Restarting OpenBSD Secure Shell server: sshd"
+	killall sshd
+	[ -f /var/run/sshd4.pid ] && rm /var/run/sshd4.pid
+	[ -f /var/run/sshd6.pid ] && rm /var/run/sshd6.pid
+	[ -f /var/run/sshd.pid ] && rm /var/run/sshd.pid
+	sleep 10
+	start-stop-daemon -S -q -m -p /var/run/sshd6.pid -x /bin/sshd -- -6 -f /etc/ssh/sshd_config
+	start-stop-daemon -S -q -m -p /var/run/sshd4.pid -x /bin/sshd -- -4 -f /etc/ssh/sshd_config
+	echo "."
+	;;
+
+  *)
+	echo "Usage: /etc/init.d/ssh {start|stop|reload|force-reload|restart}"
+	exit 1
+esac
+
+exit 0

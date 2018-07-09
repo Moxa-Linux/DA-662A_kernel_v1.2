@@ -1,0 +1,9 @@
+Package: tftp-hpa
+Version: 4.5
+Architecture: xscale
+Maintainer: Aeluin Chen <aeluin_chen@moxa.com>
+Section: base
+Priority: optional
+Description: tftp-hpa is an enhanced version of the BSD TFTP client and server. this package only include the server.
+Source: http://freecode.com/projects/tftp-hpa
+Depends:

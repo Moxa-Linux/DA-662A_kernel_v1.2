@@ -1,0 +1,9 @@
+Package: wimax-tools
+Version: 1.4.4
+Architecture: arm
+Maintainer: Jared_wu <Jared.Wu@moxa.com>
+Section: base
+Priority: optional
+Description: Low level user space tools for the Linux WiMAX stack
+Source: http://icelord.net/wordpress/wp-content/uploads/2011/08/wimax-tools-1.4.4.tar.gz
+Depends: libffi glib2

@@ -1,0 +1,9 @@
+Package: php
+Version: 5.1.6
+Architecture: arm
+Maintainer: Jared_wu <Jared_Wu@moxa.com>
+Section: base
+Priority: optional
+Description: PHP fast cgi package to work with nginx
+Source: http://museum.php.net/php5/php-5.1.6.tar.bz2
+Depends: 

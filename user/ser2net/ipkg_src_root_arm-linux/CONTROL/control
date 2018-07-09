@@ -1,0 +1,9 @@
+Package: ser2net
+Version: 2.7
+Architecture: arm
+Maintainer: Jared_wu <Jared_Wu@moxa.com>
+Section: base
+Priority: optional
+Description: Serial to network proxy
+Source: http://sourceforge.net/projects/ser2net/
+Depends: 

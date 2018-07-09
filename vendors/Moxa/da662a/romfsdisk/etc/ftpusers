@@ -1,0 +1,15 @@
+# The ftpusers file is deprecated. Use deny-uid/deny-gid in ftpaccess.
+#root
+bin
+daemon
+adm
+lp
+sync
+shutdown
+halt
+mail
+news
+uucp
+operator
+games
+nobody

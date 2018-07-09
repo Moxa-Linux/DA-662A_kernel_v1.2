@@ -1,0 +1,9 @@
+Package: nginx
+Version: 1.0.15
+Architecture: arm
+Maintainer: Jared_wu <Jared_Wu@moxa.com>
+Section: base
+Priority: optional
+Description: small, but very powerful and efficient web server
+Source: http://nginx.org/download/nginx-1.0.12.tar.gz
+Depends: 

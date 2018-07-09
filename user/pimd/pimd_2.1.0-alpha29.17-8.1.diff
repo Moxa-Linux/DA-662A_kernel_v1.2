@@ -1,0 +1,951 @@
+--- pimd-2.1.0-alpha29.17.orig/main.c
++++ pimd-2.1.0-alpha29.17/main.c
+@@ -43,6 +43,8 @@
+ 
+ #include "defs.h"
+ 
++struct rp_hold *g_rp_hold=NULL;
++
+ 
+ #ifdef SNMP
+ #include "snmp.h"
+@@ -195,6 +197,7 @@
+     struct debugname *d;
+     char c;
+     int tmpd;
++	time_t boottime;
+ 
+     
+     setlinebuf(stderr);
+@@ -334,6 +337,8 @@
+ #else
+     srandom(gethostid());
+ #endif
++
++    time(&boottime);
+     
+     /* Start up the log rate-limiter */
+     resetlogging(NULL);
+@@ -443,6 +448,23 @@
+ 	    timeout->tv_sec = secs;
+ 	   timeout->tv_usec = 0;
+         }
++
++    if (boottime) {
++         time_t n;
++         time(&n);
++         if (n > boottime + 15) {
++           struct rp_hold *rph=g_rp_hold;
++           while(rph) {
++              add_rp_grp_entry(&cand_rp_list, &grp_mask_list,
++                rph->address, 1, 0xffffff, rph->group, rph->mask,
++                curr_bsr_hash_mask, curr_bsr_fragment_tag);
++              rph=rph->next;
++           }
++           boottime=0;
++         }
++    }
++
++
+ 	
+ 	if (sighandled) {
+ 	    if (sighandled & GOT_SIGINT) {
+--- pimd-2.1.0-alpha29.17.orig/include/linux/netinet/in-my.h
++++ pimd-2.1.0-alpha29.17/include/linux/netinet/in-my.h
+@@ -0,0 +1,31 @@
++/*
++ * Dummy header file to include the appropriate in.h for Linux
++ * The situation is pretty messy, and no guarantee it will work.
++ * Use your skills and imagination at your own risk :)
++ *
++ * Thanks to Jonathan Day for the problem report and the solution
++ *
++ */
++/*
++ *  Questions concerning this software should be directed to
++ *  Pavlin Ivanov Radoslavov (pavlin@catarina.usc.edu)
++ *
++ *  $Id: in.h,v 1.8 2000/03/08 09:12:45 pavlin Exp $
++ */
++
++#include <features.h>
++
++#if (defined(__GLIBC__) && (defined(__GLIBC_MINOR__)))
++#if (__GLIBC__ == 2) && (__GLIBC_MINOR__ == 0)
++#include "in-glibc-2.0.h"
++#elif (__GLIBC__ == 2) && (__GLIBC_MINOR__ == 1)
++#include "in-glibc-2.1.h"
++#else
++#include <linux/types.h>
++#include <arpa/inet.h>
++#endif /* __GLIBC__ */
++#else
++#include <linux/types.h>
++#include <arpa/inet.h>
++#endif
++
+--- pimd-2.1.0-alpha29.17.orig/include/linux/netinet/mroute.h
++++ pimd-2.1.0-alpha29.17/include/linux/netinet/mroute.h
+@@ -2,7 +2,8 @@
+ #define __LINUX_MROUTE_H
+ 
+ #include <linux/sockios.h>
+-#include <netinet/in.h>
++#include <netinet/in-my.h>
++
+ 
+ /*
+  *	Based on the MROUTING 3.5 defines primarily to keep
+--- pimd-2.1.0-alpha29.17.orig/vers.c
++++ pimd-2.1.0-alpha29.17/vers.c
+@@ -0,0 +1 @@
++char todaysversion[]="2.1.0-alpha29.17";
+--- pimd-2.1.0-alpha29.17.orig/pathnames.h
++++ pimd-2.1.0-alpha29.17/pathnames.h
+@@ -48,6 +48,11 @@
+ #define _PATH_PIMD_GENID	"/var/run/pimd.genid"
+ #define _PATH_PIMD_DUMP		"/var/tmp/pimd.dump"
+ #define _PATH_PIMD_CACHE	"/var/tmp/pimd.cache"
++#elif defined(Linux)
++#define _PATH_PIMD_PID		"/var/run/pimd.pid"
++#define _PATH_PIMD_GENID	"/var/run/pimd.genid"
++#define _PATH_PIMD_DUMP		"/var/tmp/pimd.dump"
++#define _PATH_PIMD_CACHE	"/var/tmp/pimd.cache"
+ #else
+ #define _PATH_PIMD_PID		"/etc/pimd.pid"
+ #define _PATH_PIMD_GENID	"/etc/pimd.genid"
+--- pimd-2.1.0-alpha29.17.orig/Makefile
++++ pimd-2.1.0-alpha29.17/Makefile
+@@ -10,6 +10,9 @@
+ #
+ # XXX: SEARCH FOR "CONFIGCONFIGCONFIG" (without the quotas) for the lines
+ # that might need configuration
++#
++# Modified for Debian by Antonin Kral <A.Kral@sh.cvut.cz>
++# 27.03.2003
+ 
+ PROG_NAME=pimd
+ 
+@@ -89,7 +92,7 @@
+ 
+ ## FreeBSD	-D__FreeBSD__ is defined by the OS
+ ## FreeBSD-3.x, FreeBSD-4.x
+-CFLAGS= -Wall	-g	-Iinclude/freebsd ${COMMON_CFLAGS}
++#CFLAGS= -Wall	-g	-Iinclude/freebsd ${COMMON_CFLAGS}
+ ## FreeBSD-2.x
+ #CFLAGS= -Wall	-g	-Iinclude/freebsd2 ${COMMON_CFLAGS}
+ 
+@@ -131,7 +134,7 @@
+ #CFLAGS= -Wall -g -Dold_Linux ${LINUX_INCLUDE} ${LINUX_DEFS} ${COMMON_CFLAGS}
+ 
+ ## Newer Linux (linux-2.1.127 for example)
+-#CFLAGS= -Wall -g ${LINUX_INCLUDE} ${LINUX_DEFS} ${COMMON_CFLAGS}
++CFLAGS= -Wall -g ${LINUX_INCLUDE} ${LINUX_DEFS} ${COMMON_CFLAGS}
+ 
+ 
+ LIBS=		${SNMPLIBDIR} ${SNMPLIBS} ${LIB2}
+@@ -214,11 +217,15 @@
+ 	cvs rdiff -kk -u -r ${PROG_CVS_LAST_VERSION} ${PROG_NAME} > ${PROG_NAME}-current.diff
+ 
+ install:	${PROG_NAME}
+-	install -d /usr/local/bin
+-	install -m 0755 -f /usr/local/bin ${PROG_NAME}
+-	- mv /etc/pimd.conf /etc/pimd.conf.old
+-	cp pimd.conf /etc
+-	echo "Don't forget to check/edit /etc/pimd.conf!!!"
++	# Modified in Debianization
++	install -d ${DESTDIR}/usr/sbin
++	install -d ${DESTDIR}/etc
++	# install -m 0755 -f /usr/local/bin ${PROG_NAME}
++	install -m 0755 ${PROG_NAME} ${DESTDIR}/usr/sbin/${PROG_NAME}
++	#- mv /etc/pimd.conf /etc/pimd.conf.old
++	#cp pimd.conf /etc
++	install -m 0644 ${PROG_NAME}.conf ${DESTDIR}/etc/${PROG_NAME}.conf
++	#echo "Don't forget to check/edit /etc/pimd.conf!!!"
+ 
+ clean:	FRC ${SNMPCLEAN}
+ 	rm -f ${OBJS} core ${PROG_NAME} tags TAGS *.o
+--- pimd-2.1.0-alpha29.17.orig/config.c
++++ pimd-2.1.0-alpha29.17/config.c
+@@ -52,6 +52,8 @@
+ static int	parse_phyint	__P((char *s));
+ static u_int32	ifname2addr	__P((char *s));
+ 
++extern struct rp_hold *g_rp_hold;
++
+ 
+ /*
+  * Query the kernel to find network interfaces that are multicast-capable
+@@ -304,6 +306,7 @@
+ #define EMPTY				1
+ #define PHYINT				2
+ #define CANDIDATE_RP			3
++#define RP_ADDRESS			64
+ #define GROUP_PREFIX			4
+ #define BOOTSTRAP_RP			5
+ #define REG_THRESHOLD			6
+@@ -332,6 +335,8 @@
+ 	return PHYINT;
+     if (EQUAL(word, "cand_rp"))
+ 	return CANDIDATE_RP;
++	if (EQUAL(word, "rp_address"))
++		return RP_ADDRESS;
+     if (EQUAL(word, "group_prefix"))
+ 	return GROUP_PREFIX;
+     if (EQUAL(word, "cand_bootstrap_router"))
+@@ -782,6 +787,38 @@
+     return(TRUE);
+ }
+ 
++/* This is my hack to put a statically assignable RP address in */
++
++int
++parse_rp_address(s)
++	char *s;
++{
++	char *w;
++	u_int32 local	= 0xffffff;
++	struct rp_hold * rph;
++
++	while (!EQUAL((w = next_word(&s)), "")) {
++		/* BSR address */
++		local = inet_parse(w, 4);
++	}				/* while not empty */
++
++	if (local == 0xffffff) {
++		log(LOG_WARNING, 0, "Invalid RP address provided '%s' in %s. Ignoring.",
++			w, configfilename);
++		return(TRUE);
++	}
++
++	rph=malloc(sizeof(*rph));
++	rph->address=local;
++	rph->group=224;
++	rph->mask=240;
++	rph->next=g_rp_hold;
++	g_rp_hold=rph;
++
++	log(LOG_INFO, 0, "Assigned RP address %s", inet_fmt(local, s1));
++	return(TRUE);
++}
++
+ 
+ /*
+  * function name: parse_reg_threshold
+@@ -1086,6 +1123,9 @@
+ 	case CANDIDATE_RP:
+ 	    parse_candidateRP(s);
+ 	    break;
++		case RP_ADDRESS:
++			parse_rp_address(s);
++			break;
+ 	case GROUP_PREFIX:
+ 	    parse_group_prefix(s);
+ 	    break;
+--- pimd-2.1.0-alpha29.17.orig/debian/dirs
++++ pimd-2.1.0-alpha29.17/debian/dirs
+@@ -0,0 +1,2 @@
++etc
++usr/sbin
+--- pimd-2.1.0-alpha29.17.orig/debian/pimd.substvars
++++ pimd-2.1.0-alpha29.17/debian/pimd.substvars
+@@ -0,0 +1 @@
++shlibs:Depends=libc6 (>= 2.3.2.ds1-4)
+--- pimd-2.1.0-alpha29.17.orig/debian/README.Debian
++++ pimd-2.1.0-alpha29.17/debian/README.Debian
+@@ -0,0 +1,38 @@
++pimd for Debian
++---------------
++
++You need to enable multicast and multicast-routing in your kernel:
++ 
++CONFIG_IP_MULTICAST=y
++CONFIG_IP_MROUTE=y
++
++you have also enable support for PIM-SM v2 in kernel:
++
++CONFIG_IP_PIMSM_V2=y
++ 
++If you want to build a multicast tunnel via an unicast connection, you
++have to enable ip-tunneling to:
++ 
++CONFIG_NET_IPIP=m (or =y)
++ 
++The default configuration of pimd is to route between two and more interfaces,
++and start AutoRP. For more details see the manpage and program documentation.
++
++Support for staticRP is available since pimd_2.1.0-alpha29.17-4. Patch provided
++by Peter Mann <Peter.Mann@tuke.sk>. There is new configuratation parameter:
++
++rp_address
++
++The future of pimd
++------------------
++
++As of January 14, 2005, pimd is officially RETIRED.
++
++It hasn't been updated properly for years (only bug fixes reported by users),
++and has been superseded by newer and better open-source implementations.  See
++http://netweb.usc.edu/pim/ for a list of such implementations.
++
++Possible solution is to use http://www.xorp.org/
++ 
++ -- Antonin Kral <A.Kral@sh.cvut.cz>, Thu, 27 Mar 2003 10:12:47 +0100
++ -- Antonin Kral <A.Kral@sh.cvut.cz>, Tue, 10 Aug 2004 10:51:12 +0100
+--- pimd-2.1.0-alpha29.17.orig/debian/docs
++++ pimd-2.1.0-alpha29.17/debian/docs
+@@ -0,0 +1,5 @@
++BUGS.TODO
++README
++README.config
++README.config.jp
++README.debug
+--- pimd-2.1.0-alpha29.17.orig/debian/changelog
++++ pimd-2.1.0-alpha29.17/debian/changelog
+@@ -0,0 +1,68 @@
++pimd (2.1.0-alpha29.17-8.1) unstable; urgency=low
++
++  * Non-maintainer upload.
++  * Added LSB formatted dependency info in init.d script (closes: #469226)
++
++ -- Peter Eisentraut <petere@debian.org>  Thu, 03 Apr 2008 14:15:02 +0200
++
++pimd (2.1.0-alpha29.17-8) unstable; urgency=low
++
++  * explicit removal of 
++    removed include/linux/netinet/in.h
++    removed include/linux/netinet/in-slackware.h
++    
++    thanks Julien, Closes: #423516, #422591
++
++ -- Antonin Kral <A.Kral@sh.cvut.cz>  Mon, 06 Aug 2007 02:04:31 +0000
++
++pimd (2.1.0-alpha29.17-7) unstable; urgency=high
++
++  * included patch from Prasanna Krishnamoorthy, Closes #422591
++    removed include/linux/netinet/in.h
++    removed include/linux/netinet/in-slackware.h
++
++    goal is to fix missing reference to ntohl()
++
++  * init script works with newer kernels, Closes #231677
++
++ -- Antonin Kral <A.Kral@sh.cvut.cz>  Mon, 07 May 2007 19:14:32 +0000
++
++pimd (2.1.0-alpha29.17-6) unstable; urgency=low
++
++  * #287318 is not a bug since previsou release, closes #287318
++  * rules correction, closes #268475
++  * int pid removed from defs.h, closes #287915
++
++ -- Antonin Kral <A.Kral@sh.cvut.cz>  Fri, 28 Jan 2005 11:11:18 +0100
++
++pimd (2.1.0-alpha29.17-5) unstable; urgency=low
++
++  * /etc/pimd.conf added to conffiles, closes #287318
++
++ -- Antonin Kral <A.Kral@sh.cvut.cz>  Thu,  6 Jan 2005 23:18:36 +0100
++
++pimd (2.1.0-alpha29.17-4) unstable; urgency=low
++
++  * Addapted patch for staticRP support by Peter Mann, please refer to
++    README.Debian
++
++ -- Antonin Kral <A.Kral@sh.cvut.cz>  Tue, 10 Aug 2004 10:53:15 +0200
++
++pimd (2.1.0-alpha29.17-3) unstable; urgency=low
++
++  * Changed description, kernel patch is not longer needed
++
++ -- Antonin Kral <A.Kral@sh.cvut.cz>  Sat, 31 May 2003 08:48:11 +0200
++
++pimd (2.1.0-alpha29.17-2) unstable; urgency=low
++
++  * Changed path of pid file
++
++ -- Antonin Kral <A.Kral@sh.cvut.cz>  Mon,  7 Apr 2003 19:50:09 +0200
++
++pimd (2.1.0-alpha29.17-1) unstable; urgency=low
++
++  * Initial Release, closes #186454
++
++ -- Antonin Kral <A.Kral@sh.cvut.cz>  Thu, 27 Mar 2003 10:12:47 +0100
++
+--- pimd-2.1.0-alpha29.17.orig/debian/copyright
++++ pimd-2.1.0-alpha29.17/debian/copyright
+@@ -0,0 +1,87 @@
++This package was debianized by Antonin Kral <A.Kral@sh.cvut.cz> on
++Thu, 27 Mar 2003 10:12:47 +0100.
++
++It was downloaded from http://netweb.usc.edu/pim/pimd/
++
++Project homepage is http://netweb.usc.edu/pim/
++
++Upstream Authors:
++
++ * Ahmed Helmy <ahelmy@catarina.usc.edu>
++ * Rusty Eddy <eddy@isi.edu>
++ * Pavlin Radoslavov <pavlin@catarina.usc.edu>
++
++Copyright:
++
++/*
++ * Copyright (c) 1998-2001
++ * University of Southern California/Information Sciences Institute.
++ * All rights reserved.
++ *
++ * Redistribution and use in source and binary forms, with or without
++ * modification, are permitted provided that the following conditions
++ * are met:
++ * 1. Redistributions of source code must retain the above copyright
++ *    notice, this list of conditions and the following disclaimer.
++ * 2. Redistributions in binary form must reproduce the above copyright
++ *    notice, this list of conditions and the following disclaimer in the
++ *    documentation and/or other materials provided with the distribution.
++ * 3. Neither the name of the project nor the names of its contributors
++ *    may be used to endorse or promote products derived from this software
++ *    without specific prior written permission.
++ *
++ * THIS SOFTWARE IS PROVIDED BY THE PROJECT AND CONTRIBUTORS ``AS IS'' AND
++ * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
++ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
++ * ARE DISCLAIMED.  IN NO EVENT SHALL THE PROJECT OR CONTRIBUTORS BE LIABLE
++ * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
++ * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
++ * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
++ * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
++ * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
++ * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
++ * SUCH DAMAGE.
++ */
++/*
++ *  $Id: LICENSE,v 1.5 2001/09/10 20:31:36 pavlin Exp $
++ */
++/*
++ * Part of this program has been derived from mrouted.
++ * The mrouted program is covered by the license in the accompanying file
++ * named "LICENSE.mrouted".
++ *
++ * The mrouted program is COPYRIGHT 1989 by The Board of Trustees of
++ * Leland Stanford Junior University.
++ *
++ */
++
++Additionally, pimd uses some code from mrouted. Mrouted Copyright statement
++follows:
++
++Copyright (c) 2002 The Board of Trustees of the Leland Stanford Junior
++University
++Permission is hereby granted to STANFORD's rights, free of charge, to any
++person obtaining a copy of this Software and associated documentation files
++( "MROUTED"), to deal in MROUTED without restriction, including without
++limitation the rights to use, copy, modify, merge, publish, distribute,
++sublicense, and/or sell copies of MROUTED , and to permit persons to whom
++MROUTED is furnished to do so, subject to the following conditions:
++1)      The above copyright notice and this permission notice shall be
++included in all copies or substantial portions of the MROUTED .
++2)      Neither the STANFORD name nor the names of its contributors may be
++used in any promotional advertising or other promotional materials to be
++disseminated to the public or any portion thereof nor to use the name of
++any STANFORD faculty member, employee, or student, or any trademark,
++service mark, trade name, or symbol of STANFORD or Stanford Hospitals and
++Clinics, nor any that is associated with any of them, without STANFORD's
++prior written consent.  Any use of STANFORD's name shall be limited to
++statements of fact and shall not imply endorsement of any products or
++services.
++
++3)      MROUTED IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
++OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
++FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
++AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
++LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
++FROM, OUT OF OR IN CONNECTION WITH MROUTED OR THE USE OR OTHER DEALINGS IN
++THE MROUTED .
+--- pimd-2.1.0-alpha29.17.orig/debian/init.d
++++ pimd-2.1.0-alpha29.17/debian/init.d
+@@ -0,0 +1,48 @@
++#! /bin/sh
++### BEGIN INIT INFO
++# Provides:          pimd
++# Required-Start:    $remote_fs $syslog
++# Required-Stop:     $remote_fs $syslog
++# Default-Start:     2 3 4 5
++# Default-Stop:      0 1 6
++### END INIT INFO
++
++PATH=/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin
++DAEMON=/usr/sbin/pimd
++NAME=pimd
++DESC=pimd
++
++test -x $DAEMON || exit 0
++
++set -e
++
++case "$1" in
++  start)
++	echo -n "Starting $DESC: "
++	start-stop-daemon --start --quiet --pidfile /var/run/$NAME.pid \
++		--exec $DAEMON
++	echo "$NAME."
++	;;
++  stop)
++	echo -n "Stopping $DESC: "
++	start-stop-daemon --stop --quiet --pidfile /var/run/$NAME.pid \
++		--exec $DAEMON
++	echo "$NAME."
++	;;
++  restart|force-reload)
++	echo -n "Restarting $DESC: "
++	start-stop-daemon --stop --quiet --pidfile \
++		/var/run/$NAME.pid --exec $DAEMON
++	sleep 1
++	start-stop-daemon --start --quiet --pidfile \
++		/var/run/$NAME.pid --exec $DAEMON
++	echo "$NAME."
++	;;
++  *)
++	N=/etc/init.d/$NAME
++	echo "Usage: $N {start|stop|restart|force-reload}" >&2
++	exit 1
++	;;
++esac
++
++exit 0
+--- pimd-2.1.0-alpha29.17.orig/debian/control
++++ pimd-2.1.0-alpha29.17/debian/control
+@@ -0,0 +1,17 @@
++Source: pimd
++Section: net
++Priority: optional
++Maintainer: Antonin Kral <A.Kral@sh.cvut.cz>
++Build-Depends: debhelper
++Standards-Version: 3.7.2
++
++Package: pimd
++Architecture: any
++Depends: ${shlibs:Depends}
++Conflicts: mrouted
++Description: multicast routing daemon (PIMv2)
++ pimd is implementation of Protocol Independent Multicast routing daemon.
++ It supports PIMv2-SM on FreeBSD, NetBSD, OpenBSD, Linux. Enabled PIM support
++ in kernel is needed.
++ .
++ As of January 14, 2005, pimd is officially RETIRED (by mainstream).
+--- pimd-2.1.0-alpha29.17.orig/debian/conffiles
++++ pimd-2.1.0-alpha29.17/debian/conffiles
+@@ -0,0 +1,2 @@
++/etc/init.d/pimd
++/etc/pimd.conf
+--- pimd-2.1.0-alpha29.17.orig/debian/examples
++++ pimd-2.1.0-alpha29.17/debian/examples
+@@ -0,0 +1 @@
++debian/addons/pimd.conf
+--- pimd-2.1.0-alpha29.17.orig/debian/pimd.1
++++ pimd-2.1.0-alpha29.17/debian/pimd.1
+@@ -0,0 +1,74 @@
++.\"                                      Hey, EMACS: -*- nroff -*-
++.\" First parameter, NAME, should be all caps
++.\" Second parameter, SECTION, should be 1-8, maybe w/ subsection
++.\" other parameters are allowed: see man(7), man(1)
++.TH PIMD 1 "March 27, 2003"
++.\" Please adjust this date whenever revising the manpage.
++.\"
++.\" Some roff macros, for reference:
++.\" .nh        disable hyphenation
++.\" .hy        enable hyphenation
++.\" .ad l      left justify
++.\" .ad b      justify to both left and right margins
++.\" .nf        disable filling
++.\" .fi        enable filling
++.\" .br        insert line break
++.\" .sp <n>    insert n+1 empty lines
++.\" for manpage-specific macros, see man(7)
++.SH NAME
++pimd - PIMv2-SM multicast routing daemon
++.SH SYNOPSIS
++.B pimd
++.RI [ options ]
++.br
++.SH DESCRIPTION
++This manual page documents briefly the
++.B pimd
++program.
++This manual page was written for the Debian GNU/Linux distribution
++because the original program does not have a manual page.
++.PP
++.\" TeX users may be more comfortable with the \fB<whatever>\fP and
++.\" \fI<whatever>\fP escape sequences to invode bold face and italics, 
++.\" respectively.
++\fBpimd\fP provides implementation of Protocol Independent Multicast v2 protocol which is used in todays Internet for routing multicast traffic. PIM is widely deployed because it is main multicast routing protocol used in Cisco routers.
++.SH The Protocol Independent Multicast--Sparse Mode (PIM-SM) architecture:
++.TP
++* maintains the traditional IP multicast service model of receiver-initiated membership;
++.TP
++* uses explicit joins that propagate hop-by-hop from members' directly connected routers toward the distribution tree.
++.TP
++* builds a shared multicast distribution tree centered at a Rendezvous Point, and then builds source-specific trees for those sources whose data traffic warrants it.
++.TP
++* is not dependent on a specific unicast routing protocol; and
++.TP
++* uses soft-state mechanisms to adapt to underlying network conditions and group dynamics.
++.TP
++The robustness, flexibility, and scaling properties of this architecture make it well suited to large heterogeneous internetworks.
++.SH OPTIONS
++These programs follow the usual GNU command line syntax, with long
++options starting with two dashes (`-').
++A summary of options is included below.
++For more informations see project documentation.
++.TP
++.B \-h, \-\-help
++show brief information about usage
++.TP
++.B \-c FILE
++pimd will use FILE as configuration file instead of /etc/pimd.conf
++.TP
++.B \-d LEVEL[,LEVEL]
++add LEVEL to debugging. If you use -d \fBpimd\fP will not fork.
++.SH SEE ALSO
++.BR /usr/share/doc/pimd
++.br
++Directory with further reading.
++.br
++.BR http://netweb.usc.edu/pim/
++.br
++.BR http://netweb.usc.edu/pim/pimd/
++.br
++Project web pages.
++.SH AUTHOR
++This manual page was written by Antonín Král <A.Kral@sh.cvut.cz>,
++for the Debian GNU/Linux system (but may be used by others).
+--- pimd-2.1.0-alpha29.17.orig/debian/addons/pimd.conf
++++ pimd-2.1.0-alpha29.17/debian/addons/pimd.conf
+@@ -0,0 +1,94 @@
++#   This is the configuration file for "pimd", an IP multicast router.
++#   pimd looks for it in "/etc/pimd.conf".
++#
++#   $Id: pimd.conf,v 1.17 2001/09/10 20:31:37 pavlin Exp $
++#
++#   Command formats:
++##########
++# default_source_preference <preference>
++# default_source_metric <metric>
++#
++# phyint <local-addr | ifname> [disable]  [threshold <t>] [preference <p>] [metric <m>] [altnet <net-addr> masklen <masklen>] [scoped <net-addr> masklen <masklen>]
++#
++# cand_rp [<local-addr>] [priority <number> ] [time <number>]
++# cand_bootstrap_router [<local-addr>] [priority <number>]
++#
++# group_prefix <group-addr> [masklen <masklen>]
++# group_prefix <group-addr> [masklen <masklen>]
++# .
++# .
++# group_prefix <group-addr> [masklen <masklen>]
++#
++#
++# switch_data_threshold [rate <number> interval <number>]
++#
++# switch_register_threshold [rate <number> interval <number>]
++##########
++# By default PIM will be activated on all interfaces.  Use phyint to 
++# disable on interfaces where PIM should not be run.
++#
++# Preferences are used by assert elections to determine upstream routers.
++# Currently pimd cannot reliably obtain preferences and metrics from the
++# unicast routing protocols, so a default preference may be configured.
++# In an assert election, the router advertising the lowest assert preference
++# will be selected as the forwarder and upstream router for the LAN.
++# 101 should be sufficiently high so that asserts from Cisco or GateD
++# routers are prefered over poor-little pimd.
++#
++# It is reccommended that preferences be set such that metrics are never
++# consulted.  However, default metrics may also be set and will default to
++# 1024.
++#
++#
++# A "phyint" can be specified by either its IP address or interface name.
++#
++# `preference` and `metric` after "phyint" are used to configure manually
++# the default preference and metric for the Assert messages sent on that
++# interface. Usually you don't need this, but if you do, think of them
++# like `preference` and `metric` defined per iif, but used by the
++# Asserts on the oifs.
++#
++# If you want to add "alternative (sub)net" to a physical interface,
++# e.g., if you want to make incoming traffic with a non-local source address
++# to appear as it is coming from a local subnet, then use the command:
++#   phyint <local-addr | ifname> altnet <net-addr> masklen <len>
++# XXX: if you use this command, make sure you know what you are doing!!
++#
++# If you want administrative scoped multicast filtering, use the
++# following command:
++#   phyint <local-addr | ifname> scoped <net-addr> masklen <masklen>
++# This allows interfaces to be configured as an administrative boundary
++# for the specified scoped address. Packets belonging to the scoped
++# address will not be forwarded. To use this compile with -DSCOPED_ACL
++# option (in Makefile).
++# 
++# `local-addr` after "cand_rp" and "cand_bootstrap_router" specifies
++#  the local address to be used in the Cand-RP and Cand-BSR messages.
++#  If not specified, the largest local IP address will be used (excluding
++#  the disabled interfaces)
++#
++# `time` after `cand_rp` specifies how often to send the Cand-RP messages.
++#  Its default value should be 60 seconds. Use smaller value for faster
++#  convergence.
++#
++# `group_prefix` is/are the prefix(es) advertised if cand_rp
++#
++# `rate` specifies the minimum rate in bits/s before the last hop
++#  router or the RP switch to the shortest path (`switch_data_threshold`
++#  and `switch_register_threshold` respectively)
++#  `interval` specifies the interval for periodical testing of the rate
++#  Currently, `interval` must be at least 5 (seconds)
++#  XXX: Both intervals should be the same
++#
++#
++#default_source_preference	101  # smaller is better
++#default_source_metric		1024 # smaller is better
++#phyint de1 disable                 # phyint MUST BE AFTER default_source_*
++                                    # BUT MUST BE BEFORE everything else
++cand_rp time 30 priority 20         # Smaller value means "higher" priority
++cand_bootstrap_router priority 5    # Bigger value means  "higher" priority
++group_prefix 224.0.0.0 masklen 4    # All multicast groups
++# 
++switch_data_threshold		rate 50000 interval 20	# 50kbps (approx.)
++switch_register_threshold	rate 50000 interval 20	# 50kbps (approx.)
++
+--- pimd-2.1.0-alpha29.17.orig/debian/pimd.conf
++++ pimd-2.1.0-alpha29.17/debian/pimd.conf
+@@ -0,0 +1,94 @@
++#   This is the configuration file for "pimd", an IP multicast router.
++#   pimd looks for it in "/etc/pimd.conf".
++#
++#   $Id: pimd.conf,v 1.17 2001/09/10 20:31:37 pavlin Exp $
++#
++#   Command formats:
++##########
++# default_source_preference <preference>
++# default_source_metric <metric>
++#
++# phyint <local-addr | ifname> [disable]  [threshold <t>] [preference <p>] [metric <m>] [altnet <net-addr> masklen <masklen>] [scoped <net-addr> masklen <masklen>]
++#
++# cand_rp [<local-addr>] [priority <number> ] [time <number>]
++# cand_bootstrap_router [<local-addr>] [priority <number>]
++#
++# group_prefix <group-addr> [masklen <masklen>]
++# group_prefix <group-addr> [masklen <masklen>]
++# .
++# .
++# group_prefix <group-addr> [masklen <masklen>]
++#
++#
++# switch_data_threshold [rate <number> interval <number>]
++#
++# switch_register_threshold [rate <number> interval <number>]
++##########
++# By default PIM will be activated on all interfaces.  Use phyint to 
++# disable on interfaces where PIM should not be run.
++#
++# Preferences are used by assert elections to determine upstream routers.
++# Currently pimd cannot reliably obtain preferences and metrics from the
++# unicast routing protocols, so a default preference may be configured.
++# In an assert election, the router advertising the lowest assert preference
++# will be selected as the forwarder and upstream router for the LAN.
++# 101 should be sufficiently high so that asserts from Cisco or GateD
++# routers are prefered over poor-little pimd.
++#
++# It is reccommended that preferences be set such that metrics are never
++# consulted.  However, default metrics may also be set and will default to
++# 1024.
++#
++#
++# A "phyint" can be specified by either its IP address or interface name.
++#
++# `preference` and `metric` after "phyint" are used to configure manually
++# the default preference and metric for the Assert messages sent on that
++# interface. Usually you don't need this, but if you do, think of them
++# like `preference` and `metric` defined per iif, but used by the
++# Asserts on the oifs.
++#
++# If you want to add "alternative (sub)net" to a physical interface,
++# e.g., if you want to make incoming traffic with a non-local source address
++# to appear as it is coming from a local subnet, then use the command:
++#   phyint <local-addr | ifname> altnet <net-addr> masklen <len>
++# XXX: if you use this command, make sure you know what you are doing!!
++#
++# If you want administrative scoped multicast filtering, use the
++# following command:
++#   phyint <local-addr | ifname> scoped <net-addr> masklen <masklen>
++# This allows interfaces to be configured as an administrative boundary
++# for the specified scoped address. Packets belonging to the scoped
++# address will not be forwarded. To use this compile with -DSCOPED_ACL
++# option (in Makefile).
++# 
++# `local-addr` after "cand_rp" and "cand_bootstrap_router" specifies
++#  the local address to be used in the Cand-RP and Cand-BSR messages.
++#  If not specified, the largest local IP address will be used (excluding
++#  the disabled interfaces)
++#
++# `time` after `cand_rp` specifies how often to send the Cand-RP messages.
++#  Its default value should be 60 seconds. Use smaller value for faster
++#  convergence.
++#
++# `group_prefix` is/are the prefix(es) advertised if cand_rp
++#
++# `rate` specifies the minimum rate in bits/s before the last hop
++#  router or the RP switch to the shortest path (`switch_data_threshold`
++#  and `switch_register_threshold` respectively)
++#  `interval` specifies the interval for periodical testing of the rate
++#  Currently, `interval` must be at least 5 (seconds)
++#  XXX: Both intervals should be the same
++#
++#
++#default_source_preference	101  # smaller is better
++#default_source_metric		1024 # smaller is better
++#phyint de1 disable                 # phyint MUST BE AFTER default_source_*
++                                    # BUT MUST BE BEFORE everything else
++cand_rp time 30 priority 20         # Smaller value means "higher" priority
++cand_bootstrap_router priority 5    # Bigger value means  "higher" priority
++group_prefix 224.0.0.0 masklen 4    # All multicast groups
++# 
++switch_data_threshold		rate 50000 interval 20	# 50kbps (approx.)
++switch_register_threshold	rate 50000 interval 20	# 50kbps (approx.)
++
+--- pimd-2.1.0-alpha29.17.orig/debian/rules
++++ pimd-2.1.0-alpha29.17/debian/rules
+@@ -0,0 +1,97 @@
++#!/usr/bin/make -f
++# Sample debian/rules that uses debhelper.
++# GNU copyright 1997 to 1999 by Joey Hess.
++
++# Uncomment this to turn on verbose mode.
++export DH_VERBOSE=1
++
++CFLAGS = -Wall -g
++
++ifneq (,$(findstring noopt,$(DEB_BUILD_OPTIONS)))
++	CFLAGS += -O0
++else
++	CFLAGS += -O2
++endif
++ifeq (,$(findstring nostrip,$(DEB_BUILD_OPTIONS)))
++	INSTALL_PROGRAM += -s
++endif
++
++configure: configure-stamp
++configure-stamp:
++	dh_testdir
++	# Add here commands to configure the package.
++
++	touch configure-stamp
++
++
++build: build-stamp
++
++build-stamp: configure-stamp 
++	dh_testdir
++
++	# Add here commands to compile the package.
++	$(MAKE)
++	#/usr/bin/docbook-to-man debian/pimd.sgml > pimd.1
++
++	touch build-stamp
++
++clean:
++	dh_testdir
++	dh_testroot
++	rm -f build-stamp configure-stamp
++
++	# Add here commands to clean up after the build process.
++	-$(MAKE) clean
++
++	rm -f include/linux/netinet/in.h
++	rm -f include/linux/netinet/in-slackware.h
++
++	dh_clean
++
++install: build
++	dh_testdir
++	dh_testroot
++	dh_clean -k
++	dh_installdirs
++
++	# Add here commands to install the package into debian/pimd.
++	$(MAKE) install DESTDIR=$(CURDIR)/debian/tmp
++
++
++# Build architecture-independent files here.
++binary-indep: build install
++# We have nothing to do by default.
++
++# Build architecture-dependent files here.
++binary-arch: build install
++	dh_testdir
++	dh_testroot
++	dh_installchangelogs CHANGES
++	dh_installdocs
++	dh_installexamples
++#	dh_install
++#	dh_installmenu
++#	dh_installdebconf	
++#	dh_installlogrotate
++#	dh_installemacsen
++#	dh_installpam
++#	dh_installmime
++	dh_installinit
++#	dh_installcron
++#	dh_installinfo
++	dh_installman debian/pimd.1
++	dh_link
++	dh_strip
++	dh_compress
++	dh_fixperms
++#	dh_perl
++#	dh_python
++#	dh_makeshlibs
++	dh_installdeb
++	dh_shlibdeps
++	dh_gencontrol
++	dh_md5sums
++	dh_builddeb
++
++binary: binary-indep binary-arch
++.PHONY: build clean binary-indep binary-arch binary install configure
+--- pimd-2.1.0-alpha29.17.orig/defs.h
++++ pimd-2.1.0-alpha29.17/defs.h
+@@ -271,7 +271,7 @@
+ 
+ extern u_long		virtual_time;
+ extern char		configfilename[];
+-extern int		pid;
++/* extern int		pid; Removed due problems with ia64, Debian Bug #287915*/
+ 
+ extern struct cand_rp_adv_message_ {
+     u_int8    *buffer;
+@@ -694,3 +694,9 @@
+ extern vifi_t	find_vif_direct_local	__P((u_int32 src));
+ extern u_int32	max_local_address	__P((void));
+ 
++struct rp_hold {
++	struct rp_hold *next;
++	u_int32	address;
++	u_int32	group;
++	u_int32	mask;
++};
+--- pimd-2.1.0-alpha29.17.orig/timer.c
++++ pimd-2.1.0-alpha29.17/timer.c
+@@ -995,11 +995,13 @@
+ 	     rp_grp_entry_ptr != (rp_grp_entry_t *)NULL;
+ 	     rp_grp_entry_ptr = rp_grp_entry_next) {
+ 	    rp_grp_entry_next = rp_grp_entry_ptr->grp_rp_next;
++				if (rp_grp_entry_ptr->holdtime < 60000) {
+ 	    IF_TIMEOUT(rp_grp_entry_ptr->holdtime)
+ 		delete_rp_grp_entry(&cand_rp_list, &grp_mask_list,
+ 				    rp_grp_entry_ptr);
+ 	}
+     }
++	}
+ 
+     /* Cand-RP-Adv timer */
+     if (cand_rp_flag == TRUE) {

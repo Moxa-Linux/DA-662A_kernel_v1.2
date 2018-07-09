@@ -1,0 +1,23 @@
+#!/bin/sh
+LPATH=/bin
+print_usage()
+{
+	echo "Usage: $0 [-h] ; display the current GPRS connection status";
+	echo ""
+}
+while getopts u:p:h options
+do
+	case $options in
+	h) print_usage;
+	   exit 0;;
+	?) print_usage;
+	   exit 2;;
+	esac
+done
+
+${LPATH}/egprscmd -s
+if [ $? != 0 ]; then
+	exit 1 ;
+else
+	exit 0 ;
+fi

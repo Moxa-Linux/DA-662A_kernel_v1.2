@@ -1,0 +1,47 @@
+#!/bin/sh
+#
+# start/stop tftpd super server.
+#
+# chkconfig: 2345 20 20
+#
+#
+PATH=/bin:/usr/bin:/sbin:/usr/sbin
+if ! [ -x /usr/bin/in.tftpd ]; then
+	exit 0
+fi
+
+case "$1" in
+    start)
+	echo -n "Starting tftpd:"
+	echo -n " tftpd" ; start-stop-daemon --start --quiet --exec /usr/bin/in.tftpd -- -cpls /home/tftpboot
+	echo "."
+	;;
+    stop)
+	echo -n "Stopping in.tftpd:"
+	echo -n " in.tftpd" ; start-stop-daemon --stop --oknodo --name in.tftpd 
+	echo "."
+	;;
+    reload)
+	echo -n "Reloading tftpd:"
+	echo -n " tftpd"
+	start-stop-daemon --stop --quiet --oknodo --name in.tftpd --signal 1
+	echo "."
+	;;
+    force-reload)
+	$0 reload
+	;;
+    restart)
+	echo -n "Restarting tftpd:"
+	echo -n " tftpd"
+	start-stop-daemon --stop --quiet --oknodo --name in.tftpd
+	start-stop-daemon --start --quiet --exec /usr/bin/in.tftpd -- -cpls /home/tftpboot
+	echo "."
+	;;
+    *)
+	echo "Usage: /etc/init.d/tftpd {start|stop|reload|restart}"
+	exit 1
+	;;
+esac
+
+exit 0
+

@@ -1,0 +1,66 @@
+Rule:  
+alert tcp $EXTERNAL_NET any -> $HTTP_SERVERS 80 (msg:"WEB-MISC webplus access"; content:"webplus?script"; nocase; flags:A+; classtype:attempted-recon; sid:1159; rev:1;)
+
+--
+
+Sid:
+1159
+
+--
+
+Summary:
+Someone attempted to access the webplus CGI script, possibly for purposes
+of reconnaissance or attacking the web server.
+
+--
+Impact:
+An attacker may have accessed any file on the web server
+accessable by the user the web server runs as, possibly including
+sensitive files.  An attacker may have attempted to learn other sensitive
+information from the web server (e.g., its IP address, script source code,
+etc.).  An attacker may have executed any program accessable by the web
+user.
+
+--
+Detailed Information:
+Some versions of TalentSoft Web+ contain vulnerabilities that can
+allow arbitrary files to be read or executed by an attacker, or disclosure
+of script source code or IP address of the web server.
+
+--
+Attack Scenarios:
+An attacker sends a web request like one of the following:
+http://target/cgi-bin/webplus?script=/../../../../etc/passwd
+http://target/cgi-bin/webplus.exe?about
+http://target/cgi-bin/webplus.exe?script=test.wml::$DATA
+http://target/cgi-bin/webplus.cgi?Script=/webplus/webping/webping.wml
+
+--
+Ease of Attack:
+Fairly simple hand-crafting of URLs by the attacker.
+
+--
+False Positives:
+This signature is likely to catch any access of webplus, not just
+malicious attempts.
+
+--
+False Negatives:
+
+--
+Corrective Action:
+Examine the packet to determine what was accessed by the user.  If the
+access resembles one of the URLs mentioned in the Attack Scenarios
+section, and the targetted web server had webplus running on it,
+consider launching an investigation.
+
+--
+Contributors:
+
+--
+Additional References:
+CVE:  CVE-2000-1005
+Bugtraq:  BID 1174
+Bugtraq:  BID 1720
+Bugtraq:  BID 1722
+Bugtraq:  BID 1725

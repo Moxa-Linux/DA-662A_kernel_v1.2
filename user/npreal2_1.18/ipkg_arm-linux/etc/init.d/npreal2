@@ -1,0 +1,24 @@
+#!/bin/sh
+#
+# start/stop to let ready led on or off
+#
+
+case "$1" in
+    start)
+    	modprobe npreal2 ttymajor=33 calloutmajor=38 verbose=0
+	/usr/sbin/npreal2d -t 1&
+	/usr/sbin/npreal2d_redund -t 1 &
+	;;
+    stop)
+	killall -9 npreal2d
+	killall -9 npreal2d_redund
+	rmmod npreal2
+	;;
+    *)
+	echo "Usage: /etc/init.d/npreal2 {start|stop}"
+	exit 1
+	;;
+esac
+
+exit 0
+

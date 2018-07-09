@@ -1,0 +1,5 @@
+install_me_here/usr/local/lib/perl/5.10.0/Term/ReadKey.pm
+install_me_here/usr/local/lib/perl/5.10.0/auto/Term/ReadKey/ReadKey.bs
+install_me_here/usr/local/lib/perl/5.10.0/auto/Term/ReadKey/ReadKey.so
+install_me_here/usr/local/lib/perl/5.10.0/auto/Term/ReadKey/autosplit.ix
+install_me_here/usr/local/man/man3/Term::ReadKey.3pm

@@ -1,0 +1,7 @@
+#!/bin/sh
+
+#DEBHELPER#
+
+[ -x /etc/init.d/nfs-kernel-server ] && /etc/init.d/nfs-kernel-server stop
+
+exit 0

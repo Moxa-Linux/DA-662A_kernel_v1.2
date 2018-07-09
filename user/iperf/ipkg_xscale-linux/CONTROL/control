@@ -1,0 +1,9 @@
+Package: iperf
+Version: 2.0.5
+Architecture: xscale
+Maintainer: Jared_wu <Jared_Wu@moxa.com>
+Section: base
+Priority: optional
+Description: Iperf is a tool to measure maximum TCP bandwidth, allowing the tuning of various parameters and UDP characteristics.
+Source: http://sourceforge.net/projects/iperf/files/iperf-2.0.5.tar.gz/download
+Depends:

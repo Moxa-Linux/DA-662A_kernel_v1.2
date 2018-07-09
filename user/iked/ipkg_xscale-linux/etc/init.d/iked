@@ -1,0 +1,31 @@
+#! /bin/sh
+# /etc/init.d/iked: start and stop the Shrew Soft IKE daemon
+test -x /usr/sbin/iked || exit 0
+PATH="/usr/local/bin:/usr/local/sbin:/usr/sbin:/usr/bin:/sbin:/bin"
+case "$1" in
+  start)
+  	if [ "`lsmod|grep tun`" != "0" ]; then
+  		modprobe tun
+  	fi
+  	echo "Kernel fixup the iked alignment"
+  	echo "2" > /proc/cpu/alignment
+	echo "Starting Shrew Soft IKE daemon..."
+	start-stop-daemon -S --exec /usr/sbin/iked
+	sleep 10
+	echo "/usr/sbin/ikec -r moxa-ami -u moxa -p moxa29101230 -a"
+	start-stop-daemon -S --exec /usr/sbin/ikec -- -r moxa-ami -u moxa -p moxa29101230 -a&
+	sleep 5
+	/sbin/route add -net 192.168.53.0 netmask 255.255.255.0 dev tap0
+	;;
+  stop)
+	echo "Stopping Shrew Soft IKE daemon..."
+	start-stop-daemon -K --oknodo --exec /usr/sbin/ikec	
+	start-stop-daemon -K --oknodo --exec /usr/sbin/iked
+	;;
+
+  *)
+	echo "Usage: /etc/init.d/iked {start|stop}"
+	exit 1
+esac
+
+exit 0

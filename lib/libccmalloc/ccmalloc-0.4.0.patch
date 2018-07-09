@@ -1,0 +1,310 @@
+diff -crB ccmalloc-0.4.0/configure ccmalloc-0.4.0.new/configure
+*** ccmalloc-0.4.0/configure	2002-03-18 17:47:26.000000000 +0800
+--- ccmalloc-0.4.0.new/configure	2011-12-05 17:47:33.000000000 +0800
+***************
+*** 28,33 ****
+--- 28,35 ----
+  debug=no
+  prefix=/usr/local
+  os=unsupported
++ host=linux
++ srcdir=.
+  
+  #--------------------------------------------------------------------------#
+  # process command line options
+***************
+*** 45,50 ****
+--- 47,58 ----
+      --debug)
+        debug=yes
+        ;;
++     --host=*)
++       host=`expr $1 : '--host=\(.*\)'`
++       ;;
++     --srcdir=*)
++       srcdir=`expr $1 : '--srcdir=\(.*\)'`
++       ;;
+      *)
+        echo "*** configure: unknown command line option (try '-h')" 1>&2
+        exit 1
+***************
+*** 57,63 ****
+  # get version
+  #
+  printf "$fmt" "version"
+! version=`cat VERSION`
+  echo " $version"
+  
+  #--------------------------------------------------------------------------#
+--- 65,71 ----
+  # get version
+  #
+  printf "$fmt" "version"
+! version=`cat $srcdir/VERSION`
+  echo " $version"
+  
+  #--------------------------------------------------------------------------#
+***************
+*** 119,125 ****
+    case $CC in
+      gcc) CFLAGS="-g -Wall";;
+      cc) CFLAGS="-g -W";;
+!     *) CFLAGS="-g";;
+    esac
+    echo " $CC $CFLAGS"
+  else
+--- 127,133 ----
+    case $CC in
+      gcc) CFLAGS="-g -Wall";;
+      cc) CFLAGS="-g -W";;
+!     *) CFLAGS="-g -Isrc -I$srcdir/src";;
+    esac
+    echo " $CC $CFLAGS"
+  else
+***************
+*** 184,189 ****
+--- 192,199 ----
+  #--------------------------------------------------------------------------#
+  # searching for real libc
+  
++ if [ $host = "linux" ]; then
++ 
+  printf "$fmt" libc
+  
+  tmp=/tmp/configure-ccmalloc-findlibc-$$
+***************
+*** 237,244 ****
+--- 247,258 ----
+  
+  echo " $libc"
+  
++ fi
++ 
+  #--------------------------------------------------------------------------#
+  
++ if [ $host = "linux" ]; then
++ 
+  printf "$fmt" atexit
+  
+  tmp=/tmp/configure-ccmalloc-atexit-$$
+***************
+*** 268,273 ****
+--- 282,289 ----
+  
+  echo " $atexit"
+  
++ fi
++ 
+  #--------------------------------------------------------------------------#
+  
+  printf "$fmt" "setting up directories"
+***************
+*** 282,287 ****
+--- 298,304 ----
+  printf "$fmt" "generating src/config.h"
+  
+  rm -f src/config.h
++ mkdir -p src
+  (
+  echo "#ifndef _config_h_INCLUDED"
+  [ $debug = no ] && echo "#define NDEBUG"
+***************
+*** 313,325 ****
+  
+  rm -f $dst
+  sed \
+  -e "s,@PREFIX@,$prefix,g" \
+  -e "s,@CC@,$CC,g" \
+  -e "s,@CFLAGS@,$CFLAGS,g" \
+  -e "s,@COMPILERS@,$COMPILERS,g" \
+  -e "s,@VERSION@,$version,g" \
+  -e "s,@TARGETS@,$TARGETS,g" \
+! Makefile.in > $dst
+  
+  echo >> $dst
+  cat >>Makefile<<EOF
+--- 330,346 ----
+  
+  rm -f $dst
+  sed \
++ -e "s,@HOST@,$host,g" \
+  -e "s,@PREFIX@,$prefix,g" \
++ -e "s,@SRCDIR@,$srcdir,g" \
+  -e "s,@CC@,$CC,g" \
++ -e "s,@AR@,$AR,g" \
++ -e "s,@RANLIB@,$RANLIB,g" \
+  -e "s,@CFLAGS@,$CFLAGS,g" \
+  -e "s,@COMPILERS@,$COMPILERS,g" \
+  -e "s,@VERSION@,$version,g" \
+  -e "s,@TARGETS@,$TARGETS,g" \
+! $srcdir/Makefile.in > $dst
+  
+  echo >> $dst
+  cat >>Makefile<<EOF
+***************
+*** 338,346 ****
+        ;;
+    esac
+    echo \
+!     "obj/ccmalloc-${cc}.o: src/ccmalloc.cc src/config.h src/ccmalloc.h" \
+      >> $dst
+!   echo "	$cc -DCTORDTOR $CXXFLAGS -c -o \$@ src/ccmalloc.cc" >> $dst
+    echo >> $dst
+  done
+  
+--- 359,367 ----
+        ;;
+    esac
+    echo \
+! 	  "obj/ccmalloc-${cc}.o: $srcdir/src/ccmalloc.cc src/config.h $srcdir/src/ccmalloc.h" \
+      >> $dst
+!   echo "	$cc -DCTORDTOR $CXXFLAGS -c -o \$@ $srcdir/src/ccmalloc.cc" >> $dst
+    echo >> $dst
+  done
+  
+***************
+*** 348,361 ****
+  #-------------------------------------------------------------------------#
+  
+  install: all
+! 	./util/install bin/ccmalloc \$(PREFIX)/bin
+! 	./util/install lib/libccmalloc.a \$(PREFIX)/lib
+! 	./util/install ccmalloc.cfg \$(PREFIX)/share/ccmalloc
+  EOF
+  
+  for cc in $COMPILERS
+  do
+! echo "	./util/install obj/ccmalloc-${cc}.o \$(PREFIX)/lib" >> $dst
+  done
+  
+  cat >>Makefile<<EOF
+--- 369,382 ----
+  #-------------------------------------------------------------------------#
+  
+  install: all
+! 	$srcdir/util/install bin/ccmalloc \$(PREFIX)/bin
+! 	$srcdir/util/install lib/libccmalloc.a \$(PREFIX)/lib
+! 	$srcdir/util/install $srcdir/ccmalloc.cfg \$(PREFIX)/share/ccmalloc
+  EOF
+  
+  for cc in $COMPILERS
+  do
+! echo "	$srcdir/util/install obj/ccmalloc-${cc}.o \$(PREFIX)/lib" >> $dst
+  done
+  
+  cat >>Makefile<<EOF
+diff -crB ccmalloc-0.4.0/Makefile.in ccmalloc-0.4.0.new/Makefile.in
+*** ccmalloc-0.4.0/Makefile.in	2002-03-18 17:47:26.000000000 +0800
+--- ccmalloc-0.4.0.new/Makefile.in	2011-12-05 17:17:50.000000000 +0800
+***************
+*** 1,8 ****
+--- 1,11 ----
+  CC=@CC@
++ AR=@AR@
++ RANLIB=@RANLIB@
+  CFLAGS=@CFLAGS@
+  COMPILERS=@COMPILERS@
+  TARGETS=lib/libccmalloc.a @TARGETS@ bin/ccmalloc
+  PREFIX=@PREFIX@
++ SRCDIR=@SRCDIR@
+  
+  #--------------------------------------------------------------------------#
+  
+***************
+*** 26,49 ****
+  # should work even if another compiler is used by the user.
+  #
+  lib/libccmalloc.a: $(OBJ)
+! 	ar rc $@ $(OBJ)
+! 	ranlib $@
+  
+  #--------------------------------------------------------------------------#
+  
+! obj/callchain.o: src/config.h src/hash.h src/callchain.c src/ccmalloc.h
+! 	$(CC) $(CFLAGS) -c -o $@ src/callchain.c
+! obj/hash.o: src/hash.h src/hash.c
+! 	$(CC) $(CFLAGS) -c -o $@ src/hash.c
+! obj/wrapper.o: src/config.h src/wrapper.c
+! 	$(CC) $(CFLAGS) -c -o $@ src/wrapper.c
+! bin/ccmalloc: Makefile src/ccmalloc.in
+  	rm -f $@
+  	sed \
+  	-e 's,@''PREFIX@,$(PREFIX),g' \
+  	-e 's,@''COMPILERS@,"$(COMPILERS)",g' \
+  	-e 's,@''VERSION@,@VERSION@,g' \
+! 	src/ccmalloc.in > $@
+  	chmod 755 $@
+  
+  #--------------------------------------------------------------------------#
+--- 29,53 ----
+  # should work even if another compiler is used by the user.
+  #
+  lib/libccmalloc.a: $(OBJ)
+! 	$(AR) rc $@ $(OBJ)
+! 	$(RANLIB) $@
+  
+  #--------------------------------------------------------------------------#
+  
+! obj/callchain.o: src/config.h $(SRCDIR)/src/hash.h $(SRCDIR)/src/callchain.c $(SRCDIR)/src/ccmalloc.h
+! 	$(CC) $(CFLAGS) -c -o $@ $(SRCDIR)/src/callchain.c
+! obj/hash.o: $(SRCDIR)/src/hash.h $(SRCDIR)/src/hash.c
+! 	$(CC) $(CFLAGS) -c -o $@ $(SRCDIR)/src/hash.c
+! obj/wrapper.o: src/config.h $(SRCDIR)/src/wrapper.c
+! 	$(CC) $(CFLAGS) -c -o $@ $(SRCDIR)/src/wrapper.c
+! bin/ccmalloc: Makefile $(SRCDIR)/src/ccmalloc.in
+  	rm -f $@
+  	sed \
+  	-e 's,@''PREFIX@,$(PREFIX),g' \
++ 	-e 's,@''SRCDIR@,$(SRCDIR),g' \
+  	-e 's,@''COMPILERS@,"$(COMPILERS)",g' \
+  	-e 's,@''VERSION@,@VERSION@,g' \
+! 	$(SRCDIR)/src/ccmalloc.in > $@
+  	chmod 755 $@
+  
+  #--------------------------------------------------------------------------#
+diff -crB ccmalloc-0.4.0/src/ccmalloc.in ccmalloc-0.4.0.new/src/ccmalloc.in
+*** ccmalloc-0.4.0/src/ccmalloc.in	2002-09-13 17:23:55.000000000 +0800
+--- ccmalloc-0.4.0.new/src/ccmalloc.in	2011-12-05 17:37:48.000000000 +0800
+***************
+*** 9,14 ****
+--- 9,15 ----
+  #
+  COMPILERS=@COMPILERS@
+  PREFIX=@PREFIX@
++ SRCDIR=@SRCDIR@
+  
+  usage () {
+    echo \
+***************
+*** 123,128 ****
+--- 125,131 ----
+  
+  echo "[ccmalloc] version   .. @VERSION@"
+  echo "[ccmalloc] prefix    .. $PREFIX"
++ echo "[ccmalloc] srcdir    .. $SRCDIR"
+  echo "[ccmalloc] compilers .. $COMPILERS "
+  echo "[ccmalloc] wrapper   .. $wrappermessage"
+  
+diff -crB ccmalloc-0.4.0/util/install ccmalloc-0.4.0.new/util/install
+*** ccmalloc-0.4.0/util/install	2001-12-04 21:35:32.000000000 +0800
+--- ccmalloc-0.4.0.new/util/install	2011-12-05 17:53:55.000000000 +0800
+***************
+*** 37,43 ****
+  fi
+  
+  parts=`echo "$dst" | sed -e 's,/[/]*, ,g'`
+! src="`pwd`"/"$src"
+  
+  cd /
+  
+--- 37,46 ----
+  fi
+  
+  parts=`echo "$dst" | sed -e 's,/[/]*, ,g'`
+! if [ "`echo $src | head -c 1`" != "/" ]
+! then
+!   src="`pwd`"/"$src"
+! fi
+  
+  cd /
+  

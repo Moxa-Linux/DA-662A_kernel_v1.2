@@ -1,0 +1,65 @@
+#!/bin/sh
+#
+# start/stop dhcp server.
+#
+# chkconfig: 2345 20 20
+#
+#
+PATH=/bin:/usr/bin:/sbin:/usr/sbin
+if ! [ -x /usr/sbin/dhcpd ]; then
+	exit 0
+fi
+
+. /etc/default/dhcp3-server
+
+DHCPDCONF=/etc/dhcp3/dhcpd.conf
+DHCPDPID=/var/run/dhcpd.pid
+
+dhcpd_start()
+{
+	if [ ! -d /var/state/dhcp ]; then
+		mkdir -p /var/state/dhcp
+	fi
+	touch /var/state/dhcp/dhcpd.leases
+	if [ "x$INTERFACES" != "x" ]; then
+		echo -n "Starting dhcpd:"
+		start-stop-daemon --start --background --quiet -p $DHCPDPID --exec /usr/sbin/dhcpd -- -q -cf $DHCPDCONF $INTERFACES
+		echo "."
+	fi
+}
+
+dhcpd_stop()
+{
+	echo -n "Stopping dhcpd:"
+	start-stop-daemon --stop --oknodo --quiet --name dhcpd 
+	echo "."
+}
+
+case "$1" in
+    start)
+    	dhcpd_start
+	;;
+    stop)
+    	dhcpd_stop
+	;;
+    reload)
+	echo -n "Reloading dhcpd:"
+	echo -n " dhcpd"
+	start-stop-daemon --stop --quiet --oknodo --name dhcpd --signal 1
+	echo "."
+	;;
+    force-reload)
+	$0 reload
+	;;
+    restart)
+    	dhcpd_stop
+    	dhcpd_start
+	;;
+    *)
+	echo "Usage: /etc/init.d/dhcp3-server {start|stop|reload|restart}"
+	exit 1
+	;;
+esac
+
+exit 0
+

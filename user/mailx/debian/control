@@ -1,0 +1,24 @@
+Source: heirloom-mailx
+Section: mail
+Priority: optional
+Maintainer: Hilko Bengen <bengen@debian.org>
+Build-Depends: debhelper (>> 5), libssl-dev (>= 0.9.8), libkrb5-dev
+Standards-Version: 3.8.4
+Homepage: http://heirloom.sourceforge.net/mailx.html
+
+Package: heirloom-mailx
+Architecture: any
+Depends: base-files (>= 2.2.0), ${shlibs:Depends}, ${misc:Depends}
+Replaces: nail
+Conflicts: mailutils (<< 1:1.1+dfsg1-4), mailx (<< 1:20071201)
+Suggests: exim4 | mail-transport-agent
+Provides: mailx
+Description: feature-rich BSD mail(1)
+ Workalike of the classical mail(1). Heirloom mailx can produce and
+ read MIME and S/MIME messages and has greatly improved character-set
+ handling, including support for UTF-8.
+ .
+ It can send messages through a local /usr/bin/sendmail interface or
+ SMTP, using a smarthost. Mail can be read from local mailboxes as
+ well as via POP3 or IMAP connections. Network protocols can be
+ encrypted using SSL/TLS.

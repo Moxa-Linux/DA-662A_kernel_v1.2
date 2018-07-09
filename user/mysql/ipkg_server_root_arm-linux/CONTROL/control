@@ -1,0 +1,9 @@
+Package: mysql-server
+Version: 5.1.23
+Architecture: arm
+Maintainer: Jared_wu <Jared_Wu@moxa.com>
+Section: base
+Priority: optional
+Description: Mysql v5.1.23 server.
+Source: http://mirror.provenscaling.com/mysql/community/source/5.1/mysql-5.1.23-rc.tar.gz
+Depends:

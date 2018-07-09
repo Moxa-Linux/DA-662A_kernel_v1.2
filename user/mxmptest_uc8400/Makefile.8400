@@ -1,0 +1,22 @@
+CC=xscale-linux-gcc
+STRIP=xscale-linux-strip
+EXEC=mxmptest
+OBJS=mxmptest.o
+
+CFLAGS += -I../../lib/redboot_config  -I../mtd-utils/include -DARCH_UC8400
+LDFLAGS += -lredboot -L../../lib/redboot_config
+
+all:	$(EXEC)
+
+$(EXEC):	$(OBJS)
+	$(CC) -o $@ $(OBJS) $(LDFLAGS)
+
+.c.o:
+	$(CC) $(CFLAGS) $? -c 
+
+romfs:
+	$(STRIP) -s $(EXEC)
+	$(ROMFSINST) /bin/$(EXEC)
+
+clean:
+	rm -fr $(EXEC) $(OBJS)

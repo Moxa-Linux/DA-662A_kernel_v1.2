@@ -1,0 +1,9 @@
+Package: ftpd
+Version: 3.0.3
+Architecture: arm
+Maintainer: Jared_wu <Jared_Wu@moxa.com>
+Section: base
+Priority: optional
+Description: NetBSD ftpd
+Source: ftp://distfiles.pld-linux.org/distfiles/by-md5/d/b/db925235417c8699bb1eb8ca77811fc5/ftpd-BSD-0.3.3.tar.gz
+Depends: 

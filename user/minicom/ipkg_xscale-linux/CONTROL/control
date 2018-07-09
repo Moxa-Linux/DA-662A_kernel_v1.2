@@ -1,0 +1,9 @@
+Package: minicom
+Version: 2.4
+Architecture: xscale
+Maintainer: Jared_wu <Jared_Wu@moxa.com>
+Section: base
+Priority: optional
+Description: friendly serial communication program
+Source: https://alioth.debian.org/frs/download.php/3195/minicom-2.4.tar.gz
+Depends: 

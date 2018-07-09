@@ -1,0 +1,54 @@
+Rule:  
+web-misc.rules:alert tcp $EXTERNAL_NET any -> $HTTP_SERVERS 80 (msg:"WEB-MISC whisker space splice attack"; content:"|20|"; flags:A+; dsize:1; reference:arachnids,296; classtype:attempted-recon; reference:url,www.wiretrip.net/rfp/pages/whitepapers/whiskerids.html; sid:1104; rev:3;)
+
+--
+
+Sid:
+1104
+
+--
+
+Summary:
+Someone attempted to bypass the IDS in a possible web attack by sending
+an obfuscated request in small increments.
+
+--
+Impact:
+Someone may have run a reconnaissance tool like Whisker or an obfuscated
+attack against a web server.
+
+--
+Detailed Information:
+In normal operation, a web request fits inside one single packet.  However,
+it is possible to obfuscate a web attack by sending the attack one character
+at a time.  This will bypass some IDS systems.  Tools such as Whisker can
+be configured to do this.
+
+--
+Attack Scenarios:
+An attacker runs an automated tool, like Whisker, against a web server, or
+runs an attack by hand with telnet or some similar interactive tool.
+
+--
+Ease of Attack:
+Automated tools (e.g., Whisker) exist and are available in the wild.
+
+--
+False Positives:
+Some technically savvy users will test web servers by hand-crafting
+web requests with a telnet client.
+
+--
+False Negatives:
+
+--
+Corrective Action:
+Examine the web server logs to see what kind of request was being done.
+
+--
+Contributors:
+
+--
+Additional References:
+Arachnids:  296
+URL:  www.wiretrip.net/rfp/pages/whitepapers/whiskerids.html

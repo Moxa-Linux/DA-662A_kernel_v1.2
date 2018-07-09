@@ -1,0 +1,116 @@
+README.sglinux - ocf-linux-20110720
+-----------------------------------
+
+This README provides instructions for getting ocf-linux compiled and
+operating in a SnapGear SGlinux environment.  For other information
+you might like to visit the home page for this project:
+
+    http://ocf-linux.sourceforge.net/
+
+Please consult the README file for any other targets.
+
+How to add the OCF drivers and support to SG Linux
+--------------------------------------------------
+
+    * Best to start with the latest SnapGear source code.
+      Go to
+      
+          http://www.snapgear.org/snapgear/downloads.html
+
+      Get the following files (or later versions) 
+
+        SnapGear Embedded Linux 3.5.0
+    
+      The Crypto support is included in the Intel Library patch:
+      
+        SnapGear IXP400 Access Library patch [shar]
+
+      Extract the tarball and run the patch as "sh patchfile".
+      To use the IXP modules you will need to obtain a copy of Intels
+      IXP400 Library before applying the patch.  Follow the instructions
+      provided by the patch to complete.
+
+    * If you want to update the ocf support from the shar patch above to
+      the version included in this package.
+
+        cd modules
+        rm -rf ocf
+        tar xvzf ocf-linux.tar.gz
+
+      should be all that is required.
+
+    * firstly,  you need to include openssl back into
+      the SG Linux source.
+
+        download http://www.openssl.org/source/openssl-0.9.8n.tar.gz
+
+        cd snapgear/lib
+        tar xzf openssl-0.9.8n.tar.gz
+        mv openssl-0.9.8n libssl
+
+        get the openssl-0.9.8n.patch from this OCF release.
+
+        patch -p0 < openssl-0.9.8n.patch.gz
+
+        mv libssl/makefile-uclinuxdist libssl/makefile
+
+      remember to enable openssl apps in your build :-)
+
+    * No ssh patch is required to use OCF.  To add ssh into the
+      distribution:
+
+        download ftp://ftp.openbsd.org/pub/OpenBSD/OpenSSH/portable/openssh-4.7p1.tar.gz
+        cd snapgear/user
+        tar xvzf openssh-4.7p1.tar.gz
+        mv openssh-4.7p1 ssh
+
+        download http://ftp.snapgear.org/pub/patches/openssh-4.7p1.patch.gz
+
+        patch -p0 < openssh-4.7p1.patch.gz
+
+    * add the crypto-tools if required.
+
+        cd user
+        tar xvzf crypto-tools-XXXXXXXX.tar.gz
+        cd ..
+        patch -p0 < crypto-tools.patch
+
+    * Check that your arch has a copy of of kmap_types.h file to your
+      linux*/include/asm-<arch> directory.  If it doesn't exist just
+      copy the i386 version:
+      
+          cp linux-2.4.x/include/asm-i386/kmap_types.h \
+                    linux-2.4.x/include/asm-arm/.
+
+      This is needed to get the kernel crypto support to build.
+
+    * add an entry to your platforms vendors/*/*/Makefile to add the crypto
+      device node.
+
+          @crypto,c,10,70
+
+      or
+
+          mknod /dev/crypto c 10 70
+    
+      depending on the target,  just follow whatever is currently being done
+      in the Makefile.
+    
+    * do the normal make config/make dep/make build
+
+      be sure to enable all the kernel crypto support except for the
+      test module.  This is needed to provide the actual crypto
+      engines for the cryptosoft driver.
+
+      be sure to enable the busybox option:
+
+          CONFIG_USER_BUSYBOX_CHECK_TAINTED_MODULE=y
+
+      so that drivers can use GPL only kernel symbols.  If you do not do
+      this the cryptosoft driver will fail to load with unresolved symbols.
+
+See the README file for further instructions on using and testing the
+driver.
+
+David McCullough
+david_mccullough@mcafee.com

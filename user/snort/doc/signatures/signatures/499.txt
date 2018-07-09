@@ -1,0 +1,37 @@
+Rule:  alert icmp $EXTERNAL_NET any -> $HOME_NET any (msg:"MISC Large ICMP Packet"; dsize: >800; reference:arachnids,246; classtype:bad-unknown; sid:499; rev:1;) 
+
+--
+
+Sid: 499
+
+--
+
+Summary: A large ICMP packet was sent to one of your systems.
+
+--
+Impact:  Denial of service by system crash or bandwidth utilisation.
+
+--
+Detailed Information:  Some implementations of the IP stack may result in a system crash or hang when a large ICMP packet is sent to them.  Alternatively a large number of these packets may result in link saturation, especially on lower bandwidth links.
+
+--
+Attack Scenarios:  A malicious individual may send a series of large ICMP packet to a host with the intention of either crashing or hanging the host, or saturate its available bandwidth.
+
+--
+Ease of Attack:
+
+--
+False Positives:  A number of load balancing applications use 1500 byte ICMP packets to determine the most efficent route to a host by measuring the latency of multiple paths.  HP-UX systems configured with PMTU discovery will send echo requests in response to several types of network connections. PMTU Discovery is enabled in HP-UX 10.30 and 11.0x by default.
+
+--
+False Negatives:
+
+--
+Corrective Action:
+
+--
+Contributors:
+
+--
+Additional References:
+url, Snort archives: http://www.geocrawler.com/archives/3/4890/2000/9/0/4422905/

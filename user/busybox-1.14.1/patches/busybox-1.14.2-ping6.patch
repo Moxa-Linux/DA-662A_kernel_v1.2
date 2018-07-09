@@ -1,0 +1,12 @@
+diff -urpN busybox-1.14.2/include/applets.h busybox-1.14.2-ping6/include/applets.h
+--- busybox-1.14.2/include/applets.h	2009-06-22 00:40:29.000000000 +0200
++++ busybox-1.14.2-ping6/include/applets.h	2009-07-30 12:50:02.972397194 +0200
+@@ -284,7 +284,7 @@ USE_PATCH(APPLET(patch, _BB_DIR_USR_BIN,
+ USE_PGREP(APPLET(pgrep, _BB_DIR_USR_BIN, _BB_SUID_NEVER))
+ USE_PIDOF(APPLET(pidof, _BB_DIR_BIN, _BB_SUID_NEVER))
+ USE_PING(APPLET(ping, _BB_DIR_BIN, _BB_SUID_MAYBE))
+-USE_PING6(APPLET(ping6, _BB_DIR_BIN, _BB_SUID_NEVER))
++USE_PING6(APPLET(ping6, _BB_DIR_BIN, _BB_SUID_MAYBE))
+ USE_PIPE_PROGRESS(APPLET(pipe_progress, _BB_DIR_BIN, _BB_SUID_NEVER))
+ USE_PIVOT_ROOT(APPLET(pivot_root, _BB_DIR_SBIN, _BB_SUID_NEVER))
+ USE_PKILL(APPLET_ODDNAME(pkill, pgrep, _BB_DIR_USR_BIN, _BB_SUID_NEVER, pkill))

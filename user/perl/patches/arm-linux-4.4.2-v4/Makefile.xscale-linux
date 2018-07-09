@@ -1,0 +1,58 @@
+## Toplevel Makefile for cross-compilation of perl
+#
+## $Id: Makefile,v 1.5 2011/01/14 00:48:19 red Exp red $
+
+export TOPDIR=${shell pwd}
+include $(TOPDIR)/config
+export CFLAGS=
+export SYS=$(PERL_ARCH)-$(PERL_OS)
+export CROSS=$(PERL_ARCH)-$(PERL_OS)-
+export FULL_OPTIMIZATION = -fexpensive-optimizations -fomit-frame-pointer -O2
+export OPTIMIZATION = -O2
+ARCH_PATCH=`echo $(TOOLCHAIN_DIR)|cut -d'/' -f4`
+
+CFLAGS+=$(FULL_OPTIMIZATION)
+
+all:
+	@echo Please read the README file before doing anything else.
+
+gen_patch:
+	diff -Bbur ../Makefile.SH Makefile.SH > Makefile.SH.patch
+	diff -Bbur ../installperl installperl > installperl.patch
+
+patch:
+	cd .. ; if [ ! -e ./CROSS_PATCHED ] ; then \
+		# Patch xscale platform configuration \
+		cp -a ../patches/$(ARCH_PATCH)/config.sh-xscale-linux Cross/ ;\
+		# Patch Makefile.SH and installperl \
+		cp -a ../Makefile.SH.patch Cross/; \
+		cp -a ../installperl.patch Cross/; \
+		patch -p1 < Cross/Makefile.SH.patch; \
+		patch -p1 < Cross/installperl.patch ; mv installperl installperl-patched; \
+		sed -e 's/XXSTRIPXX/$(SYS)/' installperl-patched > installperl; \
+		touch CROSS_PATCHED ; fi
+
+
+		#sed -i 's/cp Makefile /cp ..\/Makefile.Top /g' ../makedepend; \
+		#sed -i 's/cp Makefile /cp ..\/Makefile.Top /g' ../makedepend.SH; \
+
+
+perl:
+	@echo Perl cross-build directory is $(TOPDIR)
+	@echo Target arch is $(SYS)
+	@echo toolchain: $(CC), $(CXX), $(LD), $(STRIP), $(AR), $(RANLIB)
+	@echo Optimizations: $(FULL_OPTIMIZATION)
+
+	$(TOPDIR)/generate_config_sh config.sh-$(SYS) > $(TOPDIR)/../config.sh
+	cd $(TOPDIR)/.. ; ./Configure -S ; make depend ;
+	cd $(TOPDIR)/.. ; make makefile;
+	cd $(TOPDIR)/.. ; make more; 
+	cd $(TOPDIR)/.. ; mkdir -p fake_config_library ; cp lib/Config.pm lib/Config_heavy.pl fake_config_library
+	cd $(TOPDIR)/.. ; $(MAKE) more2 "PERLRUN=/usr/local/bin/perl -I$(TOPDIR)/../fake_config_library -MConfig"
+	cd $(TOPDIR)/.. ; $(MAKE) more3 "PERLRUN=/usr/local/bin/perl -I$(TOPDIR)/../fake_config_library -MConfig"
+	cd $(TOPDIR)/.. ; $(MAKE) more4 "PERLRUN=/usr/local/bin/perl -I$(TOPDIR)/../fake_config_library -MConfig"
+	cd $(TOPDIR)/.. ; rm -rf install_me_here
+	cd $(TOPDIR)/.. ; make install-strip DESTDIR="install_me_here"
+	cd $(TOPDIR)/.. ; sh -x Cross/warp
+
+

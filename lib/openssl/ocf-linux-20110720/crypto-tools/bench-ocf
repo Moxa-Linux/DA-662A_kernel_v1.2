@@ -1,0 +1,144 @@
+#!/bin/sh
+#
+# run some speed tests over the ocf framework
+# davidm@snapgear.com
+#
+
+SPEED_CIPHERS="des-cbc des-ede3-cbc aes-128-cbc"
+SPEED_PKE="rsa512 rsa1024 rsa2048 rsa4096 dsa512 dsa1024 dsa2048"
+CRYPTOTEST_CIPHERS="des 3des aes aes192 aes256"
+CRYPTOTEST_COUNT=1000
+CRYPTOTEST_SIZES="16 64 256 1024 2048"
+THREADS=10
+
+case "$1" in
+none)
+	ENGINE=""
+	SPEED=1
+	;;
+soft)
+	insmod ocf
+	insmod cryptodev
+	insmod cryptosoft
+	ENGINE="-engine cryptodev"
+	SPEED=1
+	CRYPTOTEST=1
+	;;
+hifn)
+	insmod ocf
+	insmod cryptodev
+	insmod hifn7751
+	ENGINE="-engine cryptodev"
+	SPEED=1
+	CRYPTOTEST=1
+	;;
+safe)
+	insmod ocf
+	insmod cryptodev
+	insmod safe
+	ENGINE="-engine cryptodev"
+	SPEED=1
+	CRYPTOTEST=1
+	;;
+ixp4)
+	insmod ocf
+	insmod cryptodev
+	insmod ixp4xx
+	ENGINE="-engine cryptodev"
+	SPEED=1
+	CRYPTOTEST=1
+	;;
+*)
+	echo "usage: $0 <driver>"
+	exit 1
+	;;
+esac
+
+if [ "$SPEED" ]
+then
+	echo
+	echo "############################################################"
+	echo "## single thread: openssl speed -evp <type> ${ENGINE} -elapsed"
+	echo "############################################################"
+	echo
+	echo "type             16 bytes     64 bytes    256 bytes   1024 bytes   8192 bytes"
+
+	for i in ${SPEED_CIPHERS}
+	do
+		CMD="openssl speed -evp ${i} ${ENGINE} -elapsed"
+		$CMD 2>&1 | tail -1
+	done
+
+	echo
+	echo "############################################################"
+	echo "## multi thread: openssl speed -evp <type> ${ENGINE} -multi ${THREADS} -elapsed"
+	echo "############################################################"
+	echo
+	echo "type             16 bytes     64 bytes    256 bytes   1024 bytes   8192 bytes"
+
+	for i in ${SPEED_CIPHERS}
+	do
+		CMD="openssl speed -evp ${i} ${ENGINE} -multi ${THREADS} -elapsed"
+		$CMD 2>&1 | tail -1
+	done
+
+	echo
+	echo "############################################################"
+	echo "## single thread PKE: openssl speed ${ENGINE} -elapsed"
+	echo "############################################################"
+	echo
+	echo "type            sign           verify         sign/s verify/s"
+
+	for i in ${SPEED_PKE}
+	do
+		CMD="openssl speed ${ENGINE} ${i} -elapsed"
+		$CMD 2>&1 | tail -1
+	done
+
+	echo
+	echo "############################################################"
+	echo "## multi thread PKE: openssl speed ${ENGINE} -multi ${THREADS} -elapsed"
+	echo "############################################################"
+	echo
+	echo "type            sign           verify         sign/s verify/s"
+
+	for i in ${SPEED_PKE}
+	do
+		CMD="openssl speed ${ENGINE} ${i} -multi ${THREADS} -elapsed"
+		$CMD 2>&1 | tail -1
+	done
+fi
+
+if [ "$CRYPTOTEST" ]
+then
+	echo "############################################################"
+	echo "## cryptotest, single thread "
+	echo "############################################################"
+	echo
+
+	for i in ${CRYPTOTEST_CIPHERS}
+	do
+		cryptotest -a $i ${CRYPTOTEST_COUNT} ${CRYPTOTEST_SIZES}
+	done
+
+	echo "############################################################"
+	echo "## cryptotest, ${THREADS} threads"
+	echo "############################################################"
+	echo
+
+	for i in ${CRYPTOTEST_CIPHERS}
+	do
+		cryptotest -t ${THREADS} -a $i ${CRYPTOTEST_COUNT} ${CRYPTOTEST_SIZES}
+	done
+fi
+
+#
+# clean up
+#
+(
+	rmmod cryptodev  > /dev/null 2>&1
+	rmmod ixp4xx     > /dev/null 2>&1
+	rmmod safe       > /dev/null 2>&1
+	rmmod hifn7751   > /dev/null 2>&1
+	rmmod ocf        > /dev/null 2>&1
+) > /dev/null 2>&1

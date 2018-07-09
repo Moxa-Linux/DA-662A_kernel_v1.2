@@ -1,0 +1,16 @@
+ifrename
+iwconfig
+iwlist
+iwevent
+iwgetid
+iwpriv
+iwspy
+libiw.so.29
+ifrename.d
+iwconfig.d
+iwlist.d
+iwevent.d
+iwgetid.d
+iwpriv.d
+iwspy.d
+iwlib.d

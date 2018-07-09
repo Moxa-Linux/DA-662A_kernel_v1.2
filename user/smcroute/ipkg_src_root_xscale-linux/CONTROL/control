@@ -1,0 +1,9 @@
+Package: smcroute
+Version: 0.9.3
+Architecture: xscale
+Maintainer: Jared_wu <Jared_Wu@moxa.com>
+Section: base
+Priority: optional
+Description: static multicast routing daemon
+Source: http://pimd.sourcearchive.com/
+Depends: 

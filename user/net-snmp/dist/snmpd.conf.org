@@ -1,0 +1,5 @@
+rocommunity	public
+sysobjectid	.1.3.6.1.4.1.8691.12.8410
+syslocation	"Fl.8 No.6, Alley 6, Lane 235, Pao-Chiao Rd., Shing Tien City, Taipei, Taiwan, R.O.C."
+sysname		"Moxa Inc., Embedded Computing Business."
+syscontact	"Jared"

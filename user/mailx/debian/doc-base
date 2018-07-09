@@ -1,0 +1,10 @@
+Document: heirloom-mailx
+Title: Heirloom mailx Manual
+Author: Gunnar Ritter
+Abstract: This manual describes the "heirloom-mailx" mail processing system and
+ its features.
+Section: Network/Communication
+
+Format: HTML
+Index: /usr/share/doc/heirloom-mailx/heirloom-mailx.1.html
+Files: /usr/share/doc/heirloom-mailx/heirloom-mailx.1.html

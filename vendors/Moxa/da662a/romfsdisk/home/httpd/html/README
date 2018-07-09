@@ -1,0 +1,27 @@
+web setup
+---------------------------------------------------------
+
+INSTALLATION GUIDE:
+1. # apt-get install php5-fpm
+2. # apt-get install nginx
+3. # vi /etc/nginx/sites-enabled/default
+4. # /etc/init.d/nginx restart
+5. # /etc/init.d/php5-fpm restart
+
+
+SETUP YOUR WEB ENVIRONMENT:
+ex. 
+
+# For your web directory
+  # vi /etc/nginx/sites-enabled/default
+  ...
+      root /path-to-web-directory
+  ...
+
+# For the php framework (CodeIgniter)
+  # vi /path-to-web-directory/index.php
+  $system_path = '/path-to-codeigniter-system';
+  $application_folder = '/path-to-codeigniter-application';
+
+  # vi /path-to-codeigniter-application/config/database.php
+  $db['default']['database'] = 'sqlite:'.APPPATH.'database/moxa.db';
