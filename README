@@ -1,14 +1,14 @@
 ------------------------------------------------------------------------------
 
-Building embedded Linux firmware for UC-8481-LX
+Building embedded Linux firmware for DA-662A-LX
 
 -----------------------------------------------------------------------------
 Following steps describe how to decompress and build the firmware for Moxa embedded platform
 
 1.Host Operation System Requirements  (recommend)
 
-	Debian 4.0, 5.0, 6.0 (on x86)
-	Ubuntu 8.04, 8.10, 9.04, 9.10, 10.04, 10.10, 11.04, 11.10 (on x86)
+	Debian 4.0, 5.0, 6.0 (on x86 32bit)
+	Ubuntu 8.04, 8.10, 9.04, 9.10, 10.04, 10.10, 11.04, 11.10 (on x86 32bit)
  	
 2. Install the developing enviornment
 
@@ -22,55 +22,57 @@ Following steps describe how to decompress and build the firmware for Moxa embed
 You can check it in your cdrom or download it from Moxa supporting 
 page, http://www.moxa.com/support/support_home.aspx.
 
-	For UC-8481-LX install the toolchain
+	For DA-662A-LX install the toolchain
 
-	$ sh /tmp/arm-linux_4.4.2-v4_Build_12032109.sh
-	$ rm -f /tmp/arm-linux_4.4.2-v4_Build_12032109.sh
-	$ export PATH="$/usr/local/arm-linux-4.4.2-v4/bin":$PATH
+	$ sh /tmp/arm-linux_4.4.2-v4.3_Build_16091312.sh
+	$ rm -f /tmp/arm-linux_4.4.2-v4.3_Build_16091312.sh
+	$ export PATH=$PATH:/usr/local/arm-linux-4.4.2-v4/bin
 
-4. Untar the source code, stdlinux_uc8481.tar.bz2
+4. Untar the source code, da662a_18070918.tar.bz2
 
-	tar xjvf stdlinux_uc8481.tar.bz2
+	tar xjvf da662a_18070918.tar.bz2
 	
-	After the stdlinux_uc8481.tar.bz2 is untared, 
-	all the files will be decompressed in /PATH/TO/stdlinux_uc8481 directory
+	After the da662a_18070918.tar.bz2 is untared, 
+	all the files will be decompressed in /PATH/TO/da662a directory
 	
-	./stdlinux_uc8481/linux-2.6.38.8	Linux kernel source code
-	./stdlinux_uc8481/modules		Linux kernel modules (not included in kernel)
-	./stdlinux_uc8481/user			Application source code
-	./stdlinux_uc8481/lib			Library source code
-	./stdlinux_uc8481/vendor/Moxa/		Product specific configurations
-	./stdlinux_uc8481/host			Host utility
-	./stdlinux_uc8481/tools			rom file making utilities
-	./stdlinux_uc8481/config		firmware configuration files
+	./da662a/linux-2.6.38.8	Linux kernel source code
+	./da662a/modules		Linux kernel modules (not included in kernel)
+	./da662a/user			Application source code
+	./da662a/lib			Library source code
+	./da662a/vendor/Moxa/		Product specific configurations
+	./da662a/host			Host utility
+	./da662a/tools			rom file making utilities
+	./da662a/config		firmware configuration files
 
-5. Then you can enter the stdlinux_uc8481 directory and make the firmware image
+5. Then you can enter the da662a directory and make the firmware image
 	
 	5.1. Select the Vendor/Product and Kernel/Libray in menuconfig
 
-	$ cd /PATH/TO/stdlinux_uc8481
+	$ cd /PATH/TO/da662a
 	$ make menuconfig
 
-	5.1.a. Enter the Vendor/Product menu to select Moxa/uc8481
+	5.1.a. Enter the Vendor/Product menu and select Moxa/da662a
 
 	--- Select the Vendor you wish to target
 	(Moxa) Vendor
 	--- Select the Product you wish to target
-	(uc8481) Moxa Products
+	(da662a) Moxa Products
 
-	5.1.b. Enter the Kernel/Library/Defaults Selection to select linux-2.6.38.8
+	5.1.b. Enter the Kernel/Library/Defaults Selection and select submenus you need
 
-	(linux-2.6.38.8) Kernel Version 
+	--- Kernel is linux-2.6.38.8 
 	--- Libc is None
 	[ ] Default all settings (lose changes)
 	[ ] Customize Kernel Settings (NEW)
 	[ ] Customize Module Settings
 	[ ] Customize Vendor/User Settings
 	[ ] Update Default Vendor Settings
+	
+	Save your new kernel configuration	
 
 	5.2. make the linux kernel
 
-	$ cd /PATH/TO/stdlinux_uc8481
+	$ cd /PATH/TO/da662a
 	$ make linux
 
 	the kennel image will be output to /tftpboot/zImage, you should create 
@@ -78,16 +80,16 @@ page, http://www.moxa.com/support/support_home.aspx.
 
 	5.3. Fast making the firmware
 
-	$ cd /PATH/TO/stdlinux_uc8481
+	$ cd /PATH/TO/da662a
 	$ make fast_build
 
 	the firmwares and image files will be output to /tftpboot/1.0_Build_12042605/
 
-	8481/FWR_UC8481_V1.0_Build_12042605.hfm	the firmware
-	8481/UC8481_R1-2.4-1.0_Build_12042605	the ROM1 image
-	8481/UC8481_R2-2.4-1.0_Build_12042605	the ROM2 image
-	uc8481-kernel-1.0.bin			the kernel image
-	uc8481-usrdisk-1.0.dsk			the roof file system image
+	da662a/FWR_DA662a_V1.0_Build_12042605.hfm	the firmware
+	da662a/DA662a_R1-2.4-1.0_Build_12042605	the ROM1 image
+	da662a/DA662a1_R2-2.4-1.0_Build_12042605	the ROM2 image
+	da662a-kernel-1.0.bin			the kernel image
+	da662a-usrdisk-1.0.dsk			the roof file system image
 	
 	You can upload the .hfm file to your target and upgrade by upgradehfm
 	
@@ -95,6 +97,6 @@ page, http://www.moxa.com/support/support_home.aspx.
 
 	This will take a long time to rebuild all the libraries and applications. If not necessary, we suggest you should use the fast build making.
 
-	$ cd /PATH/TO/stdlinux_uc8481
+	$ cd /PATH/TO/da662a
 	$ make
 	
